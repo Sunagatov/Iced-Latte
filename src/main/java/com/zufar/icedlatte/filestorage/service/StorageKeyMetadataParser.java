@@ -13,7 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 class StorageKeyMetadataParser {
 
     static Optional<FileMetadataDto> parse(String fileName, String bucketName) {
-        String folderName = fileName.split("/", 2)[0];
+        int folderSeparatorIndex = fileName.indexOf('/');
+        if (folderSeparatorIndex <= 0 || folderSeparatorIndex == fileName.length() - 1) {
+            log.warn("storage.key.skipped: key={}", fileName);
+            return Optional.empty();
+        }
+
+        String folderName = fileName.substring(0, folderSeparatorIndex);
         int uuidSeparatorIndex = folderName.lastIndexOf('_');
         if (uuidSeparatorIndex < 0 || uuidSeparatorIndex == folderName.length() - 1) {
             log.warn("storage.key.skipped: key={}", fileName);

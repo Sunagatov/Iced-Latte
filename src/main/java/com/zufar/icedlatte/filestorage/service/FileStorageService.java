@@ -73,6 +73,9 @@ public class FileStorageService implements FileStorageApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Map<UUID, String> findFileUrls(List<UUID> relatedObjectIds) {
+        if (relatedObjectIds.isEmpty()) {
+            return Map.of();
+        }
         return findMetadata(relatedObjectIds).entrySet().stream()
                 .flatMap(entry ->
                         objectStorage.getUrl(entry.getValue()).map(url -> Map.entry(entry.getKey(), url)).stream())

@@ -157,7 +157,7 @@ public class AwsObjectStorage implements ObjectStorage {
     }
 
     private boolean publicUrlBaseMatchesBucket(FileMetadataDto fileMetadataDto) {
-        String baseUrl = awsProperties.publicUrlBase().stripTrailing();
+        String baseUrl = normalizedPublicUrlBase();
         String bucketName = fileMetadataDto.bucketName();
         if (baseUrl.endsWith("/" + bucketName)) {
             return true;
@@ -198,13 +198,21 @@ public class AwsObjectStorage implements ObjectStorage {
     }
 
     private String publicUrl(FileMetadataDto fileMetadataDto) {
-        String baseUrl = awsProperties.publicUrlBase().stripTrailing();
+        String baseUrl = normalizedPublicUrlBase();
         String bucketName = fileMetadataDto.bucketName();
         String encodedFileName = UriUtils.encodePath(fileMetadataDto.fileName(), StandardCharsets.UTF_8);
         if (baseUrl.endsWith("/" + bucketName)) {
             return baseUrl + "/" + encodedFileName;
         }
         return baseUrl + "/" + bucketName + "/" + encodedFileName;
+    }
+
+    private String normalizedPublicUrlBase() {
+        String baseUrl = awsProperties.publicUrlBase().strip();
+        while (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        return baseUrl;
     }
 
     private void uploadFilePath(String bucketName, Path normalizedPath, Path filePath) {
