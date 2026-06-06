@@ -484,13 +484,13 @@ components:
           description: "User's first name."
           minLength: 2
           maxLength: 64
-          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\u2019\\-]+$"
         lastName:
           type: "string"
           description: "User's last name."
           minLength: 2
           maxLength: 64
-          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\u2019\\-]+$"
         birthDate:
           type: "string"
           format: "date"
