@@ -2,7 +2,6 @@ package com.zufar.icedlatte.security.session.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -23,7 +22,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
-import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
@@ -51,9 +49,6 @@ class RefreshTokenServiceTest {
 
     @Mock
     private SessionTokenService sessionTokenService;
-
-    @Mock
-    private JwtAccountStatusValidator jwtAccountStatusValidator;
 
     @Mock
     private HttpServletRequest request;
@@ -90,7 +85,6 @@ class RefreshTokenServiceTest {
 
             assertThat(response.migratedLegacyToken()).isFalse();
             assertThat(response.tokens()).isSameAs(responseBody);
-            verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
         }
 
@@ -117,7 +111,6 @@ class RefreshTokenServiceTest {
 
             assertThat(response.migratedLegacyToken()).isTrue();
             assertThat(response.tokens()).isSameAs(responseBody);
-            verify(jwtAccountStatusValidator).requireActive(user);
             verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
         }
 
@@ -127,21 +120,19 @@ class RefreshTokenServiceTest {
             String rawToken = "raw-refresh-token";
             String oldHash = "old-hash";
             String email = "locked@example.com";
-            var user = user(email);
+            var user = inactiveUser(email);
             AuthSessionEntity session = AuthSessionEntity.builder()
                     .id(UUID.randomUUID())
                     .userId(UUID.randomUUID())
                     .build();
-            JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("User account is not active");
 
             when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
             when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
             when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
             when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            doThrow(failure).when(jwtAccountStatusValidator).requireActive(user);
 
-            assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
+            assertThatThrownBy(() -> service.refresh(request)).isInstanceOf(JwtTokenBlacklistedException.class);
 
             verifyNoInteractions(sessionTokenService);
         }
@@ -170,6 +161,11 @@ class RefreshTokenServiceTest {
     private static org.springframework.security.core.userdetails.UserDetails user(String email) {
         return new SecurityUserDetails(
                 java.util.UUID.randomUUID(), email, "secret", java.util.List.of(), true, true, true, true);
+    }
+
+    private static org.springframework.security.core.userdetails.UserDetails inactiveUser(String email) {
+        return new SecurityUserDetails(
+                java.util.UUID.randomUUID(), email, "secret", java.util.List.of(), true, false, true, true);
     }
 
     private static AuthenticationTokens response() {

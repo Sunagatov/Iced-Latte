@@ -13,12 +13,11 @@ import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 @DisplayName("JwtAccountStatusValidator unit tests")
 class JwtAccountStatusValidatorTest {
 
-    private final JwtAccountStatusValidator validator = new JwtAccountStatusValidator();
-
     @Test
     @DisplayName("allows active account")
     void allowsActiveAccount() {
-        assertThatCode(() -> validator.requireActive(activeUser())).doesNotThrowAnyException();
+        assertThatCode(() -> JwtAccountStatusValidator.requireActive(activeUser()))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -26,7 +25,8 @@ class JwtAccountStatusValidatorTest {
     void rejectsDisabledAccount() {
         UserDetails user = User.withUserDetails(activeUser()).disabled(true).build();
 
-        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
+        assertThatThrownBy(() -> JwtAccountStatusValidator.requireActive(user))
+                .isInstanceOf(JwtTokenBlacklistedException.class);
     }
 
     @Test
@@ -35,7 +35,8 @@ class JwtAccountStatusValidatorTest {
         UserDetails user =
                 User.withUserDetails(activeUser()).accountLocked(true).build();
 
-        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
+        assertThatThrownBy(() -> JwtAccountStatusValidator.requireActive(user))
+                .isInstanceOf(JwtTokenBlacklistedException.class);
     }
 
     @Test
@@ -44,7 +45,8 @@ class JwtAccountStatusValidatorTest {
         UserDetails user =
                 User.withUserDetails(activeUser()).accountExpired(true).build();
 
-        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
+        assertThatThrownBy(() -> JwtAccountStatusValidator.requireActive(user))
+                .isInstanceOf(JwtTokenBlacklistedException.class);
     }
 
     @Test
@@ -53,7 +55,8 @@ class JwtAccountStatusValidatorTest {
         UserDetails user =
                 User.withUserDetails(activeUser()).credentialsExpired(true).build();
 
-        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
+        assertThatThrownBy(() -> JwtAccountStatusValidator.requireActive(user))
+                .isInstanceOf(JwtTokenBlacklistedException.class);
     }
 
     private static UserDetails activeUser() {

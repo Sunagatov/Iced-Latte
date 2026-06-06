@@ -29,7 +29,6 @@ public class RefreshTokenService {
     private final UserDetailsService userDetailsService;
     private final AuthSessionService authSessionService;
     private final SessionTokenService sessionTokenService;
-    private final JwtAccountStatusValidator jwtAccountStatusValidator;
 
     @Transactional
     public RefreshTokenResult refresh(HttpServletRequest request) {
@@ -50,7 +49,7 @@ public class RefreshTokenService {
             log.warn("auth.token.refresh_legacy_migrate: reason=token_invalidated");
             String userEmail = extractRefreshTokenEmail(rawToken);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-            jwtAccountStatusValidator.requireActive(userDetails);
+            JwtAccountStatusValidator.requireActive(userDetails);
             var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);
             log.info("auth.token.refresh_legacy_migrated");
             return new RefreshTokenResult(response, true);
@@ -58,7 +57,7 @@ public class RefreshTokenService {
 
         String userEmail = extractRefreshTokenEmail(rawToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        jwtAccountStatusValidator.requireActive(userDetails);
+        JwtAccountStatusValidator.requireActive(userDetails);
         var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
         log.debug("auth.token.refreshed");
         return new RefreshTokenResult(response, false);

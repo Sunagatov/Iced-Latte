@@ -25,7 +25,6 @@ public class JwtAuthenticationProvider {
     private final JwtTokenClaims jwtTokenClaims;
     private final UserDetailsService userDetailsService;
     private final JwtTokenBlacklist jwtTokenBlacklist;
-    private final JwtAccountStatusValidator jwtAccountStatusValidator;
 
     public Authentication get(final HttpServletRequest httpRequest) {
         String jwtToken = jwtBearerTokenResolver.extract(httpRequest);
@@ -34,7 +33,7 @@ public class JwtAuthenticationProvider {
 
         String userEmail = jwtTokenClaims.extractAccessTokenEmail(jwtToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-        jwtAccountStatusValidator.requireActive(userDetails);
+        JwtAccountStatusValidator.requireActive(userDetails);
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

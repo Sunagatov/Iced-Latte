@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 
-@Component
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class JwtAccountStatusValidator {
 
-    public void requireActive(UserDetails userDetails) {
+    public static void requireActive(UserDetails userDetails) {
         if (!userDetails.isEnabled()
                 || !userDetails.isAccountNonLocked()
                 || !userDetails.isAccountNonExpired()
