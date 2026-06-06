@@ -83,19 +83,8 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserEntityByEmail normalizes email before lookup")
-    void getUserEntityByEmailNormalizesEmailBeforeLookup() {
-        UserEntity entity = UserEntity.builder().email("user@example.com").build();
-        when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
-
-        assertThat(singleUserProvider.getUserEntityByEmail(" User@Example.COM "))
-                .isSameAs(entity);
-        verify(userCrudRepository).findByEmail("user@example.com");
-    }
-
-    @Test
-    @DisplayName("getUserByEmail returns lookup snapshot")
-    void getUserByEmailReturnsLookupSnapshot() {
+    @DisplayName("getUserByEmail normalizes email and returns lookup snapshot")
+    void getUserByEmailNormalizesEmailAndReturnsLookupSnapshot() {
         UserEntity entity = UserEntity.builder()
                 .id(UUID.randomUUID())
                 .firstName("Grace")
@@ -104,7 +93,7 @@ class SingleUserProviderTest {
                 .build();
         when(userCrudRepository.findByEmail("user@example.com")).thenReturn(java.util.Optional.of(entity));
 
-        var snapshot = singleUserProvider.getUserByEmail("user@example.com");
+        var snapshot = singleUserProvider.getUserByEmail(" User@Example.COM ");
 
         assertThat(snapshot.id()).isEqualTo(entity.getId());
         assertThat(snapshot.firstName()).isEqualTo("Grace");
@@ -209,11 +198,11 @@ class SingleUserProviderTest {
     }
 
     @Test
-    @DisplayName("getUserEntityByEmail throws when user is missing")
-    void getUserEntityByEmailThrowsWhenMissing() {
+    @DisplayName("getUserByEmail throws when user is missing")
+    void getUserByEmailThrowsWhenMissing() {
         when(userCrudRepository.findByEmail("missing@example.com")).thenReturn(java.util.Optional.empty());
 
-        assertThatThrownBy(() -> singleUserProvider.getUserEntityByEmail("missing@example.com"))
+        assertThatThrownBy(() -> singleUserProvider.getUserByEmail("missing@example.com"))
                 .isInstanceOf(UserNotFoundException.class);
         verify(userCrudRepository).findByEmail("missing@example.com");
     }
