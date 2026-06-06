@@ -93,7 +93,6 @@ class ShoppingCartServiceTest {
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.empty());
         when(shoppingCartRepository.saveAndFlush(any(ShoppingCart.class))).thenReturn(savedCart);
-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
 
         ShoppingCartDto result = shoppingCartService.getByUserId(userId);
 
@@ -103,6 +102,24 @@ class ShoppingCartServiceTest {
         verify(shoppingCartRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getUserId()).isEqualTo(userId);
         assertThat(captor.getValue().getItems()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getByUserId does not call product catalog for an empty cart")
+    void getByUserIdDoesNotCallProductCatalogForEmptyCart() {
+        UUID userId = UUID.randomUUID();
+        ShoppingCart shoppingCart = ShoppingCart.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .items(new HashSet<>())
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
+
+        ShoppingCartDto result = shoppingCartService.getByUserId(userId);
+
+        assertThat(result.getItems()).isEmpty();
+        verifyNoInteractions(productCatalogApi);
     }
 
     @Test
@@ -329,6 +346,17 @@ class ShoppingCartServiceTest {
     void deleteItemsRejectsEmptyItemIds() {
         UUID userId = UUID.randomUUID();
         assertThatThrownBy(() -> shoppingCartService.deleteItems(List.of(), userId))
+                .isInstanceOf(InvalidCartItemRequestException.class);
+
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+    }
+
+    @Test
+    @DisplayName("deleteItems rejects null item ids before touching repositories")
+    void deleteItemsRejectsNullItemIds() {
+        UUID userId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
         verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);

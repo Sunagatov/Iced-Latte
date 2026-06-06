@@ -134,6 +134,9 @@ public class ShoppingCartService implements CartCheckoutApi {
         List<UUID> productIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductId)
                 .toList();
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
         return productCatalogApi.getProductsByIds(productIds).stream()
                 .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
     }
@@ -219,6 +222,9 @@ public class ShoppingCartService implements CartCheckoutApi {
     private static void validateDeleteItemIds(List<UUID> itemIds) {
         if (itemIds.isEmpty()) {
             throw new InvalidCartItemRequestException("Cart item ids to delete must not be empty.");
+        }
+        if (itemIds.stream().anyMatch(Objects::isNull)) {
+            throw new InvalidCartItemRequestException("Cart item ids to delete must not contain null values.");
         }
     }
 
