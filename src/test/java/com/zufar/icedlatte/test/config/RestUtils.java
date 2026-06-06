@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
-import com.zufar.icedlatte.security.endpoint.UserSecurityEndpoint;
+import com.zufar.icedlatte.common.http.ApiPaths;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -17,7 +17,7 @@ public class RestUtils {
 
     public static String getJwtToken(Integer port, String email, String password) {
         var specification = given().port(port)
-                .basePath(UserSecurityEndpoint.USER_SECURITY_API_URL)
+                .basePath(ApiPaths.AUTH)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
 

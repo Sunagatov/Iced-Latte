@@ -19,14 +19,20 @@ servers:
     description: "Production server"
 
 tags:
-  - name: "Security"
-    description: "API for user registration, authentication, and password management"
+  - name: "OAuth"
+    description: "OAuth sign-in and token handoff operations"
+  - name: "Authentication"
+    description: "User registration, email confirmation, and credential authentication"
+  - name: "Sessions"
+    description: "Authentication token, logout, and session management operations"
+  - name: "Password"
+    description: "Password reset operations"
 
 paths:
   /api/v1/auth/oauth/{provider}:
     get:
       tags:
-        - "Security"
+        - "OAuth"
       summary: "Start OAuth sign-in"
       operationId: "initiateOAuth"
       parameters:
@@ -62,7 +68,7 @@ paths:
   /api/v1/auth/oauth/{provider}/callback:
     get:
       tags:
-        - "Security"
+        - "OAuth"
       summary: "Complete OAuth sign-in"
       operationId: "completeOAuthCallback"
       parameters:
@@ -97,7 +103,7 @@ paths:
   /api/v1/auth/oauth/token:
     post:
       tags:
-        - "Security"
+        - "OAuth"
       summary: "Exchange OAuth handoff code for tokens"
       operationId: "completeOAuthTokenHandoff"
       parameters:
@@ -127,7 +133,7 @@ paths:
   /api/v1/auth/register:
     post:
       tags:
-        - "Security"
+        - "Authentication"
       summary: "Register a new user"
       operationId: "register"
       requestBody:
@@ -166,7 +172,7 @@ paths:
   /api/v1/auth/confirm:
     post:
       tags:
-        - "Security"
+        - "Authentication"
       summary: "Confirm user's email"
       operationId: "confirmEmail"
       requestBody:
@@ -205,7 +211,7 @@ paths:
   /api/v1/auth/authenticate:
     post:
       tags:
-        - "Security"
+        - "Authentication"
       summary: "Authenticate a user"
       operationId: "authenticate"
       requestBody:
@@ -244,7 +250,7 @@ paths:
   /api/v1/auth/logout:
     post:
       tags:
-        - "Security"
+        - "Sessions"
       summary: "Logout a user"
       operationId: "logout"
       security:
@@ -275,7 +281,7 @@ paths:
   /api/v1/auth/refresh:
     post:
       tags:
-        - "Security"
+        - "Sessions"
       summary: "Refresh user authentication token"
       operationId: "refreshToken"
       security:
@@ -309,7 +315,7 @@ paths:
   /api/v1/auth/logout-all:
     post:
       tags:
-        - "Security"
+        - "Sessions"
       summary: "Revoke all active sessions for the current user"
       operationId: "logoutAll"
       security:
@@ -333,7 +339,7 @@ paths:
   /api/v1/auth/sessions:
     get:
       tags:
-        - "Security"
+        - "Sessions"
       summary: "List active sessions for the current user"
       operationId: "getSessions"
       security:
@@ -364,7 +370,7 @@ paths:
   /api/v1/auth/sessions/{sessionId}:
     delete:
       tags:
-        - "Security"
+        - "Sessions"
       summary: "Revoke a specific session by ID"
       operationId: "revokeSession"
       security:
@@ -401,7 +407,7 @@ paths:
   /api/v1/auth/password/forgot:
     post:
       tags:
-        - "Security"
+        - "Password"
       summary: "Request password reset"
       operationId: "forgotPassword"
       requestBody:
@@ -430,7 +436,7 @@ paths:
   /api/v1/auth/password/change:
     post:
       tags:
-        - "Security"
+        - "Password"
       summary: "Change user password"
       operationId: "changePassword"
       requestBody:
