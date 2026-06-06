@@ -21,8 +21,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
-@DisplayName("ProductReviewEndpoint Tests")
-class ProductReviewEndpointTest extends IntegrationTestBase {
+@DisplayName("ProductReviewsEndpoint Tests")
+class ProductReviewsEndpointTest extends IntegrationTestBase {
 
     @LocalServerPort
     protected Integer port;
@@ -61,7 +61,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
         }
         specification = given().port(port)
                 .header("Authorization", "Bearer " + cachedJwtToken)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .basePath(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
     }
@@ -130,7 +130,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should fetch review statistics successfully")
     void shouldFetchReviewStatsSuccessfully() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .basePath(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL)
                 .accept(ContentType.JSON);
 
         assertRestApiBodySchemaResponse(
@@ -151,7 +151,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Reviews and ratings with default pagination and sorting for unauthorized user. Should return 200 OK")
     void shouldSuccessfullyReturnReviewsForDefaultPaginationAndSortingForAnonymous() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .basePath(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
 
@@ -228,7 +228,7 @@ class ProductReviewEndpointTest extends IntegrationTestBase {
     @DisplayName("Should return 401 Unauthorized for protected endpoints without token")
     void shouldReturnUnauthorizedWithoutToken() {
         RequestSpecification noAuth = given().port(port)
-                .basePath(ProductReviewEndpoint.PRODUCT_REVIEW_URL)
+                .basePath(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL)
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON);
 

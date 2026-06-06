@@ -57,7 +57,7 @@ class UserReviewLifecycleIntegrationTest extends AuthenticatedUserIntegrationSup
 
         String reviewId = createReview(user);
 
-        given(authenticatedJsonSpec(ProductReviewEndpoint.PRODUCT_REVIEW_URL, user.accessToken()))
+        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, user.accessToken()))
                 .delete("/{productId}/reviews/{reviewId}", PRODUCT_ID, reviewId)
                 .then()
                 .statusCode(HttpStatus.OK.value());
@@ -71,7 +71,7 @@ class UserReviewLifecycleIntegrationTest extends AuthenticatedUserIntegrationSup
     }
 
     private String createReview(AuthenticatedUser user) {
-        return given(authenticatedJsonSpec(ProductReviewEndpoint.PRODUCT_REVIEW_URL, user.accessToken()))
+        return given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, user.accessToken()))
                 .body("""
                         {
                           "text": "%s",

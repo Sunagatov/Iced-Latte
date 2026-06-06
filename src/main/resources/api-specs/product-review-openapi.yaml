@@ -23,14 +23,18 @@ security:
   - {}
 
 tags:
-  - name: "Product Review"
-    description: "An API for product's review creation and modification"
+  - name: "Product Reviews"
+    description: "Product review listing and statistics"
+  - name: "User Reviews"
+    description: "Authenticated user's product reviews"
+  - name: "Review Reactions"
+    description: "Review like and dislike operations"
 
 paths:
   /api/v1/products/{productId}/reviews:
     get:
       tags:
-        - "Product Review"
+        - "Product Reviews"
       summary: "List product reviews with pagination, sorting and filtering"
       description: "List product's Reviews with pagination, sorting and filtering features. Endpoint is available for unauthorized users"
       operationId: "getProductReviewsAndRatings"
@@ -150,7 +154,7 @@ paths:
 
     post:
       tags:
-        - "Product Review"
+        - "User Reviews"
       summary: "Add a new product's review for a specific product by an authorized user. If product's review exists, then 400 error will be returned"
       description: "Creates a new review and rating for the specified product by the authenticated user. Returns 400 if the user has already submitted a review for this product."
       operationId: "addNewProductReview"
@@ -203,7 +207,7 @@ paths:
   /api/v1/products/{productId}/reviews/{productReviewId}:
     delete:
       tags:
-        - "Product Review"
+        - "User Reviews"
       summary: "Delete an existing product's review created by an authorized user"
       description: "Permanently deletes the specified product review. Only the review's author can delete their own review."
       operationId: "deleteProductReview"
@@ -253,7 +257,7 @@ paths:
   /api/v1/products/{productId}/review:
     get:
       tags:
-        - "Product Review"
+        - "User Reviews"
       summary: "Return a product's review created by an authorized user"
       operationId: "getProductReview"
       parameters:
@@ -293,7 +297,7 @@ paths:
   /api/v1/users/reviews:
     get:
       tags:
-        - "Product Review"
+        - "User Reviews"
       summary: "Get all reviews written by the authenticated user"
       operationId: "getUserReviews"
       parameters:
@@ -354,7 +358,7 @@ paths:
   /api/v1/products/{productId}/reviews/statistics:
     get:
       tags:
-        - "Product Review"
+        - "Product Reviews"
       summary: "Returns statistics of product's review and rating : average rating, count of reviews, ratings map. The endpoint is available for unauthorized users"
       operationId: "getRatingAndReviewStat"
       parameters:
@@ -388,7 +392,7 @@ paths:
   /api/v1/products/{productId}/reviews/{productReviewId}/likes:
     post:
       tags:
-        - "Product Review"
+        - "Review Reactions"
       summary: "Like or dislike a product's review, available for authorized users only"
       operationId: "addProductReviewLike"
       parameters:

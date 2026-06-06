@@ -31,7 +31,9 @@ import com.zufar.icedlatte.order.endpoint.AdminOrderEndpoint;
 import com.zufar.icedlatte.order.endpoint.OrderEndpoint;
 import com.zufar.icedlatte.payment.endpoint.PaymentEndpoint;
 import com.zufar.icedlatte.product.endpoint.ProductsEndpoint;
-import com.zufar.icedlatte.review.endpoint.ProductReviewEndpoint;
+import com.zufar.icedlatte.review.endpoint.ProductReviewsEndpoint;
+import com.zufar.icedlatte.review.endpoint.ReviewReactionsEndpoint;
+import com.zufar.icedlatte.review.endpoint.UserReviewsEndpoint;
 import com.zufar.icedlatte.security.endpoint.AuthenticationEndpoint;
 import com.zufar.icedlatte.security.endpoint.OAuthEndpoint;
 import com.zufar.icedlatte.security.endpoint.PasswordEndpoint;
@@ -50,7 +52,9 @@ class OpenApiEndpointValidationContractTest {
             OrderEndpoint.class,
             PaymentEndpoint.class,
             ProductsEndpoint.class,
-            ProductReviewEndpoint.class,
+            ProductReviewsEndpoint.class,
+            UserReviewsEndpoint.class,
+            ReviewReactionsEndpoint.class,
             UserProfileEndpoint.class,
             DeliveryAddressEndpoint.class,
             UserAvatarEndpoint.class,

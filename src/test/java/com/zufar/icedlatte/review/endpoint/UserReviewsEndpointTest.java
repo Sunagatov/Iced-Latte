@@ -16,8 +16,8 @@ import com.zufar.icedlatte.test.config.IntegrationTestBase;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
-@DisplayName("UserReviewEndpoint Tests")
-class UserReviewEndpointTest extends IntegrationTestBase {
+@DisplayName("UserReviewsEndpoint Tests")
+class UserReviewsEndpointTest extends IntegrationTestBase {
 
     @LocalServerPort
     protected Integer port;
