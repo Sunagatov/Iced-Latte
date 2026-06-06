@@ -64,6 +64,7 @@ public class ShoppingCartDtoConverter {
         return new ProductSummaryDto()
                 .id(productInfo.id())
                 .name(productInfo.name())
+                .description(productInfo.description())
                 .price(productInfo.price())
                 .productFileUrl(productInfo.productFileUrl());
     }

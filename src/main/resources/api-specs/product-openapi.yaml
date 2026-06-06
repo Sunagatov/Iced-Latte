@@ -272,6 +272,9 @@ components:
         name:
           type: "string"
           description: "Name of the product."
+        description:
+          type: "string"
+          description: "Short product description for product list, cart, and favorite views."
         price:
           type: "number"
           description: "Price of the product."

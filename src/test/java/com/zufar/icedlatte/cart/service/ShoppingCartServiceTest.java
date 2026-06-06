@@ -70,6 +70,9 @@ class ShoppingCartServiceTest {
         assertThat(result.getId()).isEqualTo(shoppingCart.getId());
         assertThat(result.getItems()).hasSize(3);
         assertThat(result.getProductsQuantity()).isEqualTo(6);
+        assertThat(result.getItems())
+                .allSatisfy(item ->
+                        assertThat(item.getProductInfo().getDescription()).isNotBlank());
     }
 
     @Test

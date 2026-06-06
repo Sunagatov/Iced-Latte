@@ -27,6 +27,7 @@ class FavoriteListDtoConverterTest {
         assertThat(result.getProducts()).hasSize(1);
         assertThat(result.getProducts().getFirst().getId()).isEqualTo(productId);
         assertThat(result.getProducts().getFirst().getName()).isEqualTo("Coffee");
+        assertThat(result.getProducts().getFirst().getDescription()).isEqualTo("Desc");
     }
 
     @Test
