@@ -92,6 +92,17 @@ class EmailTokenServiceContractTest {
                 .isInstanceOf(TimeTokenException.class);
     }
 
+    @Test
+    @DisplayName("cooldown is scoped by token purpose")
+    void cooldownIsScopedByTokenPurpose() {
+        UserRegistrationRequest request = new UserRegistrationRequest("John", "Doe", "john@example.com", "Password1!");
+
+        service.generateEmailVerificationToken(request);
+
+        assertThatCode(() -> service.generatePasswordResetToken(request.getEmail()))
+                .doesNotThrowAnyException();
+    }
+
     private static EmailTokenPayloadProtector tokenPayloadProtector(ObjectMapper objectMapper) {
         return new EmailTokenPayloadProtector(objectMapper, jwtProperties(), new EmailTokenProperties(43, ""));
     }

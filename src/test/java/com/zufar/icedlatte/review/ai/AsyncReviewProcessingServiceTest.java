@@ -45,7 +45,7 @@ class AsyncReviewProcessingServiceTest {
     void doesNothingElseWhenModerationPasses() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "Great coffee", productId);
+        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, productId);
         ProductReview review = ProductReview.builder()
                 .id(reviewId)
                 .productId(productId)
@@ -65,7 +65,7 @@ class AsyncReviewProcessingServiceTest {
     void deletesRejectedReviewsAndRefreshesProductAggregatesWhenReviewStillExists() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "spam", productId);
+        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, productId);
         ProductReview review = ProductReview.builder()
                 .id(reviewId)
                 .productId(productId)
@@ -85,7 +85,7 @@ class AsyncReviewProcessingServiceTest {
     @DisplayName("ignores processing when the review has already disappeared")
     void ignoresProcessingWhenReviewHasAlreadyDisappeared() {
         UUID reviewId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "spam", UUID.randomUUID());
+        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, UUID.randomUUID());
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
         service.process(event);

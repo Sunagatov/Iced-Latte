@@ -56,7 +56,6 @@ public class ProductReviewDtoConverterTest {
                 .isEqualTo(Optional.of(user).get().lastName());
         assertThat(actualProductReviewDto.getLikesCount()).isEqualTo(expectedProductReview.getLikesCount());
         assertThat(actualProductReviewDto.getDislikesCount()).isEqualTo(expectedProductReview.getDislikesCount());
-        assertThat(actualProductReviewDto.getAiSummary()).isNull();
     }
 
     @Test

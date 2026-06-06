@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +25,7 @@ import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
@@ -40,6 +39,8 @@ class OAuthLoginServiceTest {
     private static final String GOOGLE_SUBJECT = "google-subject";
     private static final String EXISTING_EMAIL = "existing@example.com";
     private static final String NEW_EMAIL = "new@example.com";
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Mock
     private OAuthProviderClient providerClient;
@@ -58,9 +59,6 @@ class OAuthLoginServiceTest {
 
     @Mock
     private SessionTokenService sessionTokenService;
-
-    @Mock
-    private HttpServletRequest request;
 
     private OAuthLoginService service;
 
@@ -84,7 +82,7 @@ class OAuthLoginServiceTest {
         AuthenticationTokens response = handle();
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
-        verify(sessionTokenService).issueForNewSession(any(), eq(request));
+        verify(sessionTokenService).issueForNewSession(any(), eq(REQUEST_METADATA));
     }
 
     @Test
@@ -128,13 +126,14 @@ class OAuthLoginServiceTest {
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
         UserAuthenticationSnapshot newUser = activeUser(UUID.randomUUID(), NEW_EMAIL, "encoded-random-password");
         when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(newUser);
-        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
+        when(sessionTokenService.issueForNewSession(any(), eq(REQUEST_METADATA)))
+                .thenReturn(tokenPair());
         AuthenticationTokens response = handle();
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         verify(userRegistrationApi)
                 .registerOAuthUser(eq("New"), eq("User"), eq(NEW_EMAIL), eq("encoded-random-password"));
-        verify(sessionTokenService).issueForNewSession(any(), eq(request));
+        verify(sessionTokenService).issueForNewSession(any(), eq(REQUEST_METADATA));
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
         verify(oAuthIdentityRepository).save(savedIdentities.capture());
         assertThat(savedIdentities.getValue().getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
@@ -304,7 +303,7 @@ class OAuthLoginServiceTest {
     }
 
     private AuthenticationTokens handle() {
-        return service.handle(OAuthProvider.GOOGLE, AUTH_CODE, request);
+        return service.handle(OAuthProvider.GOOGLE, AUTH_CODE, REQUEST_METADATA);
     }
 
     private void stubProfile(
@@ -344,14 +343,16 @@ class OAuthLoginServiceTest {
     }
 
     private void stubToken() {
-        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
+        when(sessionTokenService.issueForNewSession(any(), eq(REQUEST_METADATA)))
+                .thenReturn(tokenPair());
     }
 
     private void stubNewUserSave() {
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
         when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any()))
                 .thenReturn(activeUser(UUID.randomUUID(), NEW_EMAIL, "encoded-random-password"));
-        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair());
+        when(sessionTokenService.issueForNewSession(any(), eq(REQUEST_METADATA)))
+                .thenReturn(tokenPair());
     }
 
     private static AuthenticationTokens tokenPair() {

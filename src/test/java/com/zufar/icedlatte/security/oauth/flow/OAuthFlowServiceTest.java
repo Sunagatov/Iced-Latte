@@ -17,15 +17,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadataFactory;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 @ExtendWith(MockitoExtension.class)
 class OAuthFlowServiceTest {
+
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Mock
     private OAuthLoginService oAuthLoginService;
@@ -48,6 +54,9 @@ class OAuthFlowServiceTest {
     @Mock
     private OAuthStateCookieService oAuthStateCookieService;
 
+    @Mock
+    private AuthSessionRequestMetadataFactory requestMetadataFactory;
+
     private OAuthFlowService service;
 
     @BeforeEach
@@ -57,7 +66,9 @@ class OAuthFlowServiceTest {
                 oAuthStateStore,
                 oAuthTokenHandoffStore,
                 new OAuthRedirectService("https://app.example.com"),
-                oAuthStateCookieService);
+                oAuthStateCookieService,
+                requestMetadataFactory);
+        lenient().when(requestMetadataFactory.from(request)).thenReturn(REQUEST_METADATA);
     }
 
     @Test
@@ -158,7 +169,7 @@ class OAuthFlowServiceTest {
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
-        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", REQUEST_METADATA))
                 .thenReturn(tokenPair());
         when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
 
@@ -178,7 +189,7 @@ class OAuthFlowServiceTest {
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback#old"));
-        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", request))
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", REQUEST_METADATA))
                 .thenReturn(tokenPair());
         when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
 
@@ -232,8 +243,23 @@ class OAuthFlowServiceTest {
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
-        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", REQUEST_METADATA))
                 .thenThrow(new UnauthorizedException("exchange failed"));
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=auth_failed&next=/checkout");
+    }
+
+    @Test
+    void completeCallbackReturnsAuthFailedRedirectWhenLoginFailsUnexpectedly() {
+        stubGoogleClient();
+        when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(true);
+        when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
+                .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", REQUEST_METADATA))
+                .thenThrow(new DataIntegrityViolationException("duplicate user"));
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
 
@@ -247,7 +273,7 @@ class OAuthFlowServiceTest {
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=https://evil.example.com"));
-        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", REQUEST_METADATA))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);
@@ -262,7 +288,7 @@ class OAuthFlowServiceTest {
                 .thenReturn(true);
         when(oAuthStateStore.consume(OAuthProvider.GOOGLE, "state-token"))
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=//evil.example.com"));
-        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", request))
+        when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "broken-code", REQUEST_METADATA))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "broken-code", "state-token", request, response);

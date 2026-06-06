@@ -56,6 +56,16 @@ class LangChain4jReviewAiServiceTest {
     }
 
     @Test
+    @DisplayName("moderate: rejects malformed responses that only start with OK")
+    void moderate_malformedOkPrefix_throwsModerationException() {
+        when(reviewAiService.moderate("spam text")).thenReturn("OK_NOT_OK: spam detected");
+
+        assertThatThrownBy(() -> service.moderate("spam text"))
+                .isInstanceOf(ReviewModerationException.class)
+                .hasMessageContaining("spam detected");
+    }
+
+    @Test
     @DisplayName("moderate: allows review through when AI is unavailable (fallback)")
     void moderate_aiUnavailable_doesNotThrow() {
         when(reviewAiService.moderate("some text")).thenThrow(new RuntimeException("timeout"));
@@ -78,8 +88,8 @@ class LangChain4jReviewAiServiceTest {
     }
 
     @Test
-    @DisplayName("summarize: returns fallback when AI is unavailable")
-    void summarize_aiUnavailable_returnsFallback() {
+    @DisplayName("summarize: throws when AI is unavailable so caller can retry")
+    void summarize_aiUnavailable_throwsForRetry() {
         UUID productId = UUID.randomUUID();
         ProductReview review = mock(ProductReview.class);
         when(review.getText()).thenReturn("Loved it");
@@ -87,9 +97,9 @@ class LangChain4jReviewAiServiceTest {
                 .thenReturn(List.of(review));
         when(reviewAiService.aggregateSummary(anyString())).thenThrow(new RuntimeException("timeout"));
 
-        var result = service.summarize(productId);
-
-        assertThat(result).isEqualTo("Summary unavailable.");
+        assertThatThrownBy(() -> service.summarize(productId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("AI summary generation failed");
     }
 
     @Test

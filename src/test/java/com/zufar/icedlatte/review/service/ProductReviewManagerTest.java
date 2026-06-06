@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
+import com.zufar.icedlatte.review.entity.ProductReviewLike;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
@@ -127,7 +129,7 @@ class ProductReviewManagerTest {
             verify(productReviewProductGateway).refreshReviewAggregates(productId);
             ArgumentCaptor<ReviewCreatedEvent> eventCaptor = ArgumentCaptor.forClass(ReviewCreatedEvent.class);
             verify(eventPublisher).publishEvent(eventCaptor.capture());
-            assertThat(eventCaptor.getValue().text()).isEqualTo("Great coffee!");
+            assertThat(eventCaptor.getValue().reviewId()).isEqualTo(generatedId);
             assertThat(eventCaptor.getValue().productId()).isEqualTo(productId);
             verifyNoInteractions(turnstileVerifier);
         }
@@ -300,6 +302,39 @@ class ProductReviewManagerTest {
             assertThatThrownBy(() -> service.updateLike(productId, reviewId, userId, true))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("changed concurrently");
+        }
+
+        @Test
+        @DisplayName("Keeps an existing identical vote unchanged")
+        void updateLike_sameVote_keepsExistingVote() {
+            UUID productId = UUID.randomUUID();
+            UUID reviewId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            var existingVote = ProductReviewLike.builder()
+                    .userId(userId)
+                    .productId(productId)
+                    .productReviewId(reviewId)
+                    .isLike(true)
+                    .build();
+            var review = ProductReview.builder()
+                    .id(reviewId)
+                    .userId(userId)
+                    .productId(productId)
+                    .build();
+            var user = new UserLookupSnapshot(userId, "Ada", "Lovelace", "ada@example.com");
+            var expectedDto = new ProductReviewDto();
+            when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId))
+                    .thenReturn(Optional.of(existingVote));
+            when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+            when(userLookupApi.getUserById(userId)).thenReturn(user);
+            when(productReviewDtoConverter.toProductReviewDto(review, user)).thenReturn(expectedDto);
+
+            ProductReviewDto result = service.updateLike(productId, reviewId, userId, true);
+
+            assertThat(result).isEqualTo(expectedDto);
+            verify(productReviewLikeRepository, never()).saveAndFlush(any());
+            verify(reviewRepository).updateLikesCount(reviewId);
+            verify(reviewRepository).updateDislikesCount(reviewId);
         }
     }
 }

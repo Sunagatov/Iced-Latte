@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
@@ -23,7 +23,8 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     @Autowired
     private UserRepository userRepository;
 
-    private static final MockHttpServletRequest MOCK_REQUEST = new MockHttpServletRequest();
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Test
     @DisplayName("Should successfully register new user with valid data")
@@ -31,7 +32,7 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
         final UserRegistrationRequest request =
                 new UserRegistrationRequest("John", "Doe", "john.doe@example.com", "Password123!");
 
-        final AuthenticationTokens response = userRegistrationService.register(request, MOCK_REQUEST);
+        final AuthenticationTokens response = userRegistrationService.register(request, REQUEST_METADATA);
         assertNotNull(response.accessToken());
         assertNotNull(response.refreshToken());
 
@@ -54,14 +55,14 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     void shouldThrowExceptionForDuplicateEmail() {
         final UserRegistrationRequest firstRequest =
                 new UserRegistrationRequest("John", "Doe", "duplicate@example.com", "Password123!");
-        userRegistrationService.register(firstRequest, MOCK_REQUEST);
+        userRegistrationService.register(firstRequest, REQUEST_METADATA);
 
         final UserRegistrationRequest duplicateRequest =
                 new UserRegistrationRequest("Jane", "Smith", "duplicate@example.com", "Password456!");
 
         assertThrows(
                 UserRegistrationException.class,
-                () -> userRegistrationService.register(duplicateRequest, MOCK_REQUEST));
+                () -> userRegistrationService.register(duplicateRequest, REQUEST_METADATA));
     }
 
     @Test
@@ -69,7 +70,7 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     void shouldReturnFalseForExistingEmail() {
         final UserRegistrationRequest request =
                 new UserRegistrationRequest("John", "Doe", "existing@example.com", "Password123!");
-        userRegistrationService.register(request, MOCK_REQUEST);
+        userRegistrationService.register(request, REQUEST_METADATA);
 
         assertTrue(userRepository.findByEmail("existing@example.com").isPresent());
     }

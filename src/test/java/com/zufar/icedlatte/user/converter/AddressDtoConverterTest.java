@@ -2,8 +2,6 @@ package com.zufar.icedlatte.user.converter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Objects;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -26,17 +24,6 @@ class AddressDtoConverterTest {
         assertEquals(address.getLine(), dto.getLine());
         assertEquals(address.getCity(), dto.getCity());
         assertEquals(address.getCountry(), dto.getCountry());
-    }
-
-    @Test
-    @DisplayName("toEntity should convert AddressDto to Address")
-    void toEntityShouldConvertAddressDtoToAddress() {
-        AddressDto dto = AddressDtoTestStub.createAddressDto();
-
-        Address address = Objects.requireNonNull(converter.toEntity(dto));
-
-        assertEquals(dto.getLine(), address.getLine());
-        assertEquals(dto.getCity(), address.getCity());
-        assertEquals(dto.getCountry(), address.getCountry());
+        assertEquals(address.getPostcode(), dto.getPostcode());
     }
 }

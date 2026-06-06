@@ -3,8 +3,6 @@ package com.zufar.icedlatte.security.signin.auth;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
@@ -51,11 +50,10 @@ class UserAuthenticationServiceTest {
     @Mock
     private LoginAttemptProperties loginAttemptProperties;
 
-    @Mock
-    private HttpServletRequest httpRequest;
-
     private final UserAuthenticationRequest request = mock(UserAuthenticationRequest.class);
     private final UserDetails userDetails = mock(UserDetails.class);
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Test
     @DisplayName("Should return UserDetails when valid credentials are provided")
@@ -157,13 +155,14 @@ class UserAuthenticationServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(userDetails);
-        when(sessionTokenService.issueForNewSession(userDetails, httpRequest)).thenReturn(expectedResponse);
+        when(sessionTokenService.issueForNewSession(userDetails, REQUEST_METADATA))
+                .thenReturn(expectedResponse);
 
-        AuthenticationTokens response = userAuthenticationService.authenticate(request, httpRequest);
+        AuthenticationTokens response = userAuthenticationService.authenticate(request, REQUEST_METADATA);
 
         assertSame(expectedResponse, response);
         verify(turnstileVerifier).verify("turnstile-token");
-        verify(sessionTokenService).issueForNewSession(userDetails, httpRequest);
+        verify(sessionTokenService).issueForNewSession(userDetails, REQUEST_METADATA);
         verify(loginAttemptService).resetAfterSuccessfulAuthentication("known@example.com");
     }
 }

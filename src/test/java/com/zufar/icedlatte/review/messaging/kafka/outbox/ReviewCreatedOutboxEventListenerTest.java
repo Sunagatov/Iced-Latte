@@ -49,8 +49,8 @@ class ReviewCreatedOutboxEventListenerTest {
         UUID eventId = UUID.randomUUID();
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(
-                eventId, reviewId, "private review text", productId, Instant.parse("2026-05-24T12:00:00Z"));
+        ReviewCreatedEvent domainEvent =
+                new ReviewCreatedEvent(eventId, reviewId, productId, Instant.parse("2026-05-24T12:00:00Z"));
 
         listener.writeOutboxEvent(domainEvent);
 

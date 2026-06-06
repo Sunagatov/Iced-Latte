@@ -12,7 +12,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,19 +57,14 @@ class ProductReviewSummaryDebouncerTest {
                 3,
                 productSummaryService,
                 productReviewProductGateway,
-                selfProvider);
-    }
-
-    @AfterEach
-    void shutdown() {
-        debouncer.shutdown();
+                selfProvider,
+                scheduler);
     }
 
     @Test
     @DisplayName("schedule replaces an existing debounce task for the same product")
     void scheduleReplacesExistingDebounceTaskForSameProduct() {
         UUID productId = UUID.randomUUID();
-        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
         pending().put(productId, existingFuture);
         doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
 
@@ -86,7 +80,6 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("schedule executes immediately after the max wait window")
     void scheduleExecutesImmediatelyAfterMaxWaitWindow() {
         UUID productId = UUID.randomUUID();
-        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
         firstTriggerTime().put(productId, System.currentTimeMillis() - 601_000L);
         doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(0L), eq(TimeUnit.SECONDS));
 
@@ -99,8 +92,8 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("scheduled runnable calls the proxied bean summary method")
     void scheduledRunnableCallsProxiedBeanSummaryMethod() {
         UUID productId = UUID.randomUUID();
-        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
         when(selfProvider.getObject()).thenReturn(debouncer);
+        when(future.isDone()).thenReturn(true);
         when(scheduler.schedule(any(Runnable.class), any(Long.class), eq(TimeUnit.SECONDS)))
                 .thenAnswer(invocation -> {
                     Runnable runnable = invocation.getArgument(0);
@@ -111,6 +104,7 @@ class ProductReviewSummaryDebouncerTest {
         debouncer.schedule(productId);
 
         verify(selfProvider).getObject();
+        assertThat(pending()).doesNotContainKey(productId);
     }
 
     @Test
@@ -154,7 +148,6 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("runSummary schedules a retry after summary failure")
     void runSummarySchedulesRetryAfterSummaryFailure() {
         UUID productId = UUID.randomUUID();
-        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
         when(productSummaryService.summarize(productId)).thenThrow(new RuntimeException("timeout"));
         doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
 
@@ -167,7 +160,6 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("runSummary stops retrying after max retry attempts")
     void runSummaryStopsRetryingAfterMaxRetryAttempts() {
         UUID productId = UUID.randomUUID();
-        ReflectionTestUtils.setField(debouncer, "scheduler", scheduler);
         retryCounts().put(productId, 3);
         when(productSummaryService.summarize(productId)).thenThrow(new RuntimeException("timeout"));
 

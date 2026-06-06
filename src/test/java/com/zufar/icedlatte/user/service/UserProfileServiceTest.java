@@ -28,6 +28,7 @@ import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import com.zufar.icedlatte.user.exception.UserNotFoundException;
 import com.zufar.icedlatte.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -144,12 +145,27 @@ class UserProfileServiceTest {
     @DisplayName("deleteProfile deletes user and then requests post-delete cleanup")
     void deleteProfileDeletesUserAndRequestsCleanup() {
         UUID userId = UUID.randomUUID();
+        when(singleUserProvider.getUserEntityById(userId))
+                .thenReturn(UserEntity.builder().id(userId).build());
 
         userProfileService.deleteProfile(userId);
 
+        verify(singleUserProvider).getUserEntityById(userId);
         verify(userRepository).deleteById(userId);
         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         verify(fileStorageWriterApi).deleteFile(userId);
+    }
+
+    @Test
+    @DisplayName("deleteProfile throws when user is missing")
+    void deleteProfileThrowsWhenUserIsMissing() {
+        UUID userId = UUID.randomUUID();
+        when(singleUserProvider.getUserEntityById(userId)).thenThrow(new UserNotFoundException(userId));
+
+        assertThatThrownBy(() -> userProfileService.deleteProfile(userId)).isInstanceOf(UserNotFoundException.class);
+
+        verify(userRepository, never()).deleteById(any());
+        verifyNoInteractions(eventPublisher, fileStorageWriterApi);
     }
 
     @Test
@@ -190,6 +206,7 @@ class UserProfileServiceTest {
             when(singleUserProvider.getUserEntityById(userId)).thenReturn(user);
             when(passwordEncoder.matches("old_plain", "encoded_old")).thenReturn(true);
             when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
+            when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
 
             userProfileService.changePassword(userId, request);
 
@@ -222,11 +239,25 @@ class UserProfileServiceTest {
         void changePassword_directOverload_encodesAndSaves() {
             UUID userId = UUID.randomUUID();
             when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
+            when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
 
             userProfileService.changePassword(userId, "new_plain");
 
             verify(userRepository).changeUserPassword("encoded_new", userId);
             verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        }
+
+        @Test
+        @DisplayName("direct overload throws when password update touches no rows")
+        void changePasswordDirectOverloadThrowsWhenUserIsMissing() {
+            UUID userId = UUID.randomUUID();
+            when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
+            when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(0);
+
+            assertThatThrownBy(() -> userProfileService.changePassword(userId, "new_plain"))
+                    .isInstanceOf(UserNotFoundException.class);
+
+            verify(eventPublisher, never()).publishEvent(any());
         }
     }
 }

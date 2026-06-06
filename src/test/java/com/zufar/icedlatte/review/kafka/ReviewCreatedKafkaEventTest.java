@@ -26,8 +26,7 @@ class ReviewCreatedKafkaEventTest {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
         Instant occurredAt = Instant.parse("2026-05-18T12:00:00Z");
-        ReviewCreatedEvent domainEvent =
-                new ReviewCreatedEvent(eventId, reviewId, "Fresh review", productId, occurredAt);
+        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(eventId, reviewId, productId, occurredAt);
 
         ReviewCreatedKafkaEvent kafkaEvent = ReviewCreatedKafkaEvent.fromDomainEvent(domainEvent);
 
@@ -45,13 +44,16 @@ class ReviewCreatedKafkaEventTest {
     void doesNotPutReviewTextInKafkaPayload() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(reviewId, "Fresh review", productId);
+        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(reviewId, productId);
 
         ReviewCreatedKafkaEvent kafkaEvent = ReviewCreatedKafkaEvent.fromDomainEvent(domainEvent);
 
         assertThat(kafkaEvent.payload().reviewId()).isEqualTo(reviewId);
         assertThat(kafkaEvent.payload().productId()).isEqualTo(productId);
         assertThat(ReviewCreatedKafkaEvent.Payload.class.getRecordComponents())
+                .extracting(RecordComponent::getName)
+                .doesNotContain("text");
+        assertThat(ReviewCreatedEvent.class.getRecordComponents())
                 .extracting(RecordComponent::getName)
                 .doesNotContain("text");
     }
@@ -61,8 +63,8 @@ class ReviewCreatedKafkaEventTest {
     void serializedEnvelopeMatchesReviewCreatedJsonSchema() throws Exception {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent domainEvent = new ReviewCreatedEvent(
-                UUID.randomUUID(), reviewId, "Fresh review", productId, Instant.parse("2026-05-24T12:00:00Z"));
+        ReviewCreatedEvent domainEvent =
+                new ReviewCreatedEvent(UUID.randomUUID(), reviewId, productId, Instant.parse("2026-05-24T12:00:00Z"));
         ReviewCreatedKafkaEvent kafkaEvent = ReviewCreatedKafkaEvent.fromDomainEvent(domainEvent);
         ObjectMapper objectMapper =
                 new ObjectMapper().findAndRegisterModules().disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);

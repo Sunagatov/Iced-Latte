@@ -10,8 +10,6 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +26,7 @@ import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
@@ -54,11 +53,10 @@ class EmailVerificationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
-    @Mock
-    private HttpServletRequest httpRequest;
-
     private EmailVerificationService service;
     private EmailTokenService emailTokenService;
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @BeforeEach
     void setUp() {
@@ -141,10 +139,10 @@ class EmailVerificationServiceTest {
                             argThat(request ->
                                     request.getEmail().equals("john@example.com") && request.getPassword() == null),
                             eq("encoded-password"),
-                            eq(httpRequest)))
+                            eq(REQUEST_METADATA)))
                     .thenReturn(authResponse);
 
-            AuthenticationTokens result = service.confirmEmailByCode(token, httpRequest);
+            AuthenticationTokens result = service.confirmEmailByCode(token, REQUEST_METADATA);
 
             assertThat(result).isSameAs(authResponse);
             verify(userRegistrationService)
@@ -152,7 +150,7 @@ class EmailVerificationServiceTest {
                             argThat(request ->
                                     request.getEmail().equals("john@example.com") && request.getPassword() == null),
                             eq("encoded-password"),
-                            eq(httpRequest));
+                            eq(REQUEST_METADATA));
         }
     }
 

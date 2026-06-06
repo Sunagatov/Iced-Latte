@@ -10,8 +10,6 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +23,7 @@ import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
 
@@ -64,7 +63,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     void shouldInitiateGoogleAuthAndRedirectBackWithOneTimeTokenHandoffCode() {
         String callbackBase = frontendUrl + "/auth/google/callback";
 
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("valid-code"), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(
+                        eq(OAuthProvider.GOOGLE), eq("valid-code"), any(AuthSessionRequestMetadata.class)))
                 .thenReturn(tokenPair("jwt-token", "refresh-token"));
 
         Response initiateResponse = given(specification)
@@ -117,7 +117,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     void shouldSupportProviderNeutralGoogleOAuthRoutes() {
         String callbackBase = frontendUrl + "/auth/google/callback";
 
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("valid-code"), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(
+                        eq(OAuthProvider.GOOGLE), eq("valid-code"), any(AuthSessionRequestMetadata.class)))
                 .thenReturn(tokenPair("jwt-token", "refresh-token"));
 
         Response initiateResponse = given(specification)
@@ -152,7 +153,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     void shouldRejectReusedOAuthStateAfterFirstSuccessfulCallback() {
         String callbackBase = frontendUrl + "/auth/google/callback";
 
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), any(String.class), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(
+                        eq(OAuthProvider.GOOGLE), any(String.class), any(AuthSessionRequestMetadata.class)))
                 .thenReturn(tokenPair("jwt-once", "refresh-once"));
 
         Response initiateResponse = given(specification)
@@ -188,13 +190,13 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
 
         verify(oAuthLoginService, times(1))
-                .handle(eq(OAuthProvider.GOOGLE), any(String.class), any(HttpServletRequest.class));
+                .handle(eq(OAuthProvider.GOOGLE), any(String.class), any(AuthSessionRequestMetadata.class));
     }
 
     @Test
     @DisplayName("Should fallback to configured frontend URL when redirectUrl origin is not allowed")
     void shouldFallbackToConfiguredFrontendUrlWhenRedirectUrlOriginIsNotAllowed() {
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("safe-code"), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("safe-code"), any(AuthSessionRequestMetadata.class)))
                 .thenReturn(tokenPair("safe-jwt", "safe-refresh"));
 
         Response initiateResponse = given(specification)
@@ -232,7 +234,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should fallback to configured callback path when redirectUrl uses an unexpected frontend path")
     void shouldFallbackToConfiguredCallbackPathWhenRedirectUrlUsesUnexpectedFrontendPath() {
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("safe-code"), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("safe-code"), any(AuthSessionRequestMetadata.class)))
                 .thenReturn(tokenPair("safe-jwt", "safe-refresh"));
 
         Response initiateResponse = given(specification)
@@ -279,7 +281,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .header("Location", equalTo(frontendUrl + "/signin?error=missing_code"));
 
         verify(oAuthLoginService, never())
-                .handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
+                .handle(any(OAuthProvider.class), any(String.class), any(AuthSessionRequestMetadata.class));
     }
 
     @Test
@@ -295,7 +297,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .header("Location", equalTo(frontendUrl + "/signin?error=invalid_state"));
 
         verify(oAuthLoginService, never())
-                .handle(any(OAuthProvider.class), any(String.class), any(HttpServletRequest.class));
+                .handle(any(OAuthProvider.class), any(String.class), any(AuthSessionRequestMetadata.class));
     }
 
     @Test
@@ -303,7 +305,8 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     void shouldRedirectBackToStoredCallbackWhenHandlerThrows() {
         String callbackBase = frontendUrl + "/auth/google/callback?next=/checkout";
 
-        when(oAuthLoginService.handle(eq(OAuthProvider.GOOGLE), eq("broken-code"), any(HttpServletRequest.class)))
+        when(oAuthLoginService.handle(
+                        eq(OAuthProvider.GOOGLE), eq("broken-code"), any(AuthSessionRequestMetadata.class)))
                 .thenThrow(new UnauthorizedException("exchange failed"));
 
         Response initiateResponse = given(specification)

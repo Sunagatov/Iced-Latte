@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +21,7 @@ import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 
@@ -39,11 +38,11 @@ class SessionTokenServiceTest {
     @Mock
     private AuthSessionService authSessionService;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
     private SessionTokenService service;
+
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @AfterEach
     void clearMdc() {
@@ -62,13 +61,13 @@ class SessionTokenServiceTest {
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(refreshToken);
         when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(refreshToken)).thenReturn(refreshHash);
-        when(authSessionService.createSession(any(UUID.class), eq(userId), eq(refreshHash), eq(request)))
+        when(authSessionService.createSession(any(UUID.class), eq(userId), eq(refreshHash), eq(REQUEST_METADATA)))
                 .thenAnswer(invocation -> AuthSessionEntity.builder()
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
 
-        AuthenticationTokens result = service.issueForNewSession(user, request);
+        AuthenticationTokens result = service.issueForNewSession(user, REQUEST_METADATA);
 
         assertThat(result.accessToken()).isEqualTo(accessToken);
         assertThat(result.refreshToken()).isEqualTo(refreshToken);
@@ -115,13 +114,13 @@ class SessionTokenServiceTest {
         when(jwtTokenProvider.generateRefreshToken(eq(user), any(UUID.class))).thenReturn(newRefreshToken);
         when(jwtTokenProvider.generateToken(eq(user), any(UUID.class))).thenReturn(accessToken);
         when(jwtTokenBlacklist.hash(newRefreshToken)).thenReturn(newHash);
-        when(authSessionService.createSession(any(UUID.class), eq(userId), eq(newHash), eq(request)))
+        when(authSessionService.createSession(any(UUID.class), eq(userId), eq(newHash), eq(REQUEST_METADATA)))
                 .thenAnswer(invocation -> AuthSessionEntity.builder()
                         .id(invocation.getArgument(0))
                         .userId(userId)
                         .build());
 
-        AuthenticationTokens result = service.migrateLegacyRefreshToken(user, legacyToken, request);
+        AuthenticationTokens result = service.migrateLegacyRefreshToken(user, legacyToken, REQUEST_METADATA);
 
         assertThat(result.accessToken()).isEqualTo(accessToken);
         assertThat(result.refreshToken()).isEqualTo(newRefreshToken);

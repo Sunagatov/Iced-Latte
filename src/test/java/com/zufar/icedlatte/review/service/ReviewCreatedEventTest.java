@@ -13,15 +13,14 @@ import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 class ReviewCreatedEventTest {
 
     @Test
-    @DisplayName("stores review id, text, and product id")
-    void storesReviewIdTextAndProductId() {
+    @DisplayName("stores review id and product id")
+    void storesReviewIdAndProductId() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
 
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, "Fresh review", productId);
+        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, productId);
 
         assertThat(event.reviewId()).isEqualTo(reviewId);
-        assertThat(event.text()).isEqualTo("Fresh review");
         assertThat(event.productId()).isEqualTo(productId);
     }
 }

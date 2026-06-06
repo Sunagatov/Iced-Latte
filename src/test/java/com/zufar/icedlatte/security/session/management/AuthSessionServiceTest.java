@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
@@ -45,14 +42,11 @@ class AuthSessionServiceTest {
     @Mock
     private JwtProperties jwtProperties;
 
-    @Mock
-    private ClientIpExtractor clientIpExtractor;
-
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
     private AuthSessionService service;
+
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Test
     @DisplayName("createSession saves and returns entity")
@@ -60,13 +54,11 @@ class AuthSessionServiceTest {
         when(jwtProperties.refreshExpiration()).thenReturn(Duration.ofDays(1));
         UUID sessionId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        when(request.getHeader("User-Agent")).thenReturn("TestAgent");
-        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
         AuthSessionEntity saved =
                 AuthSessionEntity.builder().id(sessionId).userId(userId).build();
         when(sessionRepository.save(any())).thenReturn(saved);
 
-        AuthSessionEntity result = service.createSession(sessionId, userId, "hash123", request);
+        AuthSessionEntity result = service.createSession(sessionId, userId, "hash123", REQUEST_METADATA);
 
         assertThat(result.getId()).isEqualTo(sessionId);
         verify(sessionRepository).save(any(AuthSessionEntity.class));
@@ -79,10 +71,8 @@ class AuthSessionServiceTest {
         when(jwtProperties.refreshExpiration()).thenReturn(Duration.ofDays(1));
         UUID sessionId = UUID.fromString("12345678-1234-5678-1234-567812345678");
         UUID userId = UUID.randomUUID();
-        when(request.getHeader("User-Agent")).thenReturn("TestAgent");
-        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
 
-        service.createSession(sessionId, userId, "hash123", request);
+        service.createSession(sessionId, userId, "hash123", REQUEST_METADATA);
 
         assertThat(appender.list)
                 .filteredOn(event -> event.getFormattedMessage().startsWith("auth.session.created"))

@@ -25,6 +25,7 @@ import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
 
@@ -56,6 +57,9 @@ class RefreshTokenServiceTest {
     @InjectMocks
     private RefreshTokenService service;
 
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
+
     @Nested
     @DisplayName("refresh")
     class Refresh {
@@ -67,7 +71,7 @@ class RefreshTokenServiceTest {
             String oldHash = "old-hash";
             String email = "alice@example.com";
             UUID userId = UUID.randomUUID();
-            var user = user(email);
+            var user = user(userId, email);
             var sessionId = UUID.randomUUID();
             AuthSessionEntity session =
                     AuthSessionEntity.builder().id(sessionId).userId(userId).build();
@@ -81,7 +85,7 @@ class RefreshTokenServiceTest {
             when(sessionTokenService.rotateSessionTokens(session, oldHash, user))
                     .thenReturn(responseBody);
 
-            RefreshTokenResult response = service.refresh(request);
+            RefreshTokenResult response = service.refresh(request, REQUEST_METADATA);
 
             assertThat(response.migratedLegacyToken()).isFalse();
             assertThat(response.tokens()).isSameAs(responseBody);
@@ -104,14 +108,14 @@ class RefreshTokenServiceTest {
             when(jwtTokenClaims.isSessionManagedRefreshToken(rawToken)).thenReturn(false);
             when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
-            when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, request))
+            when(sessionTokenService.migrateLegacyRefreshToken(user, rawToken, REQUEST_METADATA))
                     .thenReturn(responseBody);
 
-            RefreshTokenResult response = service.refresh(request);
+            RefreshTokenResult response = service.refresh(request, REQUEST_METADATA);
 
             assertThat(response.migratedLegacyToken()).isTrue();
             assertThat(response.tokens()).isSameAs(responseBody);
-            verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
+            verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, REQUEST_METADATA);
         }
 
         @Test
@@ -132,8 +136,37 @@ class RefreshTokenServiceTest {
             when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
             when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
 
-            assertThatThrownBy(() -> service.refresh(request)).isInstanceOf(JwtTokenBlacklistedException.class);
+            assertThatThrownBy(() -> service.refresh(request, REQUEST_METADATA))
+                    .isInstanceOf(JwtTokenBlacklistedException.class);
 
+            verifyNoInteractions(sessionTokenService);
+        }
+
+        @Test
+        @DisplayName("rejects managed refresh when token subject does not own the session")
+        void rejectsManagedRefreshWhenTokenSubjectDoesNotOwnSession() {
+            String rawToken = "raw-refresh-token";
+            String oldHash = "old-hash";
+            String email = "alice@example.com";
+            UUID sessionId = UUID.randomUUID();
+            AuthSessionEntity session = AuthSessionEntity.builder()
+                    .id(sessionId)
+                    .userId(UUID.randomUUID())
+                    .build();
+            var user = new SecurityUserDetails(
+                    UUID.randomUUID(), email, "secret", java.util.List.of(), true, true, true, true);
+
+            when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
+            when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
+            when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
+            when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
+            when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
+
+            assertThatThrownBy(() -> service.refresh(request, REQUEST_METADATA))
+                    .isInstanceOf(JwtTokenBlacklistedException.class)
+                    .hasMessageContaining("session");
+
+            verify(authSessionService).revokeAllForCompromisedUserBySessionId(sessionId);
             verifyNoInteractions(sessionTokenService);
         }
 
@@ -151,7 +184,7 @@ class RefreshTokenServiceTest {
             when(jwtTokenClaims.isSessionManagedRefreshToken(rawToken)).thenReturn(true);
             when(jwtTokenClaims.extractRefreshTokenSessionId(rawToken)).thenReturn(Optional.of(sessionId));
 
-            assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
+            assertThatThrownBy(() -> service.refresh(request, REQUEST_METADATA)).isSameAs(failure);
 
             verify(authSessionService).revokeAllForCompromisedUserBySessionId(sessionId);
             verifyNoInteractions(userDetailsService, sessionTokenService);
@@ -161,6 +194,10 @@ class RefreshTokenServiceTest {
     private static org.springframework.security.core.userdetails.UserDetails user(String email) {
         return new SecurityUserDetails(
                 java.util.UUID.randomUUID(), email, "secret", java.util.List.of(), true, true, true, true);
+    }
+
+    private static org.springframework.security.core.userdetails.UserDetails user(UUID userId, String email) {
+        return new SecurityUserDetails(userId, email, "secret", java.util.List.of(), true, true, true, true);
     }
 
     private static org.springframework.security.core.userdetails.UserDetails inactiveUser(String email) {

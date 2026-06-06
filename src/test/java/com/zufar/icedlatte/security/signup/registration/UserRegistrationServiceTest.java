@@ -9,8 +9,6 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
@@ -44,11 +43,11 @@ class UserRegistrationServiceTest {
     @Mock
     private TurnstileVerifier turnstileVerifier;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
     private UserRegistrationService service;
+
+    private static final AuthSessionRequestMetadata REQUEST_METADATA =
+            new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
     @Test
     @DisplayName("register normalizes input, persists the user, and returns a session-bound token pair")
@@ -74,15 +73,16 @@ class UserRegistrationServiceTest {
         when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
         when(userRegistrationApi.registerPasswordUser(any(), any(), any(), any()))
                 .thenReturn(snapshot);
-        when(sessionTokenService.issueForNewSession(any(), eq(request))).thenReturn(tokenPair);
+        when(sessionTokenService.issueForNewSession(any(), eq(REQUEST_METADATA)))
+                .thenReturn(tokenPair);
 
-        AuthenticationTokens response = service.register(registrationRequest, request);
+        AuthenticationTokens response = service.register(registrationRequest, REQUEST_METADATA);
 
         verify(turnstileVerifier).verify("turnstile-token");
         verify(userRegistrationApi).existsByEmail("mixed.case@example.com");
         verify(userRegistrationApi)
                 .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
-        verify(sessionTokenService).issueForNewSession(any(), eq(request));
+        verify(sessionTokenService).issueForNewSession(any(), eq(REQUEST_METADATA));
 
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
@@ -128,7 +128,7 @@ class UserRegistrationServiceTest {
         when(userRegistrationApi.registerPasswordUser(any(), any(), any(), any()))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        assertThatThrownBy(() -> service.register(registrationRequest, request))
+        assertThatThrownBy(() -> service.register(registrationRequest, REQUEST_METADATA))
                 .isInstanceOf(UserRegistrationException.class)
                 .hasMessage("This email is already registered. Please sign in or use a different email.");
 

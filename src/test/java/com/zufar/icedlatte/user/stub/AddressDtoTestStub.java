@@ -13,6 +13,7 @@ public class AddressDtoTestStub {
                 .line("123 Main St")
                 .city("Sample City")
                 .country("Sample Country")
+                .postcode("SW1A 1AA")
                 .build();
     }
 
@@ -21,6 +22,7 @@ public class AddressDtoTestStub {
         addressDto.setLine("456 Elm St");
         addressDto.setCity("Test City");
         addressDto.setCountry("Test Country");
+        addressDto.setPostcode("EC1A 1BB");
         return addressDto;
     }
 }
