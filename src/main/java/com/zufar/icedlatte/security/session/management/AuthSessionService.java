@@ -30,10 +30,7 @@ public class AuthSessionService {
 
     @Transactional
     public AuthSessionEntity createSession(
-            UUID sessionId,
-            UUID userId,
-            String refreshTokenHash,
-            AuthSessionRequestMetadata requestMetadata) {
+            UUID sessionId, UUID userId, String refreshTokenHash, AuthSessionRequestMetadata requestMetadata) {
         OffsetDateTime now = now();
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)

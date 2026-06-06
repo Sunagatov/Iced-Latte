@@ -39,8 +39,7 @@ public class UserRegistrationService {
 
     @Transactional
     public AuthenticationTokens register(
-            final UserRegistrationRequest userRegistrationRequest,
-            final AuthSessionRequestMetadata requestMetadata) {
+            final UserRegistrationRequest userRegistrationRequest, final AuthSessionRequestMetadata requestMetadata) {
         ensureRegistrationAllowed(userRegistrationRequest);
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));

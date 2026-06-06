@@ -51,7 +51,8 @@ class ReviewExceptionHandlerTest {
     @Test
     @DisplayName("returns 503 for summary failures")
     void returns503ForSummaryFailures() {
-        ReviewSummaryException exception = new ReviewSummaryException(UUID.randomUUID(), new RuntimeException("timeout"));
+        ReviewSummaryException exception =
+                new ReviewSummaryException(UUID.randomUUID(), new RuntimeException("timeout"));
         ProblemDetail expected = ProblemDetail.forStatus(HttpStatus.SERVICE_UNAVAILABLE);
         when(problemDetailFactory.build(
                         ProblemType.REVIEW_SUMMARY_UNAVAILABLE,

@@ -34,10 +34,7 @@ public class UserAvatarUploader {
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
 
-    public void uploadUserAvatar(
-            final UUID userId,
-            final MultipartFile file,
-            @Nullable final String turnstileToken) {
+    public void uploadUserAvatar(final UUID userId, final MultipartFile file, @Nullable final String turnstileToken) {
         if (turnstileProperties.avatarEnabled()) {
             turnstileVerifier.verify(turnstileToken);
         }

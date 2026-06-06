@@ -64,9 +64,7 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteProfile(UUID userId) {
-        UserEntity userEntity = userRepository
-                .findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        UserEntity userEntity = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
         userRepository.delete(userEntity);
         cleanUpDeletedProfileAfterCommit(userId);
     }

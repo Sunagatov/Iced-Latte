@@ -35,9 +35,7 @@ public class EmailVerificationService {
         emailConfirmation.sendTemporaryCode(normalizedEmail, token);
     }
 
-    public AuthenticationTokens confirmEmailByCode(
-            String token,
-            AuthSessionRequestMetadata requestMetadata) {
+    public AuthenticationTokens confirmEmailByCode(String token, AuthSessionRequestMetadata requestMetadata) {
         EmailVerificationTokenPayload payload = emailTokenService.consumeEmailVerificationToken(token);
         String encodedPassword = payload.encodedPassword();
         if (encodedPassword == null || encodedPassword.isBlank()) {

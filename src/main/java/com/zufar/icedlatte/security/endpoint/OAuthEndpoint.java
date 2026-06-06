@@ -38,16 +38,14 @@ public class OAuthEndpoint implements OAuthApi {
     @Override
     @GetMapping("/api/v1/auth/oauth/{provider}")
     public ResponseEntity<Void> initiateOAuth(
-            @PathVariable String provider,
-            @Valid @RequestParam(required = false) URI redirectUrl) {
+            @PathVariable String provider, @Valid @RequestParam(required = false) URI redirectUrl) {
         OAuthProvider oAuthProvider = parseProvider(provider);
         String redirectUrlAsString = redirectUrl == null ? null : redirectUrl.toString();
         return oAuthFlowService
                 .initiate(oAuthProvider, redirectUrlAsString, httpRequest, httpResponse)
                 .map(OAuthEndpoint::redirect)
-                .orElseGet(() -> ResponseEntity
-                        .status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .build());
+                .orElseGet(() ->
+                        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());
     }
 
     @Override
@@ -69,15 +67,13 @@ public class OAuthEndpoint implements OAuthApi {
     }
 
     private OAuthProvider parseProvider(String provider) {
-        return OAuthProvider
-                .fromId(provider)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, UNSUPPORTED_OAUTH_PROVIDER_REASON));
+        return OAuthProvider.fromId(provider)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, UNSUPPORTED_OAUTH_PROVIDER_REASON));
     }
 
     private static ResponseEntity<Void> redirect(URI location) {
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(location)
-                .build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(location).build();
     }
 
     private static UserAuthenticationResponse toResponse(AuthenticationTokens tokens) {

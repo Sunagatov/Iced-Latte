@@ -1,13 +1,10 @@
 package com.zufar.icedlatte.user.endpoint;
 
-import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
-import com.zufar.icedlatte.openapi.user.api.UserAvatarApi;
-import com.zufar.icedlatte.user.service.UserAvatarUploader;
-import com.zufar.icedlatte.user.service.UserProfileService;
+import java.util.UUID;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -19,7 +16,13 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
+import com.zufar.icedlatte.openapi.user.api.UserAvatarApi;
+import com.zufar.icedlatte.user.service.UserAvatarUploader;
+import com.zufar.icedlatte.user.service.UserProfileService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController

@@ -79,9 +79,7 @@ public class SingleUserProvider implements UserLookupApi, UserAuthenticationApi 
 
     private UserEntity getUserEntityByEmail(final String email) throws UserNotFoundException {
         String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
-        return userCrudRepository
-                .findByEmail(normalizedEmail)
-                .orElseThrow(() -> new UserNotFoundException(email));
+        return userCrudRepository.findByEmail(normalizedEmail).orElseThrow(() -> new UserNotFoundException(email));
     }
 
     private UserLookupSnapshot toLookupSnapshot(UserEntity user) {

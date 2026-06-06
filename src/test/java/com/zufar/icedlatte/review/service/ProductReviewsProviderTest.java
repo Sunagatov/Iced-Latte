@@ -64,11 +64,7 @@ class ProductReviewsProviderTest {
         productId = UUID.randomUUID();
         userId = UUID.randomUUID();
         provider = new ProductReviewsProvider(
-                reviewRepository,
-                productReviewDtoConverter,
-                productReviewValidator,
-                paginationConfig,
-                userLookupApi);
+                reviewRepository, productReviewDtoConverter, productReviewValidator, paginationConfig, userLookupApi);
     }
 
     @Test

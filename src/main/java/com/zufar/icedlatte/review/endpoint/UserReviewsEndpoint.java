@@ -39,8 +39,7 @@ public class UserReviewsEndpoint implements UserReviewsApi {
     @Override
     @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(
-            @PathVariable UUID productId,
-            @Valid @RequestBody ProductReviewRequest productReviewRequest) {
+            @PathVariable UUID productId, @Valid @RequestBody ProductReviewRequest productReviewRequest) {
         UUID userId = currentUserProvider.getUserId();
         var review = productReviewService.create(productId, userId, productReviewRequest);
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
@@ -68,8 +67,7 @@ public class UserReviewsEndpoint implements UserReviewsApi {
     public ResponseEntity<ProductReviewsAndRatingsWithPagination> getUserReviews(
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer pageNumber,
             @RequestParam(name = "size", required = false, defaultValue = "50") Integer pageSize,
-            @RequestParam(name = "sort_attribute", required = false, defaultValue = "createdAt")
-                    String sortAttribute,
+            @RequestParam(name = "sort_attribute", required = false, defaultValue = "createdAt") String sortAttribute,
             @RequestParam(name = "sort_direction", required = false, defaultValue = "asc") String sortDirection) {
         return ResponseEntity.ok(productReviewsProvider.getUserReviews(
                 currentUserProvider.getUserId(), pageNumber, pageSize, sortAttribute, sortDirection));

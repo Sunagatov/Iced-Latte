@@ -48,8 +48,7 @@ public class SessionsEndpoint implements SessionsApi {
     @PostMapping("/api/v1/auth/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
         RefreshTokenResult result = refreshTokenService.refresh(httpRequest, requestMetadata());
-        return ResponseEntity
-                .status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
+        return ResponseEntity.status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
                 .body(toResponse(result.tokens()));
     }
 
