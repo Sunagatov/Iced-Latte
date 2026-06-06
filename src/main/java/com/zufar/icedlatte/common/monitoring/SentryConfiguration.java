@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.common.monitoring;
 
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @ConditionalOnProperty(name = "sentry.enabled", havingValue = "true")
 public class SentryConfiguration {
+
+    private static final Set<String> SENSITIVE_HEADER_NAMES = Set.of(
+            HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
+    private static final Set<String> SENSITIVE_BREADCRUMB_KEYS = Set.of("email", "password", "phone");
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -95,16 +100,20 @@ public class SentryConfiguration {
         if (event.getRequest() != null) {
             var request = event.getRequest();
             if (request.getHeaders() != null) {
-                request.getHeaders().remove(HttpHeaders.AUTHORIZATION);
-                request.getHeaders().remove(HttpHeaders.COOKIE);
+                request.getHeaders()
+                        .keySet()
+                        .removeIf(header -> SENSITIVE_HEADER_NAMES.contains(header.toLowerCase(Locale.ROOT)));
             }
         }
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
-        breadcrumb.removeData("email");
-        breadcrumb.removeData("password");
-        breadcrumb.removeData("phone");
+        if (breadcrumb.getData() == null) {
+            return;
+        }
+        breadcrumb.getData()
+                .keySet()
+                .removeIf(key -> SENSITIVE_BREADCRUMB_KEYS.contains(key.toLowerCase(Locale.ROOT)));
     }
 
     private void addCustomTags(SentryEvent event) {
@@ -113,6 +122,9 @@ public class SentryConfiguration {
     }
 
     private static boolean containsAnyConfiguredPrefix(String value, String rawPrefixes) {
+        if (value == null) {
+            return false;
+        }
         return configuredPrefixes(rawPrefixes).stream().anyMatch(value::contains);
     }
 

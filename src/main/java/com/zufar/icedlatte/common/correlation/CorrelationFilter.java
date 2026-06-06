@@ -1,18 +1,17 @@
 package com.zufar.icedlatte.common.correlation;
 
-import java.io.IOException;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Component
 public class CorrelationFilter extends OncePerRequestFilter {
@@ -27,9 +26,10 @@ public class CorrelationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String correlationId = request.getHeader(RequestContextConstants.CORRELATION_ID_HEADER) != null
-                ? sanitizeHeader(request.getHeader(RequestContextConstants.CORRELATION_ID_HEADER))
-                : UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        String correlationId = sanitizeHeader(request.getHeader(RequestContextConstants.CORRELATION_ID_HEADER));
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        }
         String requestId = UUID.randomUUID().toString();
         String sessionId = sanitizeHeader(request.getHeader(RequestContextConstants.SESSION_ID_HEADER));
         String clientTraceId = sanitizeHeader(request.getHeader(RequestContextConstants.TRACE_ID_HEADER));
@@ -38,8 +38,12 @@ public class CorrelationFilter extends OncePerRequestFilter {
         response.setHeader(RequestContextConstants.REQUEST_ID_HEADER, requestId);
         MDC.put(RequestContextConstants.CORRELATION_ID_MDC_KEY, correlationId);
         MDC.put(RequestContextConstants.REQUEST_ID_MDC_KEY, requestId);
-        if (sessionId != null) MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sessionId);
-        if (clientTraceId != null) MDC.put(RequestContextConstants.CLIENT_TRACE_ID_MDC_KEY, clientTraceId);
+        if (sessionId != null) {
+            MDC.put(RequestContextConstants.SESSION_ID_MDC_KEY, sessionId);
+        }
+        if (clientTraceId != null) {
+            MDC.put(RequestContextConstants.CLIENT_TRACE_ID_MDC_KEY, clientTraceId);
+        }
 
         try {
             filterChain.doFilter(request, response);
@@ -53,8 +57,13 @@ public class CorrelationFilter extends OncePerRequestFilter {
     }
 
     private static String sanitizeHeader(String value) {
-        if (value == null) return null;
-        String cleaned = UNSAFE_HEADER_CHARS.matcher(value).replaceAll("_");
+        if (value == null) {
+            return null;
+        }
+        String cleaned = UNSAFE_HEADER_CHARS.matcher(value.trim()).replaceAll("_");
+        if (cleaned.isBlank()) {
+            return null;
+        }
         return cleaned.length() > MAX_HEADER_LENGTH ? cleaned.substring(0, MAX_HEADER_LENGTH) : cleaned;
     }
 }

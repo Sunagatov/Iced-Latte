@@ -21,23 +21,23 @@ public class PaginationParametersValidator {
             final Set<String> allowedSortAttributeValues) {
         List<String> errors = new ArrayList<>();
         if (pageNumber != null && pageNumber < 0) {
-            errors.add(error(
-                    "'%s' is the incorrect 'PageNumber' attribute value. 'PageNumber' value should be non negative integer number value."
-                            .formatted(pageNumber)));
+            String errorMessage = "'%s' is the incorrect 'PageNumber' attribute value. 'PageNumber' value should be non negative integer number value.";
+            errors.add(error(errorMessage.formatted(pageNumber)));
         }
         if (pageSize != null && pageSize < 1) {
-            errors.add(error(
-                    "'%s' is the incorrect 'PageSize' attribute value. 'PageSize' value should be non negative integer number value which is bigger than 1."
-                            .formatted(pageSize)));
+            String errorMessage = "'%s' is the incorrect 'PageSize' attribute value. 'PageSize' value should be a positive integer.";
+            errors.add(error(errorMessage.formatted(pageSize)));
         }
-        if (sortAttribute != null && !allowedSortAttributeValues.contains(sortAttribute)) {
-            errors.add(error("'%s' is incorrect 'sortAttribute' value. Allowed 'sortAttribute' values are '%s'."
-                    .formatted(sortAttribute, allowedSortAttributeValues)));
+        String normalizedSortAttribute = sortAttribute == null ? null : sortAttribute.trim();
+        if (normalizedSortAttribute != null && !allowedSortAttributeValues.contains(normalizedSortAttribute)) {
+            String errorMessage = "'%s' is incorrect 'sortAttribute' value. Allowed 'sortAttribute' values are '%s'.";
+            errors.add(error(errorMessage.formatted(sortAttribute, allowedSortAttributeValues)));
         }
-        if (sortDirection != null
-                && !ALLOWED_SORT_DIRECTION_VALUES.contains(sortDirection.toLowerCase(java.util.Locale.ROOT))) {
-            errors.add(error("'%s' is incorrect 'sortDirection' value. Allowed 'sortDirection' values are '%s'."
-                    .formatted(sortDirection, ALLOWED_SORT_DIRECTION_VALUES)));
+        String normalizedSortDirection = sortDirection == null ? null : sortDirection.trim();
+        if (normalizedSortDirection != null
+                && !ALLOWED_SORT_DIRECTION_VALUES.contains(normalizedSortDirection.toLowerCase(java.util.Locale.ROOT))) {
+            String errorMessage = "'%s' is incorrect 'sortDirection' value. Allowed 'sortDirection' values are '%s'.";
+            errors.add(error(errorMessage.formatted(sortDirection, ALLOWED_SORT_DIRECTION_VALUES)));
         }
         return errors;
     }

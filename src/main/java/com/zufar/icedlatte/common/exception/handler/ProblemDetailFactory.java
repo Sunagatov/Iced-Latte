@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.exception.handler;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.List;
 
@@ -43,7 +44,11 @@ public class ProblemDetailFactory {
     private static @Nullable URI resolveInstance() {
         var attrs = RequestContextHolder.getRequestAttributes();
         if (attrs instanceof ServletRequestAttributes sra) {
-            return URI.create(sra.getRequest().getRequestURI());
+            try {
+                return new URI(null, null, sra.getRequest().getRequestURI(), null);
+            } catch (URISyntaxException ignored) {
+                return null;
+            }
         }
         return null;
     }

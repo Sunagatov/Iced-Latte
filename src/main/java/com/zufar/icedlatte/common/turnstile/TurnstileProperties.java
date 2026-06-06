@@ -15,9 +15,15 @@ public record TurnstileProperties(
         Duration readTimeout) {
 
     public TurnstileProperties {
-        secretKey = secretKey == null ? "" : secretKey;
+        secretKey = secretKey == null ? "" : secretKey.trim();
         connectTimeout = connectTimeout == null ? Duration.ofSeconds(2) : connectTimeout;
         readTimeout = readTimeout == null ? Duration.ofSeconds(3) : readTimeout;
+        if (connectTimeout.isZero() || connectTimeout.isNegative()) {
+            throw new IllegalStateException("turnstile.connect-timeout must be positive");
+        }
+        if (readTimeout.isZero() || readTimeout.isNegative()) {
+            throw new IllegalStateException("turnstile.read-timeout must be positive");
+        }
         if (!enabled && (checkoutEnabled || reviewsEnabled || avatarEnabled)) {
             throw new IllegalStateException(
                     "turnstile.enabled must be true when feature-specific Turnstile protection is enabled");

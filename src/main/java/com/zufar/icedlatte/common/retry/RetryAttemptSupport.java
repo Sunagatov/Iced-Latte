@@ -17,12 +17,17 @@ public class RetryAttemptSupport {
     }
 
     public static long backoffSeconds(int attemptCount) {
+        if (attemptCount <= 0) {
+            return 1L;
+        }
         long backoff = attemptCount > MAX_BACKOFF_EXPONENT ? MAX_BACKOFF_SECONDS : 1L << attemptCount;
         return Math.min(backoff, MAX_BACKOFF_SECONDS);
     }
 
     public static String sanitizedError(Throwable failure) {
-        String message = failure.getClass().getSimpleName() + ": " + failure.getMessage();
+        String failureMessage = failure.getMessage();
+        String message = failure.getClass().getSimpleName() + (failureMessage == null ? "" : ": " + failureMessage);
+        message = message.replaceAll("[\\r\\n]", "_");
         return message.length() <= MAX_ERROR_LENGTH ? message : message.substring(0, MAX_ERROR_LENGTH);
     }
 }

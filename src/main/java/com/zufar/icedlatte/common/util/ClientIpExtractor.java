@@ -104,6 +104,9 @@ public class ClientIpExtractor {
             if (parts.length != 2) {
                 return false;
             }
+            if (!isLiteralIp(ip) || !isLiteralIp(parts[0])) {
+                return false;
+            }
 
             InetAddress ipAddress = InetAddress.getByName(ip);
             InetAddress networkAddress = InetAddress.getByName(parts[0]);

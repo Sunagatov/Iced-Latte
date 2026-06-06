@@ -10,9 +10,12 @@ import lombok.experimental.UtilityClass;
 public class PageRequestFactory {
 
     public static Pageable of(final int page, final int size, final String sortAttribute, final String sortDirection) {
-        Sort sort = Sort.by(sortAttribute);
-        sort = Sort.Direction.fromString(sortDirection) == Sort.Direction.ASC ? sort.ascending() : sort.descending();
-        if (!"id".equals(sortAttribute)) {
+        String normalizedSortAttribute = sortAttribute.trim();
+        Sort sort = Sort.by(normalizedSortAttribute);
+        sort = Sort.Direction.fromString(sortDirection.trim()) == Sort.Direction.ASC
+                ? sort.ascending()
+                : sort.descending();
+        if (!"id".equals(normalizedSortAttribute)) {
             sort = sort.and(Sort.by(Sort.Direction.ASC, "id"));
         }
         return PageRequest.of(page, size, sort);
