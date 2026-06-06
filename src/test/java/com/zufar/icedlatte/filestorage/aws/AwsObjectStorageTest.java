@@ -3,14 +3,17 @@ package com.zufar.icedlatte.filestorage.aws;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +34,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AwsObjectStorage")
@@ -64,6 +69,33 @@ class AwsObjectStorageTest {
 
         assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "products", "card_logo.webp")))
                 .contains("https://cdn.example.com/products/card_logo.webp");
+    }
+
+    @Test
+    @DisplayName("Supabase public URL base for product bucket falls back to signed URL for avatar bucket")
+    void supabaseProductPublicUrlBaseFallsBackToSignedUrlForAvatarBucket() throws Exception {
+        AwsObjectStorage storage = new AwsObjectStorage(
+                s3Client,
+                s3Presigner,
+                properties("https://project.supabase.co/storage/v1/object/public/iced-latte-products"));
+        PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
+        when(presignedRequest.url())
+                .thenReturn(URI.create("https://signed.example.com/avatar").toURL());
+        when(s3Presigner.presignGetObject(anyConsumer()))
+                .thenReturn(presignedRequest);
+
+        assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "iced-latte-users", "avatar.png")))
+                .contains("https://signed.example.com/avatar");
+    }
+
+    @Test
+    @DisplayName("Supabase public URL base without bucket appends requested bucket")
+    void supabasePublicUrlBaseWithoutBucketAppendsRequestedBucket() {
+        AwsObjectStorage storage = new AwsObjectStorage(
+                s3Client, s3Presigner, properties("https://project.supabase.co/storage/v1/object/public"));
+
+        assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "iced-latte-users", "avatar.png")))
+                .contains("https://project.supabase.co/storage/v1/object/public/iced-latte-users/avatar.png");
     }
 
     @Test
@@ -116,5 +148,9 @@ class AwsObjectStorageTest {
                 Duration.ofSeconds(10),
                 Duration.ofSeconds(60),
                 Duration.ofSeconds(15));
+    }
+
+    private static Consumer<GetObjectPresignRequest.Builder> anyConsumer() {
+        return any();
     }
 }

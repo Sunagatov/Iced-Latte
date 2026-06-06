@@ -73,6 +73,13 @@ class ShoppingCartServiceTest {
         assertThat(result.getItems())
                 .allSatisfy(item ->
                         assertThat(item.getProductInfo().getDescription()).isNotBlank());
+        assertThat(result.getItems()).allSatisfy(item -> {
+            assertThat(item.getProductInfo().getAverageRating()).isNotNull();
+            assertThat(item.getProductInfo().getReviewsCount()).isNotNull();
+            assertThat(item.getProductInfo().getBrandName()).isEqualTo("Test Brand");
+            assertThat(item.getProductInfo().getSellerName()).isEqualTo("Test Seller");
+            assertThat(item.getProductInfo().getWeight()).isNotNull();
+        });
     }
 
     @Test

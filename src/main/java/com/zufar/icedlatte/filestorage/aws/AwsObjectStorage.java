@@ -129,9 +129,13 @@ public class AwsObjectStorage implements ObjectStorage {
 
     @Override
     public @NonNull Optional<String> getUrl(@NonNull FileMetadataDto fileMetadataDto) {
-        if (StringUtils.hasText(awsProperties.publicUrlBase())) {
+        if (StringUtils.hasText(awsProperties.publicUrlBase()) && publicUrlBaseMatchesBucket(fileMetadataDto)) {
             return Optional.of(publicUrl(fileMetadataDto));
         }
+        return presignedUrl(fileMetadataDto);
+    }
+
+    private @NonNull Optional<String> presignedUrl(@NonNull FileMetadataDto fileMetadataDto) {
         try {
             String url = s3Presigner
                     .presignGetObject(r -> r.signatureDuration(awsProperties.linkExpirationTime())
@@ -149,6 +153,22 @@ public class AwsObjectStorage implements ObjectStorage {
                     ex);
             return Optional.empty();
         }
+    }
+
+    private boolean publicUrlBaseMatchesBucket(FileMetadataDto fileMetadataDto) {
+        String baseUrl = awsProperties.publicUrlBase().stripTrailing();
+        String bucketName = fileMetadataDto.bucketName();
+        if (baseUrl.endsWith("/" + bucketName)) {
+            return true;
+        }
+
+        int publicSegment = baseUrl.indexOf("/storage/v1/object/public/");
+        if (publicSegment < 0) {
+            return true;
+        }
+
+        String suffix = baseUrl.substring(publicSegment + "/storage/v1/object/public/".length());
+        return !StringUtils.hasText(suffix);
     }
 
     @Override
