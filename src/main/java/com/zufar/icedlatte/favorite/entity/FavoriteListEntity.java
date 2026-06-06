@@ -1,15 +1,29 @@
 package com.zufar.icedlatte.favorite.entity;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.UpdateTimestamp;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -40,7 +54,8 @@ public class FavoriteListEntity {
             },
             orphanRemoval = true,
             fetch = FetchType.LAZY)
-    private Set<FavoriteItemEntity> favoriteItems;
+    @Builder.Default
+    private Set<FavoriteItemEntity> favoriteItems = new HashSet<>();
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

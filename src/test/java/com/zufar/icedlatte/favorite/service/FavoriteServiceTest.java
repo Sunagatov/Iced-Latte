@@ -4,9 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -82,7 +95,10 @@ class FavoriteServiceTest {
                         .productId(productId)
                         .build());
 
-        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity), Optional.of(refreshed));
+        doReturn(Optional.of(entity))
+                .doReturn(Optional.of(refreshed))
+                .when(favoriteRepository)
+                .findByUserId(userId);
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
         when(productCatalogApi.getProductsByIds(List.of(productId))).thenReturn(List.of(productSnapshot(productId)));
 
@@ -94,6 +110,40 @@ class FavoriteServiceTest {
         verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(entity.getId()), eq(productId));
         verify(favoriteRepository).touchFavoriteList(entity.getId());
         verify(favoriteRepository).flush();
+    }
+
+    @Test
+    @DisplayName("add validates distinct requested products in request order")
+    void addValidatesDistinctRequestedProductsInRequestOrder() {
+        UUID userId = UUID.randomUUID();
+        UUID firstProductId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID secondProductId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
+        FavoriteListEntity entity = favoriteList(userId);
+
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of(firstProductId, firstProductId, secondProductId));
+
+        FavoriteListEntity refreshed = favoriteList(userId);
+        refreshed.getFavoriteItems().add(favoriteItem(refreshed, firstProductId));
+        refreshed.getFavoriteItems().add(favoriteItem(refreshed, secondProductId));
+
+        doReturn(Optional.of(entity))
+                .doReturn(Optional.of(refreshed))
+                .when(favoriteRepository)
+                .findByUserId(userId);
+        when(productCatalogApi.findExistingProductIds(new HashSet<>(List.of(firstProductId, secondProductId))))
+                .thenReturn(Set.of(firstProductId, secondProductId));
+        when(productCatalogApi.getProductsByIds(List.of(firstProductId, secondProductId)))
+                .thenReturn(List.of(productSnapshot(firstProductId), productSnapshot(secondProductId)));
+
+        var result = favoriteService.add(request, userId);
+
+        assertThat(result.getProducts())
+                .extracting(com.zufar.icedlatte.openapi.dto.ProductSummaryDto::getId)
+                .containsExactly(firstProductId, secondProductId);
+        verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(entity.getId()), eq(firstProductId));
+        verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(entity.getId()), eq(secondProductId));
     }
 
     @Test
@@ -143,8 +193,7 @@ class FavoriteServiceTest {
     @DisplayName("add rejects oversized favorite requests")
     void addRejectsOversizedFavoriteRequests() {
         UUID userId = UUID.randomUUID();
-        List<UUID> productIds =
-                java.util.stream.Stream.generate(UUID::randomUUID).limit(101).toList();
+        List<UUID> productIds = Stream.generate(UUID::randomUUID).limit(101).toList();
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(productIds);
 
@@ -228,7 +277,14 @@ class FavoriteServiceTest {
         return FavoriteListEntity.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
-                .favoriteItems(new HashSet<>())
+                .build();
+    }
+
+    private static FavoriteItemEntity favoriteItem(FavoriteListEntity favoriteList, UUID productId) {
+        return FavoriteItemEntity.builder()
+                .id(UUID.randomUUID())
+                .favoriteListEntity(favoriteList)
+                .productId(productId)
                 .build();
     }
 
@@ -237,11 +293,11 @@ class FavoriteServiceTest {
                 id,
                 "Coffee",
                 "Desc",
-                java.math.BigDecimal.TEN,
+                BigDecimal.TEN,
                 100,
                 true,
                 null,
-                java.math.BigDecimal.valueOf(4.5),
+                BigDecimal.valueOf(4.5),
                 12,
                 "Brand",
                 "Seller",

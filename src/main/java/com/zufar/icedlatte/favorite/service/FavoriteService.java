@@ -2,9 +2,14 @@ package com.zufar.icedlatte.favorite.service;
 
 import static java.util.Comparator.comparing;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -42,13 +47,13 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts request, final UUID userId) {
-        validateRequestSize(request);
+        List<UUID> requestedProductIds = validateAndCopyProductIds(request);
         FavoriteListEntity favoriteList = getOrCreateFavoriteList(userId);
 
         Set<UUID> existingProductIds = extractProductIds(favoriteList);
-        Set<UUID> newProductIds = request.getProductIds().stream()
+        Set<UUID> newProductIds = requestedProductIds.stream()
                 .filter(id -> !existingProductIds.contains(id))
-                .collect(Collectors.toSet());
+                .collect(LinkedHashSet::new, Set::add, Set::addAll);
 
         validateProductsExist(newProductIds);
         insertFavoriteItems(favoriteList.getId(), newProductIds);
@@ -71,8 +76,6 @@ public class FavoriteService {
         });
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
-
     private FavoriteListEntity getOrCreateFavoriteList(UUID userId) {
         return favoriteRepository.findByUserId(userId).orElseGet(() -> {
             favoriteRepository.insertFavoriteListIfAbsent(UUID.randomUUID(), userId);
@@ -93,7 +96,9 @@ public class FavoriteService {
     }
 
     private void validateProductsExist(Set<UUID> productIds) {
-        if (productIds.isEmpty()) return;
+        if (productIds.isEmpty()) {
+            return;
+        }
         Set<UUID> foundIds = productCatalogApi.findExistingProductIds(productIds);
         List<UUID> missingIds =
                 productIds.stream().filter(id -> !foundIds.contains(id)).toList();
@@ -126,20 +131,26 @@ public class FavoriteService {
                 .toList();
     }
 
-    private static void validateRequestSize(ListOfFavoriteProducts request) {
+    private static List<UUID> validateAndCopyProductIds(ListOfFavoriteProducts request) {
         if (request.getProductIds() == null) {
             throw new InvalidFavoriteRequestException("Favorite request product ids must not be null.");
         }
-        int productCount = request.getProductIds().size();
+        List<? extends @Nullable UUID> productIds = request.getProductIds();
+        int productCount = productIds.size();
         if (productCount == 0) {
             throw new InvalidFavoriteRequestException("Favorite request must contain at least one product id.");
-        }
-        if (request.getProductIds().stream().anyMatch(Objects::isNull)) {
-            throw new InvalidFavoriteRequestException("Favorite request product ids must not contain null values.");
         }
         if (productCount > MAX_FAVORITE_PRODUCT_IDS) {
             throw new InvalidFavoriteRequestException(
                     "Favorite request must contain no more than " + MAX_FAVORITE_PRODUCT_IDS + " product ids.");
         }
+        List<UUID> validatedProductIds = new ArrayList<>(productCount);
+        for (@Nullable UUID productId : productIds) {
+            if (productId == null) {
+                throw new InvalidFavoriteRequestException("Favorite request product ids must not contain null values.");
+            }
+            validatedProductIds.add(productId);
+        }
+        return List.copyOf(validatedProductIds);
     }
 }
