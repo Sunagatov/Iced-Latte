@@ -10,8 +10,8 @@ import org.springframework.http.HttpStatus;
 
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
-@DisplayName("UserEndpoint integration tests")
-class UserEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
+@DisplayName("UserProfileEndpoint integration tests")
+class UserProfileEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport {
 
     private static final String BASE_PATH = "/api/v1/users";
     private static final String AUTH_BASE_PATH = "/api/v1/auth";

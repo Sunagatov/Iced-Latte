@@ -36,7 +36,9 @@ import com.zufar.icedlatte.security.endpoint.AuthenticationEndpoint;
 import com.zufar.icedlatte.security.endpoint.OAuthEndpoint;
 import com.zufar.icedlatte.security.endpoint.PasswordEndpoint;
 import com.zufar.icedlatte.security.endpoint.SessionsEndpoint;
-import com.zufar.icedlatte.user.endpoint.UserEndpoint;
+import com.zufar.icedlatte.user.endpoint.DeliveryAddressEndpoint;
+import com.zufar.icedlatte.user.endpoint.UserAvatarEndpoint;
+import com.zufar.icedlatte.user.endpoint.UserProfileEndpoint;
 
 @DisplayName("OpenAPI endpoint validation contract tests")
 class OpenApiEndpointValidationContractTest {
@@ -49,7 +51,9 @@ class OpenApiEndpointValidationContractTest {
             PaymentEndpoint.class,
             ProductsEndpoint.class,
             ProductReviewEndpoint.class,
-            UserEndpoint.class,
+            UserProfileEndpoint.class,
+            DeliveryAddressEndpoint.class,
+            UserAvatarEndpoint.class,
             OAuthEndpoint.class,
             AuthenticationEndpoint.class,
             SessionsEndpoint.class,

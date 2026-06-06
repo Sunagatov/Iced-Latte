@@ -22,15 +22,19 @@ security:
   - bearerAuth: []
 
 tags:
-  - name: "User"
-    description: "Operations related to user profiles."
+  - name: "User Profile"
+    description: "Operations related to user profile and account settings."
+  - name: "Delivery Addresses"
+    description: "Operations related to user delivery addresses."
+  - name: "User Avatar"
+    description: "Operations related to user avatars."
 
 paths:
   /api/v1/users:
 
     get:
       tags:
-        - "User"
+        - "User Profile"
       summary: "Get user profile"
       description: "Fetch detailed information about the authenticated user."
       operationId: "getUserProfile"
@@ -62,7 +66,7 @@ paths:
 
     put:
       tags:
-        - "User"
+        - "User Profile"
       summary: "Edit user profile"
       description: "Update the authenticated user's profile details."
       operationId: "editUserProfile"
@@ -107,7 +111,7 @@ paths:
 
     patch:
       tags:
-        - "User"
+        - "User Profile"
       summary: "Change user password"
       description: "Change the password for the authenticated user."
       operationId: "changeUserPassword"
@@ -145,7 +149,7 @@ paths:
 
     delete:
       tags:
-        - "User"
+        - "User Profile"
       summary: "Delete user profile"
       description: "Delete the authenticated user's profile."
       operationId: "deleteUserProfile"
@@ -174,7 +178,7 @@ paths:
   /api/v1/users/addresses:
     get:
       tags:
-        - "User"
+        - "Delivery Addresses"
       summary: "Get delivery addresses"
       operationId: "getDeliveryAddresses"
       responses:
@@ -196,7 +200,7 @@ paths:
 
     post:
       tags:
-        - "User"
+        - "Delivery Addresses"
       summary: "Add delivery address"
       operationId: "addDeliveryAddress"
       requestBody:
@@ -228,7 +232,7 @@ paths:
   /api/v1/users/addresses/{addressId}:
     put:
       tags:
-        - "User"
+        - "Delivery Addresses"
       summary: "Update delivery address"
       operationId: "updateDeliveryAddress"
       parameters:
@@ -260,7 +264,7 @@ paths:
 
     delete:
       tags:
-        - "User"
+        - "Delivery Addresses"
       summary: "Delete delivery address"
       operationId: "deleteDeliveryAddress"
       parameters:
@@ -283,7 +287,7 @@ paths:
   /api/v1/users/addresses/{addressId}/default:
     patch:
       tags:
-        - "User"
+        - "Delivery Addresses"
       summary: "Set default delivery address"
       operationId: "setDefaultDeliveryAddress"
       parameters:
@@ -310,7 +314,7 @@ paths:
   /api/v1/users/avatar:
     post:
       tags:
-        - "User"
+        - "User Avatar"
       summary: "Upload user avatar"
       description: "Upload a user's avatar image."
       operationId: "uploadUserAvatar"
@@ -351,7 +355,7 @@ paths:
 
     get:
       tags:
-        - "User"
+        - "User Avatar"
       summary: "Get user avatar link"
       description: "Retrieve the link to the authenticated user's avatar image."
       operationId: "getUserAvatarLink"
@@ -380,7 +384,7 @@ paths:
 
     delete:
       tags:
-        - "User"
+        - "User Avatar"
       summary: "Delete user avatar"
       description: "Delete the authenticated user's avatar image."
       operationId: "deleteUserAvatar"

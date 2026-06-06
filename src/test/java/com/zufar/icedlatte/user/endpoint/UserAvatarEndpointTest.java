@@ -14,13 +14,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
-import com.zufar.icedlatte.user.service.DeliveryAddressService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserEndpoint unit tests")
-class UserEndpointTest {
+@DisplayName("UserAvatarEndpoint unit tests")
+class UserAvatarEndpointTest {
 
     @Mock
     private UserProfileService userProfileService;
@@ -29,17 +28,13 @@ class UserEndpointTest {
     private UserAvatarUploader userAvatarUploader;
 
     @Mock
-    private DeliveryAddressService deliveryAddressService;
-
-    @Mock
     private CurrentUserIdProvider currentUserIdProvider;
 
-    private UserEndpoint endpoint;
+    private UserAvatarEndpoint endpoint;
 
     @BeforeEach
     void setUp() {
-        endpoint =
-                new UserEndpoint(userProfileService, userAvatarUploader, deliveryAddressService, currentUserIdProvider);
+        endpoint = new UserAvatarEndpoint(userProfileService, userAvatarUploader, currentUserIdProvider);
     }
 
     @Test
