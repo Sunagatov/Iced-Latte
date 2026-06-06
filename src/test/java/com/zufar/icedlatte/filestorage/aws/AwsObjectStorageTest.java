@@ -81,8 +81,7 @@ class AwsObjectStorageTest {
         PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
         when(presignedRequest.url())
                 .thenReturn(URI.create("https://signed.example.com/avatar").toURL());
-        when(s3Presigner.presignGetObject(anyConsumer()))
-                .thenReturn(presignedRequest);
+        when(s3Presigner.presignGetObject(anyConsumer())).thenReturn(presignedRequest);
 
         assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "iced-latte-users", "avatar.png")))
                 .contains("https://signed.example.com/avatar");
