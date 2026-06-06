@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
@@ -93,13 +94,13 @@ public class UserProfileService implements UserAccessControlApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int lockAccount(String email) {
-        return userRepository.setAccountNonLockedStatus(email, false);
+        return userRepository.setAccountNonLockedStatus(EmailNormalizer.normalize(email), false);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int unlockAccount(String email) {
-        return userRepository.setAccountNonLockedStatus(email, true);
+        return userRepository.setAccountNonLockedStatus(EmailNormalizer.normalize(email), true);
     }
 
     @Transactional(readOnly = true)

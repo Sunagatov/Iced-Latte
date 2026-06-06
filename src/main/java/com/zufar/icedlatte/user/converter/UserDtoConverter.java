@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
@@ -70,20 +71,16 @@ public interface UserDtoConverter {
     }
 
     private static boolean isEmptyAddress(AddressDto dto) {
-        return isBlank(dto.getCountry())
-                && isBlank(dto.getCity())
-                && isBlank(dto.getLine())
-                && isBlank(dto.getPostcode());
+        return !StringUtils.hasText(dto.getCountry())
+                && !StringUtils.hasText(dto.getCity())
+                && !StringUtils.hasText(dto.getLine())
+                && !StringUtils.hasText(dto.getPostcode());
     }
 
     private static String required(@Nullable String value, String fieldName) {
-        if (value == null || value.isBlank()) {
+        if (!StringUtils.hasText(value)) {
             throw new IllegalArgumentException("address." + fieldName + " is required");
         }
         return value;
-    }
-
-    private static boolean isBlank(@Nullable String value) {
-        return value == null || value.isBlank();
     }
 }
