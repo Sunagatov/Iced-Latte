@@ -436,7 +436,7 @@ components:
           description: "The first name of the user."
           minLength: 2
           maxLength: 64
-          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\u2019\\-]+$"
           x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"First name is required\")"
           example: "John"
         lastName:
@@ -444,7 +444,7 @@ components:
           description: "The last name of the user."
           minLength: 2
           maxLength: 64
-          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\-]+$"
+          pattern: "^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s''\\u2019\\-]+$"
           x-field-extra-annotation: "@jakarta.validation.constraints.NotNull(message = \"Last name is required\")"
           example: "Doe"
         birthDate:
