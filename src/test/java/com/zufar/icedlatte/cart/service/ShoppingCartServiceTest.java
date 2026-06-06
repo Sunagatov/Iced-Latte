@@ -329,6 +329,7 @@ class ShoppingCartServiceTest {
     }
 
     private static ProductSnapshot productDto(UUID id, BigDecimal price) {
-        return new ProductSnapshot(id, "New coffee", "Desc", price, 10, true, null);
+        return new ProductSnapshot(
+                id, "New coffee", "Desc", price, 10, true, null, BigDecimal.valueOf(4.5), 12, "Brand", "Seller", 250);
     }
 }

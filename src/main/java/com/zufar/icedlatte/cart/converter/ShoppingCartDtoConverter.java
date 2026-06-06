@@ -66,7 +66,12 @@ public class ShoppingCartDtoConverter {
                 .name(productInfo.name())
                 .description(productInfo.description())
                 .price(productInfo.price())
-                .productFileUrl(productInfo.productFileUrl());
+                .productFileUrl(productInfo.productFileUrl())
+                .averageRating(productInfo.averageRating())
+                .reviewsCount(productInfo.reviewsCount())
+                .brandName(productInfo.brandName())
+                .sellerName(productInfo.sellerName())
+                .weight(productInfo.weight());
     }
 
     public CartSnapshot toSnapshot(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {

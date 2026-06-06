@@ -28,6 +28,11 @@ class FavoriteListDtoConverterTest {
         assertThat(result.getProducts().getFirst().getId()).isEqualTo(productId);
         assertThat(result.getProducts().getFirst().getName()).isEqualTo("Coffee");
         assertThat(result.getProducts().getFirst().getDescription()).isEqualTo("Desc");
+        assertThat(result.getProducts().getFirst().getAverageRating()).isEqualByComparingTo("4.5");
+        assertThat(result.getProducts().getFirst().getReviewsCount()).isEqualTo(12);
+        assertThat(result.getProducts().getFirst().getBrandName()).isEqualTo("Brand");
+        assertThat(result.getProducts().getFirst().getSellerName()).isEqualTo("Seller");
+        assertThat(result.getProducts().getFirst().getWeight()).isEqualTo(250);
     }
 
     @Test
@@ -43,6 +48,18 @@ class FavoriteListDtoConverterTest {
     }
 
     private static ProductSnapshot productSnapshot(UUID id) {
-        return new ProductSnapshot(id, "Coffee", "Desc", BigDecimal.valueOf(10), 100, true, null);
+        return new ProductSnapshot(
+                id,
+                "Coffee",
+                "Desc",
+                BigDecimal.valueOf(10),
+                100,
+                true,
+                null,
+                BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
     }
 }

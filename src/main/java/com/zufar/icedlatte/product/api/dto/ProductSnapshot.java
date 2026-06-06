@@ -12,4 +12,9 @@ public record ProductSnapshot(
         BigDecimal price,
         @Nullable Integer quantity,
         @Nullable Boolean active,
-        @Nullable String productFileUrl) {}
+        @Nullable String productFileUrl,
+        @Nullable BigDecimal averageRating,
+        @Nullable Integer reviewsCount,
+        @Nullable String brandName,
+        @Nullable String sellerName,
+        @Nullable Integer weight) {}

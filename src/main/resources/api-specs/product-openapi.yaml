@@ -281,6 +281,23 @@ components:
         productFileUrl:
           type: "string"
           description: "URL of the product's primary image or file."
+        averageRating:
+          type: "number"
+          description: "Average rating of the product."
+        reviewsCount:
+          type: "integer"
+          format: "int32"
+          description: "Number of reviews for the product."
+        brandName:
+          type: "string"
+          description: "Brand of the product."
+        sellerName:
+          type: "string"
+          description: "Seller of the product."
+        weight:
+          type: "integer"
+          format: "int32"
+          description: "Weight of the product in grams."
 
     ProductInfoDto:
       type: "object"

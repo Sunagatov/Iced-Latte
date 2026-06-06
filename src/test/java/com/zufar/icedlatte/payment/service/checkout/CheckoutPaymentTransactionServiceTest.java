@@ -71,8 +71,19 @@ class CheckoutPaymentTransactionServiceTest {
         CreateCheckoutRequestDto request =
                 new CreateCheckoutRequestDto().recipientName("John").recipientSurname("Doe");
 
-        var productInfo =
-                new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
+        var productInfo = new ProductSnapshot(
+                UUID.randomUUID(),
+                "Coffee",
+                "Desc",
+                BigDecimal.valueOf(12.50),
+                10,
+                true,
+                null,
+                BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
         var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 2);
         CartSnapshot cart = new CartSnapshot(
                 UUID.randomUUID(),
@@ -214,8 +225,19 @@ class CheckoutPaymentTransactionServiceTest {
                 .recipientSurname("B")
                 .address(new AddressDto().city("London").line("123 Coffee St").postcode("E1 6AN"));
 
-        var productInfo =
-                new ProductSnapshot(UUID.randomUUID(), "Coffee", "Desc", BigDecimal.valueOf(12.50), 10, true, null);
+        var productInfo = new ProductSnapshot(
+                UUID.randomUUID(),
+                "Coffee",
+                "Desc",
+                BigDecimal.valueOf(12.50),
+                10,
+                true,
+                null,
+                BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
         var cartItem = new CartItemSnapshot(UUID.randomUUID(), productInfo, 1);
         CartSnapshot cart = new CartSnapshot(
                 UUID.randomUUID(),

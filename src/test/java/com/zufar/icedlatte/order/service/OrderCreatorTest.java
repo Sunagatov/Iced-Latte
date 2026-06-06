@@ -267,7 +267,19 @@ class OrderCreatorTest {
     }
 
     private CartSnapshot buildCart(UUID productId) {
-        ProductSnapshot product = new ProductSnapshot(productId, "Test", "Desc", BigDecimal.TEN, 10, true, null);
+        ProductSnapshot product = new ProductSnapshot(
+                productId,
+                "Test",
+                "Desc",
+                BigDecimal.TEN,
+                10,
+                true,
+                null,
+                BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
         return new CartSnapshot(
                 UUID.randomUUID(),
                 UUID.randomUUID(),

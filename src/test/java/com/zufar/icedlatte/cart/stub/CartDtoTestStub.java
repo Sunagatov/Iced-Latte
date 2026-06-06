@@ -83,11 +83,44 @@ public class CartDtoTestStub {
     public static Map<UUID, ProductSnapshot> createProductsById() {
         List<ProductSnapshot> products = List.of(
                 new ProductSnapshot(
-                        FIRST_PRODUCT_ID, "First test name", "Desc", BigDecimal.valueOf(1.1), 10, true, null),
+                        FIRST_PRODUCT_ID,
+                        "First test name",
+                        "Desc",
+                        BigDecimal.valueOf(1.1),
+                        10,
+                        true,
+                        null,
+                        BigDecimal.valueOf(4.5),
+                        12,
+                        "Test Brand",
+                        "Test Seller",
+                        250),
                 new ProductSnapshot(
-                        SECOND_PRODUCT_ID, "Second test name", "Desc", BigDecimal.valueOf(2.2), 10, true, null),
+                        SECOND_PRODUCT_ID,
+                        "Second test name",
+                        "Desc",
+                        BigDecimal.valueOf(2.2),
+                        10,
+                        true,
+                        null,
+                        BigDecimal.valueOf(4.0),
+                        8,
+                        "Test Brand",
+                        "Test Seller",
+                        300),
                 new ProductSnapshot(
-                        THIRD_PRODUCT_ID, "Third test name", "Desc", BigDecimal.valueOf(3.3), 10, true, null));
+                        THIRD_PRODUCT_ID,
+                        "Third test name",
+                        "Desc",
+                        BigDecimal.valueOf(3.3),
+                        10,
+                        true,
+                        null,
+                        BigDecimal.valueOf(3.5),
+                        4,
+                        "Test Brand",
+                        "Test Seller",
+                        350));
         return products.stream().collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
     }
 }
