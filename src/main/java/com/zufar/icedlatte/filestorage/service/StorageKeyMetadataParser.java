@@ -14,14 +14,15 @@ import lombok.extern.slf4j.Slf4j;
 public class StorageKeyMetadataParser {
 
     Optional<FileMetadataDto> parse(String fileName, String bucketName) {
-        String[] parts = fileName.split("/");
-        String[] packageName = parts[0].split("_");
-        if (packageName.length < 2) {
+        String folderName = fileName.split("/", 2)[0];
+        int uuidSeparatorIndex = folderName.lastIndexOf('_');
+        if (uuidSeparatorIndex < 0 || uuidSeparatorIndex == folderName.length() - 1) {
             log.warn("storage.key.skipped: key={}", fileName);
             return Optional.empty();
         }
         try {
-            return Optional.of(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
+            UUID relatedObjectId = UUID.fromString(folderName.substring(uuidSeparatorIndex + 1));
+            return Optional.of(new FileMetadataDto(relatedObjectId, bucketName, fileName));
         } catch (IllegalArgumentException ex) {
             log.warn("storage.key.invalid_uuid: key={}", fileName);
             return Optional.empty();
