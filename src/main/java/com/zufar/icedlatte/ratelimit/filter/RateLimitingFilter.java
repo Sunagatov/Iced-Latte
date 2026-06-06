@@ -49,28 +49,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     @PostConstruct
     void validate() {
-        assertPositive("pre-auth", properties.getPreAuth());
-        assertPositive("auth", properties.getAuth());
-        assertPositive("global", properties.getGlobal());
-        assertPositive("search", properties.getSearch());
-        assertPositive("telemetry", properties.getTelemetry());
-        assertPositive("payment", properties.getPayment());
-        assertPositive("write", properties.getWrite());
-        assertPositive("file-upload", properties.getFileUpload());
-        assertPositiveBanConfiguration(properties);
-    }
-
-    private static void assertPositive(String bucketName, Bucket bucket) {
-        if (bucket.getMaxRequests() <= 0) {
-            throw new IllegalStateException(
-                    "security.rate-limit." + bucketName + ".max-requests must be > 0, got: " + bucket.getMaxRequests());
-        }
-        if (bucket.getWindowDuration() == null
-                || bucket.getWindowDuration().isZero()
-                || bucket.getWindowDuration().isNegative()) {
-            throw new IllegalStateException("security.rate-limit." + bucketName
-                    + ".window-duration must be positive, got: " + bucket.getWindowDuration());
-        }
+        RateLimitPropertiesValidator.validate(properties);
     }
 
     public RateLimitingFilter(
@@ -82,7 +61,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitProperties properties,
             ProblemTypeUriFactory problemTypeUriFactory,
             CaffeineSizeProperties caffeineSizeProperties) {
-        assertPositiveBanConfiguration(properties);
+        RateLimitPropertiesValidator.assertPositiveBanConfiguration(properties);
         this.openRateLimiter = openRateLimiter;
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;
@@ -158,7 +137,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 response,
                 identity.key(category),
                 category,
-                bucketFor(category),
+                RateLimitBucketResolver.bucketFor(category, properties),
                 openRateLimiter,
                 identity.type(),
                 ip)) {
@@ -196,32 +175,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 .counter("rate_limit.requests.allowed", "category", category.getValue())
                 .increment();
         return false;
-    }
-
-    private Bucket bucketFor(RateLimitCategory category) {
-        return switch (category) {
-            case AUTH, AUTH_PRE -> properties.getAuth();
-            case SEARCH -> properties.getSearch();
-            case TELEMETRY -> properties.getTelemetry();
-            case PAYMENT -> properties.getPayment();
-            case WRITE -> properties.getWrite();
-            case FILE_UPLOAD -> properties.getFileUpload();
-            case PRE_AUTH -> properties.getPreAuth();
-            case GLOBAL -> properties.getGlobal();
-        };
-    }
-
-    private static void assertPositiveBanConfiguration(RateLimitProperties properties) {
-        if (properties.getBanThreshold() <= 0) {
-            throw new IllegalStateException(
-                    "security.rate-limit.ban-threshold must be > 0, got: " + properties.getBanThreshold());
-        }
-        if (properties.getBanDuration() == null
-                || properties.getBanDuration().isZero()
-                || properties.getBanDuration().isNegative()) {
-            throw new IllegalStateException(
-                    "security.rate-limit.ban-duration must be positive, got: " + properties.getBanDuration());
-        }
     }
 
     private Identity resolveIdentity(HttpServletRequest request, String ip) {

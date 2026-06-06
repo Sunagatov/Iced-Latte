@@ -135,7 +135,7 @@ Each brand has a consistent package style and background. Products within a bran
 
 7. **Speed tip:** Give the prompt first, handle file operations after. Don't wait for the upload to finish before writing the next prompt.
 
-8. **Underscore in product names is safe** — the backend splits the folder name by `_` and takes `packageName[1]` as the UUID. Since UUIDs have a fixed format (`8-4-4-4-12` hex), the parser uses `UUID.fromString()` which validates correctly even if the product name contains underscores. However, the current code does `parts[0].split("_")` and takes index `[1]` — so a product name with underscores (e.g., `Cold_Brew`) would break parsing. **Avoid underscores in product folder names.** Use spaces instead.
+8. **Underscore in product names is safe** — the backend reads the UUID after the last underscore in the folder name. Product names can contain underscores as long as the final segment is the product UUID, for example `Cold_Brew_Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png`.
 
 ---
 

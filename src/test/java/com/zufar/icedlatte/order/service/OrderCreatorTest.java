@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,8 +30,6 @@ import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.openapi.dto.*;
-import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
-import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderItem;
@@ -46,6 +44,8 @@ import com.zufar.icedlatte.user.service.SingleUserProvider;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderCreator unit tests")
 class OrderCreatorTest {
+
+    private static final OrderDtoConverter CHECKOUT_ORDER_CONVERTER = Mappers.getMapper(OrderDtoConverter.class);
 
     @Mock
     private OrderRepository orderRepository;
@@ -212,7 +212,7 @@ class OrderCreatorTest {
                 .address(buildAddressDto());
 
         assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(
-                        userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+                        userId, CHECKOUT_ORDER_CONVERTER.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("not both");
     }
@@ -225,7 +225,7 @@ class OrderCreatorTest {
                 new CreateCheckoutRequestDto().recipientName("A").recipientSurname("B");
 
         assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(
-                        userId, toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
+                        userId, CHECKOUT_ORDER_CONVERTER.toCheckoutOrderRequest(req), buildCart(UUID.randomUUID())))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be provided");
     }
@@ -243,7 +243,8 @@ class OrderCreatorTest {
 
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of());
 
-        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(userId, toCheckoutOrderRequest(req), cart))
+        assertThatThrownBy(() -> orderCreator.createPendingPaymentOrder(
+                        userId, CHECKOUT_ORDER_CONVERTER.toCheckoutOrderRequest(req), cart))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("no longer available");
     }
@@ -289,22 +290,5 @@ class OrderCreatorTest {
                 1,
                 OffsetDateTime.now(),
                 null);
-    }
-
-    private static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto req) {
-        AddressDto a = req.getAddress();
-        OrderAddressRequest addr = a == null
-                ? null
-                : new OrderAddressRequest(
-                        Objects.requireNonNull(a.getCountry()),
-                        Objects.requireNonNull(a.getCity()),
-                        Objects.requireNonNull(a.getLine()),
-                        Objects.requireNonNull(a.getPostcode()));
-        return new CheckoutOrderRequest(
-                req.getRecipientName(),
-                req.getRecipientSurname(),
-                req.getRecipientPhone(),
-                req.getDeliveryAddressId(),
-                addr);
     }
 }

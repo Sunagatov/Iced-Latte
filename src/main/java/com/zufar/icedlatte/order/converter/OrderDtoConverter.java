@@ -2,9 +2,11 @@ package com.zufar.icedlatte.order.converter;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.mapstruct.*;
 
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.openapi.dto.OrderDto;
@@ -60,9 +62,30 @@ public interface OrderDtoConverter {
                 items);
     }
 
-    @Mapping(target = "address", source = "address")
-    CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request);
+    default CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
+        return new CheckoutOrderRequest(
+                request.getRecipientName(),
+                request.getRecipientSurname(),
+                request.getRecipientPhone(),
+                request.getDeliveryAddressId(),
+                toAddressRequest(request.getAddress()));
+    }
 
-    @Mapping(target = "country", source = "country")
-    OrderAddressRequest toAddressRequest(AddressDto address);
+    default @Nullable OrderAddressRequest toAddressRequest(@Nullable AddressDto address) {
+        if (address == null) {
+            return null;
+        }
+        return new OrderAddressRequest(
+                requireAddressPart(address.getCountry(), "country"),
+                requireAddressPart(address.getCity(), "city"),
+                requireAddressPart(address.getLine(), "line"),
+                requireAddressPart(address.getPostcode(), "postcode"));
+    }
+
+    private static String requireAddressPart(@Nullable String value, String fieldName) {
+        if (value == null) {
+            throw new BadRequestException("Address field '" + fieldName + "' must be provided.");
+        }
+        return value;
+    }
 }

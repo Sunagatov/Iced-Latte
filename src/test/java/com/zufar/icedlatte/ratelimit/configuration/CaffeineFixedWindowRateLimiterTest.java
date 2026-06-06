@@ -3,6 +3,7 @@ package com.zufar.icedlatte.ratelimit.configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.concurrent.locks.LockSupport;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +59,7 @@ class CaffeineFixedWindowRateLimiterTest {
 
         @Test
         @DisplayName("resets the window after expiry")
-        void resetsWindowAfterExpiry() throws InterruptedException {
+        void resetsWindowAfterExpiry() {
             var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
             Duration shortWindow = Duration.ofMillis(50);
 
@@ -66,9 +67,7 @@ class CaffeineFixedWindowRateLimiterTest {
             limiter.tryConsume("search", 2, shortWindow);
             RateLimitResult blocked = limiter.tryConsume("search", 2, shortWindow);
 
-            Thread.sleep(70);
-
-            RateLimitResult afterReset = limiter.tryConsume("search", 2, shortWindow);
+            RateLimitResult afterReset = awaitWindowReset(limiter, "search", 2, shortWindow);
 
             assertThat(blocked.allowed()).isFalse();
             assertThat(afterReset.allowed()).isTrue();
@@ -97,5 +96,19 @@ class CaffeineFixedWindowRateLimiterTest {
             assertThat(result.allowed()).isTrue();
             assertThat(result.remaining()).isEqualTo(9);
         }
+    }
+
+    private static RateLimitResult awaitWindowReset(
+            CaffeineFixedWindowRateLimiter limiter, String key, int maxRequests, Duration window) {
+        long deadline = System.nanoTime() + Duration.ofSeconds(1).toNanos();
+        RateLimitResult result;
+        do {
+            result = limiter.tryConsume(key, maxRequests, window);
+            if (result.allowed()) {
+                return result;
+            }
+            LockSupport.parkNanos(Duration.ofMillis(1).toNanos());
+        } while (System.nanoTime() < deadline);
+        return result;
     }
 }

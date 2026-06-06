@@ -41,7 +41,7 @@ class StartupTaskRunnerTest {
         StartupTaskRunner.runAsync("slow startup task", Duration.ofMillis(10), () -> {
             started.countDown();
             try {
-                Thread.sleep(Duration.ofSeconds(5));
+                new CountDownLatch(1).await(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 interrupted.countDown();
                 Thread.currentThread().interrupt();
@@ -59,7 +59,7 @@ class StartupTaskRunnerTest {
 
         StartupTaskRunner.runAsync("interrupt-swallowing task", Duration.ofMillis(10), () -> {
             try {
-                Thread.sleep(Duration.ofSeconds(5));
+                new CountDownLatch(1).await(5, TimeUnit.SECONDS);
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             } finally {

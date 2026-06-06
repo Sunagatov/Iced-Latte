@@ -11,11 +11,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,6 +31,7 @@ import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
 import com.zufar.icedlatte.order.api.OrderStatusSnapshot;
 import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
@@ -59,11 +61,23 @@ class CheckoutPaymentTransactionServiceTest {
     @Mock
     private StripeProperties stripeProperties;
 
-    @InjectMocks
     private CheckoutPaymentTransactionService service;
+
+    private final OrderDtoConverter orderDtoConverter = Mappers.getMapper(OrderDtoConverter.class);
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final String IDEMPOTENCY_KEY = "test-key-123";
+
+    @BeforeEach
+    void setUp() {
+        service = new CheckoutPaymentTransactionService(
+                paymentRepository,
+                orderPaymentApi,
+                orderCheckoutApi,
+                shoppingCartService,
+                orderDtoConverter,
+                stripeProperties);
+    }
 
     @Test
     @DisplayName("prepareCheckout creates order and payment for new checkout")

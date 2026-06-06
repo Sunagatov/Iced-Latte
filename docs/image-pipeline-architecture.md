@@ -89,36 +89,36 @@ migration.timeout-minutes: 5
 #### Key Parsing Logic (`toFileMetadata`)
 
 ```
-S3 key:  "Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png"
+S3 key:  "Cold_Brew_Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9/card_logo.png"
           ─────────────────────────────────────────── ──────────────
           parts[0] (folder name)                       parts[1] (file)
 
-Folder:  "Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9"
-          ───── ────────────────────────────────────
-          packageName[0]  packageName[1] → UUID (product ID)
+Folder:  "Cold_Brew_Latte_1e5b295f-8f50-4425-90e9-8b590a27b3a9"
+          ─────────────── ────────────────────────────────────
+          product name    final underscore segment → UUID (product ID)
 ```
 
 - Splits key by `/` → takes `parts[0]` (folder name).
-- Splits folder by `_` → takes `packageName[1]` as the product UUID.
+- Reads the substring after the folder's last `_` as the product UUID.
 - Returns `FileMetadataDto(relatedObjectId=UUID, bucketName, fileName=full_key)`.
 
 **⚠️ Critical constraint:** Only ONE file per product folder. Multiple files → `Duplicate key` exception when the API tries to build a `Map<UUID, String>`.
 
-#### ⚠️ Underscore Split Bug Risk
+#### Underscore-Safe Key Parsing
 
 The parsing code does:
 ```
-String[] packageName = parts[0].split("_");
-UUID.fromString(packageName[1]);
+String folderName = fileName.split("/", 2)[0];
+int uuidSeparatorIndex = folderName.lastIndexOf('_');
+UUID.fromString(folderName.substring(uuidSeparatorIndex + 1));
 ```
 
 This works because:
 - Product names use **spaces** (e.g., `Vanilla Latte_uuid`)
-- The split produces `["Vanilla Latte", "uuid"]`
+- Product names may also use underscores (e.g., `Cold_Brew_Latte_uuid`)
+- The UUID is always parsed from the final underscore-delimited segment
 
-**But if a product name contained underscores** (e.g., `Cold_Brew_uuid`), the split would produce `["Cold", "Brew", "uuid"]` and `packageName[1]` would be `"Brew"` — not a valid UUID. The `UUID.fromString()` would throw `IllegalArgumentException`, and the key would be logged as `storage.key.invalid_uuid` and skipped.
-
-**Rule:** Never use underscores in the product name portion of folder names. The single underscore before the UUID is the delimiter.
+**Rule:** Keep the final underscore before the UUID. Earlier underscores are treated as part of the product name.
 
 ### 3. ProductImageReceiver
 

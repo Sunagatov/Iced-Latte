@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
+import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.moderation.ReviewModerationService;
@@ -33,15 +34,15 @@ public class AsyncReviewProcessingService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProcessingResult processByReviewId(UUID reviewId) {
-        var review = reviewRepository.findById(reviewId);
-        if (review.isEmpty()) {
+        ProductReview review = reviewRepository.findById(reviewId).orElse(null);
+        if (review == null) {
             log.info("review.processing.ignored: reviewId={}, reason=REVIEW_NOT_FOUND", reviewId);
             return ProcessingResult.IGNORED;
         }
 
-        UUID productId = review.get().getProductId();
+        UUID productId = review.getProductId();
         try {
-            moderationService.moderate(review.get().getText());
+            moderationService.moderate(review.getText());
         } catch (ReviewModerationException e) {
             log.warn("review.moderation.failed: reviewId={}, reasonCode=REJECTED_BY_MODERATION", reviewId);
             reviewRepository.deleteById(reviewId);

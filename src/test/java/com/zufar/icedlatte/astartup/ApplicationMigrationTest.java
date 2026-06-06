@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -146,7 +148,7 @@ class ApplicationMigrationTest {
             migration = migration(false, Duration.ofMillis(10), "products-bucket");
             when(fileStorageService.isEnabled()).thenReturn(true);
             doAnswer(_ -> {
-                        Thread.sleep(Duration.ofSeconds(5));
+                        new CountDownLatch(1).await(5, TimeUnit.SECONDS);
                         return null;
                     })
                     .when(fileStorageService)
