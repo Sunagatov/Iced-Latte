@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.favorite.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -157,15 +158,21 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(List.of(productId));
 
+        FavoriteListEntity refreshed = favoriteList(userId);
+        refreshed.getFavoriteItems().add(favoriteItem(refreshed, productId));
+
         when(favoriteRepository.findByUserId(userId))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(createdList))
-                .thenReturn(Optional.of(createdList));
+                .thenReturn(Optional.of(refreshed));
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
+        when(productCatalogApi.getProductsByIds(List.of(productId))).thenReturn(List.of(productSnapshot(productId)));
 
         var result = favoriteService.add(request, userId);
 
-        assertThat(result.getProducts()).isEmpty();
+        assertThat(result.getProducts())
+                .extracting(com.zufar.icedlatte.openapi.dto.ProductSummaryDto::getId)
+                .containsExactly(productId);
         verify(favoriteRepository).insertFavoriteListIfAbsent(any(UUID.class), eq(userId));
         verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(createdList.getId()), eq(productId));
     }
@@ -183,7 +190,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
         when(productCatalogApi.findExistingProductIds(Set.of(missingProductId))).thenReturn(Set.of());
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
                 .isInstanceOf(FavoriteProductNotFoundException.class)
                 .hasMessageContaining(missingProductId.toString());
         verify(favoriteRepository, never()).insertFavoriteItemIfAbsent(any(), any(), any());
@@ -197,7 +204,7 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(productIds);
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
                 .isInstanceOf(InvalidFavoriteRequestException.class)
                 .hasMessageContaining("100");
         verifyNoInteractions(favoriteRepository);
@@ -210,7 +217,7 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(null);
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
                 .isInstanceOf(InvalidFavoriteRequestException.class)
                 .hasMessageContaining("must not be null");
         verifyNoInteractions(favoriteRepository);
@@ -223,7 +230,7 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(List.of());
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
                 .isInstanceOf(InvalidFavoriteRequestException.class)
                 .hasMessageContaining("at least one");
         verifyNoInteractions(favoriteRepository);
@@ -236,7 +243,7 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(new ArrayList<>(Collections.singletonList(null)));
 
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> favoriteService.add(request, userId))
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
                 .isInstanceOf(InvalidFavoriteRequestException.class)
                 .hasMessageContaining("must not contain null values");
         verifyNoInteractions(favoriteRepository);

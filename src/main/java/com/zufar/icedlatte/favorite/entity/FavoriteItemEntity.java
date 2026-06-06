@@ -48,8 +48,12 @@ public class FavoriteItemEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FavoriteItemEntity that)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FavoriteItemEntity that)) {
+            return false;
+        }
         UUID favoriteListId = favoriteListId();
         UUID thatFavoriteListId = that.favoriteListId();
         if (favoriteListId == null || productId == null || thatFavoriteListId == null || that.productId == null) {

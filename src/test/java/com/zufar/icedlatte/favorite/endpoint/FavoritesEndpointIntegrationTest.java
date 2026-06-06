@@ -1,15 +1,22 @@
 package com.zufar.icedlatte.favorite.endpoint;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,8 +60,7 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
         List<String> productIds = getFavoriteProductIds(user);
 
         assertEquals(2, productIds.size());
-        org.assertj.core.api.Assertions.assertThat(productIds)
-                .containsExactlyInAnyOrder(PRODUCT_ID_ONE, PRODUCT_ID_TWO);
+        assertThat(productIds).containsExactlyInAnyOrder(PRODUCT_ID_ONE, PRODUCT_ID_TWO);
     }
 
     @Test
@@ -77,9 +83,9 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
     @DisplayName("Should reject oversized favorites request")
     void shouldRejectOversizedFavoritesRequest() {
         AuthenticatedUser user = registerAndAuthenticateUser();
-        String productIds = java.util.stream.Stream.generate(() -> "\"" + PRODUCT_ID_ONE + "\"")
+        String productIds = Stream.generate(() -> "\"" + PRODUCT_ID_ONE + "\"")
                 .limit(101)
-                .collect(java.util.stream.Collectors.joining(", "));
+                .collect(Collectors.joining(", "));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
                 .body("""
@@ -113,14 +119,14 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("products", hasSize(1))
-                .body("products[0].id", org.hamcrest.Matchers.equalTo(PRODUCT_ID_ONE));
+                .body("products[0].id", equalTo(PRODUCT_ID_ONE));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, secondUser.accessToken()))
                 .get()
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("products", hasSize(1))
-                .body("products[0].id", org.hamcrest.Matchers.equalTo(PRODUCT_ID_TWO));
+                .body("products[0].id", equalTo(PRODUCT_ID_TWO));
     }
 
     @Test
@@ -140,7 +146,7 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("products", hasSize(1))
-                .body("products[0].id", org.hamcrest.Matchers.equalTo(PRODUCT_ID_TWO))
+                .body("products[0].id", equalTo(PRODUCT_ID_TWO))
                 .body("products[0].id", not(PRODUCT_ID_ONE));
     }
 
@@ -162,7 +168,7 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
             List<String> productIds = getFavoriteProductIds(user);
 
             assertEquals(1, productIds.size());
-            org.assertj.core.api.Assertions.assertThat(productIds).containsExactly(PRODUCT_ID_ONE);
+            assertThat(productIds).containsExactly(PRODUCT_ID_ONE);
         }
     }
 
@@ -171,9 +177,9 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 {
                   "productIds": [%s]
                 }
-                """.formatted(java.util.Arrays.stream(productIds)
+        """.formatted(Arrays.stream(productIds)
                 .map(id -> "\"" + id + "\"")
-                .collect(java.util.stream.Collectors.joining(", ")));
+                .collect(Collectors.joining(", ")));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
                 .body(body)

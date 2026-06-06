@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.favorite.api.endpoint;
 
-import static com.zufar.icedlatte.test.config.RestAssertion.*;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiBodySchemaResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiEmptyBodyResponse;
+import static com.zufar.icedlatte.test.config.RestAssertion.assertRestApiOkResponse;
 import static com.zufar.icedlatte.test.config.RestUtils.getJwtToken;
 import static com.zufar.icedlatte.test.config.RestUtils.getRequestBody;
 import static io.restassured.RestAssured.given;
