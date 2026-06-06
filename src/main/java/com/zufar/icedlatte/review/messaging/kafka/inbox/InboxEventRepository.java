@@ -4,13 +4,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.zufar.icedlatte.common.retry.RetryAttemptSupport;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -118,7 +118,7 @@ public class InboxEventRepository {
         if (permanent) {
             nextAttemptAt = null;
         } else {
-            nextAttemptAt = Timestamp.from(Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS));
+            nextAttemptAt = Timestamp.from(RetryAttemptSupport.nextAttemptAt(nextAttemptCount));
         }
         jdbcTemplate.update(
                 """
@@ -139,7 +139,7 @@ public class InboxEventRepository {
                 status,
                 nextAttemptCount,
                 nextAttemptAt,
-                sanitizedError(failure),
+                RetryAttemptSupport.sanitizedError(failure),
                 id,
                 consumerName,
                 eventType,
@@ -161,15 +161,6 @@ public class InboxEventRepository {
                           AND event_type = ?
                           AND locked_by = ?
                         """, status, id, consumerName, eventType, workerId);
-    }
-
-    private long backoffSeconds(int attemptCount) {
-        return Math.min(1L << Math.min(attemptCount, 8), 300L);
-    }
-
-    private String sanitizedError(Throwable failure) {
-        String message = failure.getClass().getSimpleName() + ": " + failure.getMessage();
-        return message.length() <= 1000 ? message : message.substring(0, 1000);
     }
 
     private InboxEventRow mapRow(ResultSet rs) throws SQLException {

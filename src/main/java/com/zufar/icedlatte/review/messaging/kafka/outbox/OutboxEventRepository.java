@@ -4,13 +4,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import com.zufar.icedlatte.common.retry.RetryAttemptSupport;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -109,8 +109,7 @@ public class OutboxEventRepository {
     public void markFailed(UUID id, String workerId, int attemptCount, int maxAttempts, Throwable failure) {
         int nextAttemptCount = attemptCount + 1;
         boolean permanent = nextAttemptCount >= maxAttempts;
-        Instant nextAttemptAt =
-                permanent ? null : Instant.now().plus(backoffSeconds(nextAttemptCount), ChronoUnit.SECONDS);
+        Instant nextAttemptAt = permanent ? null : RetryAttemptSupport.nextAttemptAt(nextAttemptCount);
         jdbcTemplate.update(
                 """
                 UPDATE outbox_events
@@ -129,19 +128,10 @@ public class OutboxEventRepository {
                 permanent ? "FAILED_PERMANENT" : "FAILED_RETRYABLE",
                 nextAttemptCount,
                 nextAttemptAt == null ? null : Timestamp.from(nextAttemptAt),
-                sanitizedError(failure),
+                RetryAttemptSupport.sanitizedError(failure),
                 id,
                 REVIEW_CREATED_EVENT_TYPE,
                 workerId);
-    }
-
-    private long backoffSeconds(int attemptCount) {
-        return Math.min(1L << Math.min(attemptCount, 8), 300L);
-    }
-
-    private String sanitizedError(Throwable failure) {
-        String message = failure.getClass().getSimpleName() + ": " + failure.getMessage();
-        return message.length() <= 1000 ? message : message.substring(0, 1000);
     }
 
     private OutboxEventRow mapRow(ResultSet rs) throws SQLException {
