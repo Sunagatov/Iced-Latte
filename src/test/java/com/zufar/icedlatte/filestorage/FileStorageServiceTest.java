@@ -225,6 +225,15 @@ public class FileStorageServiceTest {
     }
 
     @Test
+    @DisplayName("findFileUrls returns empty result without querying repository for empty input")
+    void findFileUrlsReturnsEmptyResultWithoutQueryingRepositoryForEmptyInput() {
+        Map<UUID, String> result = fileStorageService.findFileUrls(List.of());
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(fileMetadataRepository, objectStorage);
+    }
+
+    @Test
     @DisplayName("findFileUrls resolves duplicate metadata using preferred image")
     void findFileUrlsResolvesDuplicateMetadataUsingPreferredImage() {
         UUID id = UUID.randomUUID();
@@ -346,6 +355,25 @@ public class FileStorageServiceTest {
         when(objectStorage.isConfigured()).thenReturn(true);
         when(objectStorage.listObjectKeys("bucket"))
                 .thenReturn(List.of("product_" + relatedObjectId + "/cover.jpg", "invalid-key"));
+        when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
+
+        fileStorageService.refreshBucketIndex("bucket");
+
+        ArgumentCaptor<List<FileMetadataDto>> captor = ArgumentCaptor.forClass(List.class);
+        verify(fileMetadataDtoConverter).toEntityList(captor.capture());
+        assertThat(captor.getValue()).containsExactlyElementsOf(metadata);
+    }
+
+    @Test
+    @DisplayName("refreshBucketIndex skips folder markers and root keys")
+    @SuppressWarnings("unchecked")
+    void refreshBucketIndexSkipsFolderMarkersAndRootKeys() {
+        UUID relatedObjectId = UUID.randomUUID();
+        String validKey = "product_" + relatedObjectId + "/cover.jpg";
+        List<FileMetadataDto> metadata = List.of(new FileMetadataDto(relatedObjectId, "bucket", validKey));
+        when(objectStorage.isConfigured()).thenReturn(true);
+        when(objectStorage.listObjectKeys("bucket"))
+                .thenReturn(List.of("product_" + relatedObjectId, "product_" + relatedObjectId + "/", validKey));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
 
         fileStorageService.refreshBucketIndex("bucket");

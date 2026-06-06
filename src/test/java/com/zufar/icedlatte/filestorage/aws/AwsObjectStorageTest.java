@@ -92,6 +92,16 @@ class AwsObjectStorageTest {
     }
 
     @Test
+    @DisplayName("public URL trims trailing slashes before checking bucket suffix")
+    void publicUrlTrimsTrailingSlashesBeforeCheckingBucketSuffix() {
+        AwsObjectStorage storage =
+                new AwsObjectStorage(s3Client, s3Presigner, properties("https://cdn.example.com/products/"));
+
+        assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "products", "card_logo.webp")))
+                .contains("https://cdn.example.com/products/card_logo.webp");
+    }
+
+    @Test
     @DisplayName("Supabase public URL base for product bucket falls back to signed URL for avatar bucket")
     void supabaseProductPublicUrlBaseFallsBackToSignedUrlForAvatarBucket() throws Exception {
         AwsObjectStorage storage = new AwsObjectStorage(
@@ -112,6 +122,16 @@ class AwsObjectStorageTest {
     void supabasePublicUrlBaseWithoutBucketAppendsRequestedBucket() {
         AwsObjectStorage storage = new AwsObjectStorage(
                 s3Client, s3Presigner, properties("https://project.supabase.co/storage/v1/object/public"));
+
+        assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "iced-latte-users", "avatar.png")))
+                .contains("https://project.supabase.co/storage/v1/object/public/iced-latte-users/avatar.png");
+    }
+
+    @Test
+    @DisplayName("Supabase public URL base with trailing slash appends requested bucket once")
+    void supabasePublicUrlBaseWithTrailingSlashAppendsRequestedBucketOnce() {
+        AwsObjectStorage storage = new AwsObjectStorage(
+                s3Client, s3Presigner, properties("https://project.supabase.co/storage/v1/object/public/"));
 
         assertThat(storage.getUrl(new FileMetadataDto(UUID.randomUUID(), "iced-latte-users", "avatar.png")))
                 .contains("https://project.supabase.co/storage/v1/object/public/iced-latte-users/avatar.png");

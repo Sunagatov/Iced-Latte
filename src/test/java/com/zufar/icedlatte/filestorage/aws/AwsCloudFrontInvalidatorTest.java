@@ -55,6 +55,34 @@ class AwsCloudFrontInvalidatorTest {
         assertThat(request.invalidationBatch().callerReference()).isNotBlank();
     }
 
+    @Test
+    @DisplayName("normalizes leading slashes before invalidating")
+    void normalizesLeadingSlashesBeforeInvalidating() {
+        AwsCloudFrontInvalidator invalidator =
+                new AwsCloudFrontInvalidator(cloudFrontClient, properties("distribution-123"));
+
+        invalidator.invalidate("/images/avatar.jpg");
+
+        ArgumentCaptor<Consumer<CreateInvalidationRequest.Builder>> consumerCaptor = consumerCaptor();
+        verify(cloudFrontClient).createInvalidation(consumerCaptor.capture());
+
+        CreateInvalidationRequest.Builder builder = CreateInvalidationRequest.builder();
+        consumerCaptor.getValue().accept(builder);
+
+        assertThat(builder.build().invalidationBatch().paths().items()).containsExactly("/images/avatar.jpg");
+    }
+
+    @Test
+    @DisplayName("skips invalidation when the file key is blank")
+    void skipsInvalidationWhenFileKeyIsBlank() {
+        AwsCloudFrontInvalidator invalidator =
+                new AwsCloudFrontInvalidator(cloudFrontClient, properties("distribution-123"));
+
+        invalidator.invalidate(" ");
+
+        verifyNoInteractions(cloudFrontClient);
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static ArgumentCaptor<Consumer<CreateInvalidationRequest.Builder>> consumerCaptor() {
         return (ArgumentCaptor) ArgumentCaptor.forClass(Consumer.class);
