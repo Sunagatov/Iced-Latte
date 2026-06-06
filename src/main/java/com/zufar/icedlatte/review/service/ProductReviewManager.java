@@ -84,7 +84,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
 
         productReviewProductApi.refreshReviewAggregates(productId);
 
-        eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productReviewText.trim(), productId));
+        eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productId));
 
         return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
@@ -118,9 +118,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
 
         productReviewLike.ifPresentOrElse(
                 entity -> {
-                    if (entity.getIsLike().equals(newProductReviewLike)) {
-                        productReviewLikeRepository.deleteByUserIdAndProductReviewId(userId, productReviewId);
-                    } else {
+                    if (!entity.getIsLike().equals(newProductReviewLike)) {
                         entity.setIsLike(newProductReviewLike);
                         productReviewLikeRepository.saveAndFlush(entity);
                     }

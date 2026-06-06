@@ -2,7 +2,11 @@ package com.zufar.icedlatte.review.service.ai.summary;
 
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PreDestroy;
 
@@ -29,7 +33,7 @@ public class ProductReviewSummaryDebouncer {
     private final ProductReviewProductApi productReviewProductApi;
     private final ObjectProvider<ProductReviewSummaryDebouncer> selfProvider;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final ScheduledExecutorService scheduler;
     private final ConcurrentHashMap<UUID, ScheduledFuture<?>> pendingDebounce = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Long> firstTriggerTime = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Integer> retryCounts = new ConcurrentHashMap<>();
@@ -41,12 +45,31 @@ public class ProductReviewSummaryDebouncer {
             ProductSummaryService productSummaryService,
             ProductReviewProductApi productReviewProductApi,
             ObjectProvider<ProductReviewSummaryDebouncer> selfProvider) {
+        this(
+                debounceDelay,
+                maxWait,
+                maxRetryAttempts,
+                productSummaryService,
+                productReviewProductApi,
+                selfProvider,
+                Executors.newScheduledThreadPool(2));
+    }
+
+    ProductReviewSummaryDebouncer(
+            Duration debounceDelay,
+            Duration maxWait,
+            int maxRetryAttempts,
+            ProductSummaryService productSummaryService,
+            ProductReviewProductApi productReviewProductApi,
+            ObjectProvider<ProductReviewSummaryDebouncer> selfProvider,
+            ScheduledExecutorService scheduler) {
         this.debounceDelaySec = debounceDelay.toSeconds();
         this.maxWaitSec = maxWait.toSeconds();
         this.maxRetryAttempts = maxRetryAttempts;
         this.productSummaryService = productSummaryService;
         this.productReviewProductApi = productReviewProductApi;
         this.selfProvider = selfProvider;
+        this.scheduler = scheduler;
     }
 
     public void schedule(UUID productId) {
@@ -86,7 +109,7 @@ public class ProductReviewSummaryDebouncer {
                 },
                 delay,
                 TimeUnit.SECONDS);
-        pendingDebounce.put(productId, future);
+        pendingDebounce.compute(productId, (_, _) -> future.isDone() ? null : future);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public record ReviewCreatedEvent(UUID eventId, UUID reviewId, String text, UUID productId, Instant occurredAt) {
+public record ReviewCreatedEvent(UUID eventId, UUID reviewId, UUID productId, Instant occurredAt) {
 
     public ReviewCreatedEvent {
         Objects.requireNonNull(eventId, "eventId");
@@ -13,7 +13,7 @@ public record ReviewCreatedEvent(UUID eventId, UUID reviewId, String text, UUID 
         Objects.requireNonNull(occurredAt, "occurredAt");
     }
 
-    public ReviewCreatedEvent(UUID reviewId, String text, UUID productId) {
-        this(UUID.randomUUID(), reviewId, text, productId, Instant.now());
+    public ReviewCreatedEvent(UUID reviewId, UUID productId) {
+        this(UUID.randomUUID(), reviewId, productId, Instant.now());
     }
 }

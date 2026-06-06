@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
+import com.zufar.icedlatte.review.exception.ReviewSummaryException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 
@@ -22,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 class LangChain4jReviewAiService implements ReviewModerationService, ProductSummaryService {
 
     private static final String OK = "OK";
-    private static final String FALLBACK_SUMMARY = "Summary unavailable.";
     private static final int MAX_REVIEWS_FOR_SUMMARY = 100;
 
     private final ReviewAiService reviewAiService;
@@ -32,10 +32,17 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
     public void moderate(String text) {
         try {
             var response = reviewAiService.moderate(text);
-            if (!response.startsWith(OK)) {
-                var reason = response.contains(":")
-                        ? response.substring(response.indexOf(':') + 1).trim()
-                        : response;
+            var normalizedResponse = response == null ? "" : response.trim();
+
+            if (!OK.equals(normalizedResponse)) {
+                String reason;
+                if (normalizedResponse.contains(":")) {
+                    reason = normalizedResponse
+                            .substring(normalizedResponse.indexOf(':') + 1)
+                            .trim();
+                } else {
+                    reason = normalizedResponse;
+                }
                 throw new ReviewModerationException(reason);
             }
         } catch (ReviewModerationException e) {
@@ -59,7 +66,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
                     "ai.summary.unavailable: productId={}, exceptionClass={}",
                     productId,
                     e.getClass().getSimpleName());
-            return FALLBACK_SUMMARY;
+            throw new ReviewSummaryException(productId, e);
         }
     }
 }
