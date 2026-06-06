@@ -7,15 +7,13 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 
-import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 
-@Service
-@RequiredArgsConstructor
+@UtilityClass
 public class GetProductsRequestValidator {
 
     private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES =
@@ -23,9 +21,7 @@ public class GetProductsRequestValidator {
     private static final Set<Integer> ALLOWED_MINIMUM_AVERAGE_RATING_VALUES = Set.of(1, 2, 3, 4, 5);
     private static final int MAX_KEYWORD_LENGTH = 200;
 
-    private final PaginationParametersValidator paginationParametersValidator;
-
-    public void validate(
+    public static void validate(
             final @Nullable Integer pageNumber,
             final @Nullable Integer pageSize,
             final @Nullable String sortAttribute,
@@ -37,7 +33,7 @@ public class GetProductsRequestValidator {
             final @Nullable List<@Nullable String> sellerNames,
             final @Nullable String keyword) {
 
-        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
+        List<String> errors = new ArrayList<>(PaginationParametersValidator.validate(
                 pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
         errors.addAll(validateMinMaxPrice(minPrice, maxPrice));
         errors.addAll(validateNameList(brandNames, "brandNames"));

@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,6 +62,24 @@ class UserExceptionHandlerTest {
         ResponseEntity<ProblemDetail> result = userExceptionHandler.handleUserException(exception);
 
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(result.getBody()).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("Should return SERVICE_UNAVAILABLE for UserAvatarUploadException")
+    void shouldHandleUserAvatarUploadException() {
+        UserAvatarUploadException exception = new UserAvatarUploadException(UUID.randomUUID(), "avatar.jpg");
+        ProblemDetail expected = ProblemDetail.forStatus(HttpStatus.SERVICE_UNAVAILABLE);
+        when(problemDetailFactory.build(
+                        "file-upload-failed",
+                        "File upload failed",
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Avatar upload is currently unavailable."))
+                .thenReturn(expected);
+
+        ResponseEntity<ProblemDetail> result = userExceptionHandler.handleUserException(exception);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
         assertThat(result.getBody()).isEqualTo(expected);
     }
 }

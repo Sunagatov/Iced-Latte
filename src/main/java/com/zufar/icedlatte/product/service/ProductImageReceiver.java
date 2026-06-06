@@ -15,6 +15,7 @@ import com.zufar.icedlatte.product.config.ProductCacheConfigurationProvider;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class ProductImageReceiver {
 
     private final FileUrlResolverApi fileUrlResolverApi;
     private final ProductImageRepository productImageRepository;
+    private final MeterRegistry meterRegistry;
 
     @Cacheable(
             cacheNames = ProductCacheConfigurationProvider.PRODUCT_IMAGE_URL,
@@ -42,6 +44,7 @@ public class ProductImageReceiver {
                 return placeholderImageUrl;
             });
         } catch (RuntimeException ex) {
+            meterRegistry.counter("product.image.fallback", "mode", "single").increment();
             log.error(
                     "product.image.error: productId={}, exceptionClass={}",
                     productId,
@@ -71,6 +74,7 @@ public class ProductImageReceiver {
         try {
             fileUrls = fileUrlResolverApi.findFileUrls(productIds);
         } catch (RuntimeException ex) {
+            meterRegistry.counter("product.image.fallback", "mode", "batch").increment();
             log.error(
                     "product.images.error: count={}, exceptionClass={}",
                     productIds.size(),

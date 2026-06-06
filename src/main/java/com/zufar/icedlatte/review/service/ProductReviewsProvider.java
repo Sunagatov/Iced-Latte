@@ -41,7 +41,6 @@ public class ProductReviewsProvider {
     private final ProductReviewDtoConverter productReviewDtoConverter;
     private final ProductReviewValidator productReviewValidator;
     private final PaginationConfig paginationConfig;
-    private final GetReviewsRequestValidator getReviewsRequestValidator;
     private final UserLookupApi userLookupApi;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
@@ -118,7 +117,7 @@ public class ProductReviewsProvider {
         String sortDir = sortDirection != null
                 ? sortDirection
                 : paginationConfig.reviews().defaultSortDirection();
-        getReviewsRequestValidator.validate(page, size, sortAttr, sortDir, productRatings);
+        GetReviewsRequestValidator.validate(page, size, sortAttr, sortDir, productRatings);
         return PageRequestFactory.of(page, size, sortAttr, sortDir);
     }
 

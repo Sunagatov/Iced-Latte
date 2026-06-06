@@ -2,9 +2,7 @@ package com.zufar.icedlatte.ratelimit.filter;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -22,7 +20,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.ratelimit.api.AuthenticatedRequestIdentityProvider;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
@@ -39,8 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
-
     private final RateLimiter openRateLimiter;
     private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
@@ -48,11 +43,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private final AuthenticatedRequestIdentityProvider authenticatedRequestIdentityProvider;
     private final RateLimitProperties properties;
     private final ProblemTypeUriFactory problemTypeUriFactory;
+    private final RateLimitBanTracker banTracker;
 
     private final Cache<String, Boolean> warnedKeys;
-
-    /** Tracks how many times an IP has been blocked within the ban window. */
-    private final Cache<String, AtomicInteger> blockCounts;
 
     @PostConstruct
     void validate() {
@@ -97,25 +90,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         this.authenticatedRequestIdentityProvider = authenticatedRequestIdentityProvider;
         this.properties = properties;
         this.problemTypeUriFactory = problemTypeUriFactory;
+        this.banTracker = new RateLimitBanTracker(properties, caffeineSizeProperties);
         this.warnedKeys = Caffeine.newBuilder()
                 .maximumSize(caffeineSizeProperties.rateLimitFilterSize())
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build();
-        this.blockCounts = Caffeine.newBuilder()
-                .maximumSize(caffeineSizeProperties.rateLimitFilterSize())
-                .expireAfterWrite(properties.getBanDuration())
                 .build();
     }
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String method = request.getMethod();
-        String path = request.getRequestURI();
-        return "OPTIONS".equalsIgnoreCase(method) || isActuatorPath(path) || path.startsWith(ApiPaths.DOCS_ROOT);
-    }
-
-    private boolean isActuatorPath(String path) {
-        return path.startsWith(ApiPaths.ACTUATOR_ROOT) || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+        return RateLimitRouteClassifier.shouldSkip(request);
     }
 
     @Override
@@ -127,7 +111,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String ip = clientIpExtractor.extract(request);
 
         // #7: Short-circuit ban for repeat offenders
-        if (isBanned(ip)) {
+        if (banTracker.isBanned(ip)) {
             meterRegistry.counter("rate_limit.requests.banned").increment();
             RateLimitResult banResult = new RateLimitResult(
                     false,
@@ -140,7 +124,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (isStrictPreAuthPath(request.getRequestURI())
+        if (RateLimitRouteClassifier.isStrictPreAuthPath(request.getRequestURI())
                 && isBlocked(
                         request,
                         response,
@@ -150,7 +134,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                         closedRateLimiter,
                         "ip",
                         ip)) {
-            recordBlock(ip);
+            banTracker.recordBlock(ip);
             return;
         }
 
@@ -163,11 +147,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 openRateLimiter,
                 "ip",
                 ip)) {
-            recordBlock(ip);
+            banTracker.recordBlock(ip);
             return;
         }
 
-        RateLimitCategory category = resolvePrimaryCategory(request);
+        RateLimitCategory category = RateLimitRouteClassifier.classify(request);
         Identity identity = resolveIdentity(request, ip);
         if (isBlocked(
                 request,
@@ -178,20 +162,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 openRateLimiter,
                 identity.type(),
                 ip)) {
-            recordBlock(ip);
+            banTracker.recordBlock(ip);
             return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private boolean isBanned(String ip) {
-        AtomicInteger count = blockCounts.getIfPresent(ip);
-        return count != null && count.get() >= properties.getBanThreshold();
-    }
-
-    private void recordBlock(String ip) {
-        blockCounts.get(ip, _ -> new AtomicInteger(0)).incrementAndGet();
     }
 
     private boolean isBlocked(
@@ -234,46 +209,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             case PRE_AUTH -> properties.getPreAuth();
             case GLOBAL -> properties.getGlobal();
         };
-    }
-
-    private RateLimitCategory resolvePrimaryCategory(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return switch (path) {
-            case String uri
-            when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
-            case String uri when isPasswordResetPath(uri) -> RateLimitCategory.AUTH;
-            case String uri
-            when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
-            case String uri
-            when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
-            case String uri when uri.startsWith("/api/v1/telemetry/") -> RateLimitCategory.TELEMETRY;
-            case String uri when isFileUploadRequest(request, uri) -> RateLimitCategory.FILE_UPLOAD;
-            case String _ when !READ_METHODS.contains(request.getMethod()) -> RateLimitCategory.WRITE;
-            default -> RateLimitCategory.GLOBAL;
-        };
-    }
-
-    private boolean isFileUploadRequest(HttpServletRequest request, String path) {
-        String contentType = request.getContentType();
-        return contentType != null
-                && contentType.startsWith("multipart/")
-                && (path.endsWith("/avatar") || path.contains("/images"));
-    }
-
-    private boolean isStrictPreAuthPath(String path) {
-        return path.equals(ApiPaths.AUTH_AUTHENTICATE)
-                || path.equals(ApiPaths.AUTH + "/register")
-                || isPasswordResetPath(path);
-    }
-
-    private boolean isGlobalAuthPath(String path) {
-        return path.startsWith(ApiPaths.AUTH_OAUTH + "/")
-                || path.equals(ApiPaths.AUTH_AUTHENTICATE)
-                || path.equals(ApiPaths.AUTH + "/register");
-    }
-
-    private boolean isPasswordResetPath(String path) {
-        return path.equals(ApiPaths.AUTH_PASSWORD_FORGOT) || path.equals(ApiPaths.AUTH_PASSWORD_CHANGE);
     }
 
     private static void assertPositiveBanConfiguration(RateLimitProperties properties) {

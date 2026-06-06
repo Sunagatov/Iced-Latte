@@ -45,7 +45,6 @@ public class ProductService implements ProductCatalogApi {
     private final ProductInfoDtoConverter productInfoDtoConverter;
     private final ProductPictureLinkUpdater productPictureLinkUpdater;
     private final PaginationConfig paginationConfig;
-    private final GetProductsRequestValidator getProductsRequestValidator;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     @Cacheable(cacheNames = ProductCacheConfigurationProvider.PRODUCT_BY_ID, key = "#productId")
@@ -102,7 +101,7 @@ public class ProductService implements ProductCatalogApi {
             final @Nullable List<String> brandNames,
             final @Nullable List<String> sellerNames,
             final @Nullable String keyword) {
-        getProductsRequestValidator.validate(
+        GetProductsRequestValidator.validate(
                 pageNumber,
                 pageSize,
                 sortAttribute,

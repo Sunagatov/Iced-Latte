@@ -19,15 +19,13 @@ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 class ShoppingCartDtoConverterTest {
 
-    private final ShoppingCartDtoConverter converter = new ShoppingCartDtoConverter();
-
     @Test
     @DisplayName("Should convert ShoppingCart to ShoppingCartDto with complete information")
     void shouldConvertShoppingCartToShoppingCartDtoWithCompleteInformation() {
         ShoppingCart cart = CartDtoTestStub.createShoppingCart();
         Map<UUID, ProductSnapshot> productsById = CartDtoTestStub.createProductsById();
 
-        ShoppingCartDto result = converter.toDto(cart, productsById);
+        ShoppingCartDto result = ShoppingCartDtoConverter.toDto(cart, productsById);
 
         assertNotNull(result);
         assertEquals(cart.getId(), result.getId());
@@ -47,7 +45,7 @@ class ShoppingCartDtoConverterTest {
         ShoppingCart emptyCart = CartDtoTestStub.createEmptyShoppingCart();
         Map<UUID, ProductSnapshot> productsById = Map.of();
 
-        ShoppingCartDto result = converter.toDto(emptyCart, productsById);
+        ShoppingCartDto result = ShoppingCartDtoConverter.toDto(emptyCart, productsById);
 
         assertNotNull(result);
         assertEquals(emptyCart.getId(), result.getId());
@@ -67,7 +65,7 @@ class ShoppingCartDtoConverterTest {
         Map<UUID, ProductSnapshot> productsById = CartDtoTestStub.createProductsById();
         productsById.remove(CartDtoTestStub.FIRST_PRODUCT_ID);
 
-        assertThatThrownBy(() -> converter.toDto(cart, productsById))
+        assertThatThrownBy(() -> ShoppingCartDtoConverter.toDto(cart, productsById))
                 .isInstanceOf(CartProductSnapshotMissingException.class);
     }
 
@@ -77,6 +75,7 @@ class ShoppingCartDtoConverterTest {
         ShoppingCart cart = new ShoppingCart();
         cart.setId(UUID.randomUUID());
 
-        assertThatThrownBy(() -> converter.toDto(cart, Map.of())).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> ShoppingCartDtoConverter.toDto(cart, Map.of()))
+                .isInstanceOf(NullPointerException.class);
     }
 }

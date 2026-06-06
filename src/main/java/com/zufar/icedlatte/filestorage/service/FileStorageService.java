@@ -35,8 +35,6 @@ public class FileStorageService implements FileStorageApi {
     private final FileMetadataDtoConverter fileMetadataDtoConverter;
     private final FileDeletionOutboxRepository fileDeletionOutboxRepository;
     private final FileDeletionOutboxProperties fileDeletionOutboxProperties;
-    private final FileMetadataSelectionPolicy fileMetadataSelectionPolicy;
-    private final StorageKeyMetadataParser storageKeyMetadataParser;
 
     @Override
     public boolean isEnabled() {
@@ -102,12 +100,12 @@ public class FileStorageService implements FileStorageApi {
     public void refreshBucketIndex(String bucketName) {
         requireStorageEnabledForListing(bucketName);
         List<FileMetadataDto> fileMetadataList = objectStorage.listObjectKeys(bucketName).stream()
-                .map(fileName -> storageKeyMetadataParser.parse(fileName, bucketName))
+                .map(fileName -> StorageKeyMetadataParser.parse(fileName, bucketName))
                 .flatMap(Optional::stream)
                 .collect(Collectors.toMap(
                         FileMetadataDto::relatedObjectId,
                         metadata -> metadata,
-                        fileMetadataSelectionPolicy::selectPreferred))
+                        FileMetadataSelectionPolicy::selectPreferred))
                 .values()
                 .stream()
                 .toList();
@@ -169,6 +167,6 @@ public class FileStorageService implements FileStorageApi {
                 .collect(Collectors.toMap(
                         FileMetadataDto::relatedObjectId,
                         metadata -> metadata,
-                        fileMetadataSelectionPolicy::selectPreferred));
+                        FileMetadataSelectionPolicy::selectPreferred));
     }
 }

@@ -30,7 +30,6 @@ public class FavoriteService {
     private static final int MAX_FAVORITE_PRODUCT_IDS = 100;
 
     private final FavoriteRepository favoriteRepository;
-    private final FavoriteListDtoConverter favoriteListDtoConverter;
     private final ProductCatalogApi productCatalogApi;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
@@ -38,7 +37,7 @@ public class FavoriteService {
         return favoriteRepository
                 .findByUserId(userId)
                 .map(this::toEnrichedDto)
-                .orElseGet(() -> favoriteListDtoConverter.toDto(List.of()));
+                .orElseGet(() -> FavoriteListDtoConverter.toDto(List.of()));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -87,10 +86,10 @@ public class FavoriteService {
     private ListOfFavoriteProductsDto toEnrichedDto(FavoriteListEntity entity) {
         List<UUID> productIds = extractSortedProductIds(entity);
         if (productIds.isEmpty()) {
-            return favoriteListDtoConverter.toDto(List.of());
+            return FavoriteListDtoConverter.toDto(List.of());
         }
         List<ProductSnapshot> existingProducts = productCatalogApi.getProductsByIds(productIds);
-        return favoriteListDtoConverter.toDto(existingProducts);
+        return FavoriteListDtoConverter.toDto(existingProducts);
     }
 
     private void validateProductsExist(Set<UUID> productIds) {

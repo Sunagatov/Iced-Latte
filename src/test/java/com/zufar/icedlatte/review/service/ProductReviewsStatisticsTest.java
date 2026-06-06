@@ -20,7 +20,6 @@ import com.zufar.icedlatte.openapi.dto.RatingMap;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ProductRatingCount;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,9 +40,6 @@ class ProductReviewsStatisticsTest {
 
     @Mock
     PaginationConfig paginationConfig;
-
-    @Mock
-    GetReviewsRequestValidator getReviewsRequestValidator;
 
     @Test
     @DisplayName("Should return stats with correct avg rating and rating map")

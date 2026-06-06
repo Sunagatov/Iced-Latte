@@ -30,7 +30,6 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
-import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
@@ -47,9 +46,6 @@ class ProductReviewsProviderTest {
 
     @Mock
     private ProductReviewValidator productReviewValidator;
-
-    @Mock
-    private GetReviewsRequestValidator getReviewsRequestValidator;
 
     @Mock
     private UserLookupApi userLookupApi;
@@ -95,7 +91,6 @@ class ProductReviewsProviderTest {
 
         assertThat(result).isEqualTo(expected);
         verify(productReviewValidator).validateProductExists(productId);
-        verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
         verify(userLookupApi, never()).getUserById(userId);
     }
 
@@ -135,7 +130,6 @@ class ProductReviewsProviderTest {
                 .thenReturn(expected);
 
         assertThat(provider.getUserReviews(userId, 0, 10, "createdAt", "desc")).isEqualTo(expected);
-        verify(getReviewsRequestValidator).validate(0, 10, "createdAt", "desc", null);
     }
 
     private UserLookupSnapshot user() {

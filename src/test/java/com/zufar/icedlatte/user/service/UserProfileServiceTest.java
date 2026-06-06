@@ -44,10 +44,6 @@ class UserProfileServiceTest {
     private UserDtoConverter userDtoConverter;
 
     @Mock
-    @SuppressWarnings("unused")
-    private PutUsersRequestValidator putUsersRequestValidator;
-
-    @Mock
     private FileUrlResolverApi fileUrlResolverApi;
 
     @Mock
@@ -118,7 +114,6 @@ class UserProfileServiceTest {
 
             assertThat(result).isEqualTo(expectedDto);
             assertThat(result.getAvatarLink()).isEqualTo("https://cdn.example.com/avatar.jpg");
-            verify(putUsersRequestValidator).validate("Alice", "Smith", "+1234567890", birthDate, addressDto);
             verify(userDtoConverter).updateEntity(userEntity, request);
             verify(userRepository).save(userEntity);
         }
@@ -141,7 +136,6 @@ class UserProfileServiceTest {
 
             userProfileService.updateProfile(userId, request);
 
-            verify(putUsersRequestValidator).validate("Bob", "Jones", null, null, null);
             verify(userDtoConverter).updateEntity(userEntity, request);
         }
     }

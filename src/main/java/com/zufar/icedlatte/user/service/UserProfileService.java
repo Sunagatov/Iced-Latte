@@ -36,7 +36,6 @@ public class UserProfileService implements UserAccessControlApi {
     private final SingleUserProvider singleUserProvider;
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
-    private final PutUsersRequestValidator putUsersRequestValidator;
     private final FileUrlResolverApi fileUrlResolverApi;
     private final FileStorageWriterApi fileStorageWriterApi;
     private final PasswordEncoder passwordEncoder;
@@ -50,7 +49,7 @@ public class UserProfileService implements UserAccessControlApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateProfile(UUID userId, UpdateUserAccountRequest request) {
         AddressDto addressDto = request.getAddress();
-        putUsersRequestValidator.validate(
+        PutUsersRequestValidator.validate(
                 request.getFirstName(),
                 request.getLastName(),
                 request.getPhoneNumber(),

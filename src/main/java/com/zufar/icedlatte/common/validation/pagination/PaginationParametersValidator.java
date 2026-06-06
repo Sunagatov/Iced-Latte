@@ -5,14 +5,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Service;
 
-@Service
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class PaginationParametersValidator {
 
     private static final Set<String> ALLOWED_SORT_DIRECTION_VALUES = Set.of("asc", "desc");
 
-    public List<String> validate(
+    public static List<String> validate(
             final @Nullable Integer pageNumber,
             final @Nullable Integer pageSize,
             final @Nullable String sortAttribute,

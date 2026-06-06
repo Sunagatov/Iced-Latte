@@ -5,42 +5,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 import com.zufar.icedlatte.review.service.validator.GetReviewsRequestValidator;
 
 @DisplayName("GetReviewsRequestValidator unit tests")
 class GetReviewsRequestValidatorTest {
 
-    private GetReviewsRequestValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new GetReviewsRequestValidator(new PaginationParametersValidator());
-    }
-
     @Test
     @DisplayName("Valid request passes")
     void validate_allValid_noException() {
-        assertThatCode(() -> validator.validate(0, 10, "createdAt", "desc", List.of(1, 2, 3)))
+        assertThatCode(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "desc", List.of(1, 2, 3)))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("Null productRatings is allowed")
     void validate_nullRatings_noException() {
-        assertThatCode(() -> validator.validate(0, 10, "createdAt", "asc", null))
+        assertThatCode(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "asc", null))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("Invalid rating value throws")
     void validate_invalidRatingValue_throws() {
-        assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of(6)))
+        assertThatThrownBy(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "asc", List.of(6)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("productRating");
     }
@@ -48,7 +39,7 @@ class GetReviewsRequestValidatorTest {
     @Test
     @DisplayName("Empty productRatings throws")
     void validate_emptyRatings_throws() {
-        assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of()))
+        assertThatThrownBy(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "asc", List.of()))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must not be empty");
     }
@@ -56,7 +47,7 @@ class GetReviewsRequestValidatorTest {
     @Test
     @DisplayName("Duplicate rating values throws")
     void validate_duplicateRatings_throws() {
-        assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", List.of(1, 1)))
+        assertThatThrownBy(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "asc", List.of(1, 1)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("duplicates");
     }
@@ -67,14 +58,14 @@ class GetReviewsRequestValidatorTest {
         List<Integer> withNull = new java.util.ArrayList<>();
         withNull.add(1);
         withNull.add(null);
-        assertThatThrownBy(() -> validator.validate(0, 10, "createdAt", "asc", withNull))
+        assertThatThrownBy(() -> GetReviewsRequestValidator.validate(0, 10, "createdAt", "asc", withNull))
                 .isInstanceOf(BadRequestException.class);
     }
 
     @Test
     @DisplayName("Invalid sortAttribute throws")
     void validate_invalidSortAttribute_throws() {
-        assertThatThrownBy(() -> validator.validate(0, 10, "unknown", "asc", null))
+        assertThatThrownBy(() -> GetReviewsRequestValidator.validate(0, 10, "unknown", "asc", null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("sortAttribute");
     }
@@ -82,7 +73,8 @@ class GetReviewsRequestValidatorTest {
     @Test
     @DisplayName("All valid ratings 1-5 pass")
     void validate_allValidRatings_noException() {
-        assertThatCode(() -> validator.validate(0, 10, "productRating", "desc", List.of(1, 2, 3, 4, 5)))
+        assertThatCode(() ->
+                        GetReviewsRequestValidator.validate(0, 10, "productRating", "desc", List.of(1, 2, 3, 4, 5)))
                 .doesNotThrowAnyException();
     }
 }

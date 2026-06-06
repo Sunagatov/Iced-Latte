@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +14,6 @@ import com.zufar.icedlatte.openapi.dto.AddressDto;
 @DisplayName("PutUsersRequestValidator Tests")
 class PutUsersRequestValidatorTest {
 
-    private PutUsersRequestValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new PutUsersRequestValidator();
-    }
-
     @Test
     @DisplayName("Should not throw exception when all parameters are correct")
     void shouldNotThrowExceptionWhenAllParametersAreCorrect() {
@@ -29,19 +21,22 @@ class PutUsersRequestValidatorTest {
                 new AddressDto().country("Country").city("City").line("Line").postcode("00000");
         LocalDate birthDate = LocalDate.of(2000, 12, 1);
 
-        assertDoesNotThrow(() -> validator.validate("name", "surname", "+79000000000", birthDate, address));
+        assertDoesNotThrow(
+                () -> PutUsersRequestValidator.validate("name", "surname", "+79000000000", birthDate, address));
     }
 
     @Test
     @DisplayName("Should not throw exception when only required parameters are provided")
     void shouldNotThrowExceptionWhenHasOnlyRequiredParameters() {
-        assertDoesNotThrow(() -> validator.validate("name", "surname", null, null, null));
+        assertDoesNotThrow(() -> PutUsersRequestValidator.validate("name", "surname", null, null, null));
     }
 
     @Test
     @DisplayName("Should throw BadRequestException when name and phone are incorrect")
     void shouldThrowWhenCoreParametersAreIncorrect() {
-        assertThrows(BadRequestException.class, () -> validator.validate(null, "s", "+7900000000b", null, null));
+        assertThrows(
+                BadRequestException.class,
+                () -> PutUsersRequestValidator.validate(null, "s", "+7900000000b", null, null));
     }
 
     @Test
@@ -55,6 +50,7 @@ class PutUsersRequestValidatorTest {
 
         assertThrows(
                 BadRequestException.class,
-                () -> validator.validate("name", "surname", "+79000000000", LocalDate.of(2000, 12, 1), address));
+                () -> PutUsersRequestValidator.validate(
+                        "name", "surname", "+79000000000", LocalDate.of(2000, 12, 1), address));
     }
 }

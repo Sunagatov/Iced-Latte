@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 import com.zufar.icedlatte.user.exception.UserException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
 
@@ -45,6 +46,13 @@ public class UserExceptionHandler {
                                 "Invalid file type",
                                 HttpStatus.BAD_REQUEST,
                                 "Invalid file type. Allowed types: JPEG, PNG, WebP");
+                    case UserAvatarUploadException _ ->
+                        new ErrorMapping(
+                                "exception.avatar.upload_failed",
+                                ProblemType.FILE_UPLOAD_FAILED,
+                                "File upload failed",
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "Avatar upload is currently unavailable.");
                 };
 
         log.debug("{}: status={}", mapping.logTag(), mapping.status().value());

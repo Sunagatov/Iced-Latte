@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.order.endpoint;
 
+import static com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator.validate;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -10,7 +12,6 @@ import org.springframework.stereotype.Component;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,11 +23,9 @@ class OrderPageRequestFactory {
             Set.of("id", "createdAt", "updatedAt", "status", "itemsTotalPrice");
 
     private final PaginationConfig paginationConfig;
-    private final PaginationParametersValidator paginationParametersValidator;
 
     Pageable build(Integer page, Integer size, String sortBy, String sortDirection) {
-        List<String> errors = new ArrayList<>(
-                paginationParametersValidator.validate(page, size, sortBy, sortDirection, ALLOWED_SORT_ATTRIBUTES));
+        List<String> errors = new ArrayList<>(validate(page, size, sortBy, sortDirection, ALLOWED_SORT_ATTRIBUTES));
         if (size != null && size > paginationConfig.orders().maxPageSize()) {
             errors.add(error("'%s' is the incorrect 'size' value. Maximum allowed 'size' value is '%s'."
                     .formatted(size, paginationConfig.orders().maxPageSize())));

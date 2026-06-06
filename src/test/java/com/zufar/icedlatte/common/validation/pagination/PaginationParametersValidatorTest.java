@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 @DisplayName("PaginationParametersValidator unit tests")
 class PaginationParametersValidatorTest {
 
-    private final PaginationParametersValidator validator = new PaginationParametersValidator();
     private final Set<String> allowed = Set.of("name", "price", "rating");
 
     @Nested
@@ -22,19 +21,21 @@ class PaginationParametersValidatorTest {
         @Test
         @DisplayName("returns no errors when all parameters are valid")
         void returnsNoErrorsWhenAllParametersAreValid() {
-            assertThat(validator.validate(0, 10, "name", "asc", allowed)).isEmpty();
+            assertThat(PaginationParametersValidator.validate(0, 10, "name", "asc", allowed))
+                    .isEmpty();
         }
 
         @Test
         @DisplayName("allows null optional parameters")
         void allowsNullOptionalParameters() {
-            assertThat(validator.validate(null, null, null, null, allowed)).isEmpty();
+            assertThat(PaginationParametersValidator.validate(null, null, null, null, allowed))
+                    .isEmpty();
         }
 
         @Test
         @DisplayName("reports negative page number")
         void reportsNegativePageNumber() {
-            List<String> errors = validator.validate(-1, 10, "name", "asc", allowed);
+            List<String> errors = PaginationParametersValidator.validate(-1, 10, "name", "asc", allowed);
 
             assertThat(errors).singleElement().asString().contains("PageNumber");
         }
@@ -42,7 +43,7 @@ class PaginationParametersValidatorTest {
         @Test
         @DisplayName("reports zero page size")
         void reportsZeroPageSize() {
-            List<String> errors = validator.validate(0, 0, "name", "asc", allowed);
+            List<String> errors = PaginationParametersValidator.validate(0, 0, "name", "asc", allowed);
 
             assertThat(errors).singleElement().asString().contains("PageSize");
         }
@@ -50,7 +51,7 @@ class PaginationParametersValidatorTest {
         @Test
         @DisplayName("reports invalid sort attribute")
         void reportsInvalidSortAttribute() {
-            List<String> errors = validator.validate(0, 10, "unknown", "asc", allowed);
+            List<String> errors = PaginationParametersValidator.validate(0, 10, "unknown", "asc", allowed);
 
             assertThat(errors).singleElement().asString().contains("sortAttribute");
         }
@@ -58,13 +59,14 @@ class PaginationParametersValidatorTest {
         @Test
         @DisplayName("treats sort direction case-insensitively")
         void treatsSortDirectionCaseInsensitively() {
-            assertThat(validator.validate(0, 10, "name", "DESC", allowed)).isEmpty();
+            assertThat(PaginationParametersValidator.validate(0, 10, "name", "DESC", allowed))
+                    .isEmpty();
         }
 
         @Test
         @DisplayName("reports invalid sort direction")
         void reportsInvalidSortDirection() {
-            List<String> errors = validator.validate(0, 10, "name", "sideways", allowed);
+            List<String> errors = PaginationParametersValidator.validate(0, 10, "name", "sideways", allowed);
 
             assertThat(errors).singleElement().asString().contains("sortDirection");
         }
@@ -72,7 +74,7 @@ class PaginationParametersValidatorTest {
         @Test
         @DisplayName("accumulates all validation errors")
         void accumulatesAllValidationErrors() {
-            List<String> errors = validator.validate(-1, 0, "bad", "sideways", allowed);
+            List<String> errors = PaginationParametersValidator.validate(-1, 0, "bad", "sideways", allowed);
 
             assertThat(errors).hasSize(4);
             assertThat(String.join(" ", errors))

@@ -1,16 +1,15 @@
 package com.zufar.icedlatte.filestorage.service;
 
-import org.springframework.stereotype.Component;
-
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
-public class FileMetadataSelectionPolicy {
+@UtilityClass
+class FileMetadataSelectionPolicy {
 
-    FileMetadataDto selectPreferred(FileMetadataDto first, FileMetadataDto second) {
+    static FileMetadataDto selectPreferred(FileMetadataDto first, FileMetadataDto second) {
         FileMetadataDto preferred = compare(first, second) <= 0 ? first : second;
         FileMetadataDto skipped = preferred == first ? second : first;
         log.warn(
@@ -21,7 +20,7 @@ public class FileMetadataSelectionPolicy {
         return preferred;
     }
 
-    private int compare(FileMetadataDto first, FileMetadataDto second) {
+    private static int compare(FileMetadataDto first, FileMetadataDto second) {
         int rankComparison = Integer.compare(rank(first), rank(second));
         if (rankComparison != 0) {
             return rankComparison;
@@ -29,7 +28,7 @@ public class FileMetadataSelectionPolicy {
         return first.fileName().compareTo(second.fileName());
     }
 
-    private int rank(FileMetadataDto metadata) {
+    private static int rank(FileMetadataDto metadata) {
         String fileName = metadata.fileName().toLowerCase();
         String baseName = fileName.substring(fileName.lastIndexOf('/') + 1);
         switch (baseName) {

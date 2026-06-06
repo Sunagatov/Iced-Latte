@@ -27,10 +27,8 @@ import com.zufar.icedlatte.filestorage.exception.FileListException;
 import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
 import com.zufar.icedlatte.filestorage.repository.FileMetadataRepository;
-import com.zufar.icedlatte.filestorage.service.FileMetadataSelectionPolicy;
 import com.zufar.icedlatte.filestorage.service.FileStorageService;
 import com.zufar.icedlatte.filestorage.service.ObjectStorage;
-import com.zufar.icedlatte.filestorage.service.StorageKeyMetadataParser;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FileStorageService unit tests")
@@ -63,9 +61,7 @@ public class FileStorageServiceTest {
                 fileMetadataRepository,
                 fileMetadataDtoConverter,
                 fileDeletionOutboxRepository,
-                fileDeletionOutboxProperties,
-                new FileMetadataSelectionPolicy(),
-                new StorageKeyMetadataParser());
+                fileDeletionOutboxProperties);
     }
 
     @Test
@@ -350,6 +346,24 @@ public class FileStorageServiceTest {
         when(objectStorage.isConfigured()).thenReturn(true);
         when(objectStorage.listObjectKeys("bucket"))
                 .thenReturn(List.of("product_" + relatedObjectId + "/cover.jpg", "invalid-key"));
+        when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
+
+        fileStorageService.refreshBucketIndex("bucket");
+
+        ArgumentCaptor<List<FileMetadataDto>> captor = ArgumentCaptor.forClass(List.class);
+        verify(fileMetadataDtoConverter).toEntityList(captor.capture());
+        assertThat(captor.getValue()).containsExactlyElementsOf(metadata);
+    }
+
+    @Test
+    @DisplayName("refreshBucketIndex accepts product folder names containing underscores")
+    @SuppressWarnings("unchecked")
+    void refreshBucketIndexAcceptsProductFolderNamesContainingUnderscores() {
+        UUID relatedObjectId = UUID.randomUUID();
+        String key = "cold_brew_latte_" + relatedObjectId + "/cover.jpg";
+        List<FileMetadataDto> metadata = List.of(new FileMetadataDto(relatedObjectId, "bucket", key));
+        when(objectStorage.isConfigured()).thenReturn(true);
+        when(objectStorage.listObjectKeys("bucket")).thenReturn(List.of(key));
         when(fileMetadataDtoConverter.toEntityList(metadata)).thenReturn(List.of(new FileMetadata()));
 
         fileStorageService.refreshBucketIndex("bucket");

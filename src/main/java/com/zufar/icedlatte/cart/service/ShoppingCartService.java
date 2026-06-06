@@ -43,7 +43,6 @@ public class ShoppingCartService implements CartCheckoutApi {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ProductCatalogApi productCatalogApi;
-    private final ShoppingCartDtoConverter shoppingCartDtoConverter;
 
     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -123,12 +122,12 @@ public class ShoppingCartService implements CartCheckoutApi {
 
     private ShoppingCartDto toCartDto(ShoppingCart shoppingCart) {
         Map<UUID, ProductSnapshot> productsById = loadProductsById(shoppingCart);
-        return shoppingCartDtoConverter.toDto(shoppingCart, productsById);
+        return ShoppingCartDtoConverter.toDto(shoppingCart, productsById);
     }
 
     private CartSnapshot toCartSnapshot(ShoppingCart shoppingCart) {
         Map<UUID, ProductSnapshot> productsById = loadProductsById(shoppingCart);
-        return shoppingCartDtoConverter.toSnapshot(shoppingCart, productsById);
+        return ShoppingCartDtoConverter.toSnapshot(shoppingCart, productsById);
     }
 
     private Map<UUID, ProductSnapshot> loadProductsById(ShoppingCart shoppingCart) {

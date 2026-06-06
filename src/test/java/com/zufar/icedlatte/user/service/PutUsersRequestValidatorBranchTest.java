@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,18 +13,11 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 @DisplayName("PutUsersRequestValidator additional branch tests")
 class PutUsersRequestValidatorBranchTest {
 
-    private PutUsersRequestValidator validator;
-
-    @BeforeEach
-    void setUp() {
-        validator = new PutUsersRequestValidator();
-    }
-
     @Test
     @DisplayName("Future birth date throws BadRequestException")
     void validate_futureBirthDate_throws() {
         LocalDate futureDate = LocalDate.now().plusDays(1);
-        assertThatThrownBy(() -> validator.validate("John", "Doe", null, futureDate, null))
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, futureDate, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be in the past");
     }
@@ -34,7 +26,7 @@ class PutUsersRequestValidatorBranchTest {
     @DisplayName("Birth date less than 13 years ago throws BadRequestException")
     void validate_under13BirthDate_throws() {
         LocalDate recentDate = LocalDate.now().minusYears(10);
-        assertThatThrownBy(() -> validator.validate("John", "Doe", null, recentDate, null))
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, recentDate, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("at least 13 years old");
     }
@@ -42,7 +34,7 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Blank first name throws BadRequestException")
     void validate_blankFirstName_throws() {
-        assertThatThrownBy(() -> validator.validate("   ", "Doe", null, null, null))
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("   ", "Doe", null, null, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must not be blank");
     }
@@ -50,7 +42,7 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Name with digits throws BadRequestException")
     void validate_nameWithDigits_throws() {
-        assertThatThrownBy(() -> validator.validate("John123", "Doe", null, null, null))
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John123", "Doe", null, null, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("can only contain letters");
     }
@@ -59,14 +51,14 @@ class PutUsersRequestValidatorBranchTest {
     @DisplayName("Valid birth date exactly 13 years ago passes validation")
     void validate_exactly13YearsAgo_passes() {
         LocalDate date = LocalDate.now().minusYears(13).minusDays(1);
-        assertThatCode(() -> validator.validate("John", "Doe", null, date, null))
+        assertThatCode(() -> PutUsersRequestValidator.validate("John", "Doe", null, date, null))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @DisplayName("Phone number without leading plus throws BadRequestException")
     void validate_phoneWithoutPlus_throws() {
-        assertThatThrownBy(() -> validator.validate("John", "Doe", "12025550123", null, null))
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", "12025550123", null, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("E.164 format");
     }

@@ -3,17 +3,16 @@ package com.zufar.icedlatte.filestorage.service;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.stereotype.Component;
-
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
-public class StorageKeyMetadataParser {
+@UtilityClass
+class StorageKeyMetadataParser {
 
-    Optional<FileMetadataDto> parse(String fileName, String bucketName) {
+    static Optional<FileMetadataDto> parse(String fileName, String bucketName) {
         String folderName = fileName.split("/", 2)[0];
         int uuidSeparatorIndex = folderName.lastIndexOf('_');
         if (uuidSeparatorIndex < 0 || uuidSeparatorIndex == folderName.length() - 1) {

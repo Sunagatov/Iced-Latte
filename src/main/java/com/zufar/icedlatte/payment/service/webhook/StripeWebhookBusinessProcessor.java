@@ -1,5 +1,11 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHARGE_REFUNDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_COMPLETED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_EXPIRED;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,16 +52,17 @@ public class StripeWebhookBusinessProcessor {
         }
 
         switch (eventType) {
-            case "checkout.session.expired" -> handleExpired(requireSession(event));
-            case "checkout.session.async_payment_failed" -> handleAsyncPaymentFailed(requireSession(event));
-            case "charge.refunded" -> handleChargeRefunded(event);
+            case String type when CHECKOUT_SESSION_EXPIRED.matches(type) -> handleExpired(requireSession(event));
+            case String type
+            when CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED.matches(type) -> handleAsyncPaymentFailed(requireSession(event));
+            case String type when CHARGE_REFUNDED.matches(type) -> handleChargeRefunded(event);
             default -> log.debug("payment.webhook.unhandled: eventType={}", eventType);
         }
     }
 
     private boolean isSessionCompletedEvent(String eventType) {
-        return "checkout.session.completed".equals(eventType)
-                || "checkout.session.async_payment_succeeded".equals(eventType);
+        return CHECKOUT_SESSION_COMPLETED.matches(eventType)
+                || CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED.matches(eventType);
     }
 
     private void handleSessionCompleted(Event event, Session stripeSession) {

@@ -4,16 +4,16 @@ import static java.util.Comparator.comparing;
 
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
 import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
-@Component
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class FavoriteListDtoConverter {
 
-    public ListOfFavoriteProductsDto toDto(final List<ProductSnapshot> productSnapshots) {
+    public static ListOfFavoriteProductsDto toDto(final List<ProductSnapshot> productSnapshots) {
         List<ProductSummaryDto> products = productSnapshots.stream()
                 .sorted(comparing(productSnapshot -> productSnapshot.id().toString()))
                 .map(FavoriteListDtoConverter::toSummaryDto)

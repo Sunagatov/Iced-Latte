@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
-import com.zufar.icedlatte.cart.converter.ShoppingCartDtoConverter;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
 import com.zufar.icedlatte.cart.entity.ShoppingCartItem;
 import com.zufar.icedlatte.cart.exception.CartProductNotFoundException;
@@ -50,8 +49,8 @@ class ShoppingCartServiceTest {
 
     @BeforeEach
     void setUp() {
-        shoppingCartService = new ShoppingCartService(
-                shoppingCartRepository, shoppingCartItemRepository, productCatalogApi, new ShoppingCartDtoConverter());
+        shoppingCartService =
+                new ShoppingCartService(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
 
     @Test

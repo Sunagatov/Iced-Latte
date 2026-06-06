@@ -5,29 +5,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.stereotype.Service;
-
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 
-import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 
-@Service
-@RequiredArgsConstructor
+@UtilityClass
 public class GetReviewsRequestValidator {
 
     private static final Set<String> ALLOWED_SORT_ATTRIBUTES_VALUES = Set.of("createdAt", "productRating");
     private static final Set<Integer> ALLOWED_PRODUCT_RATING_VALUES = Set.of(1, 2, 3, 4, 5);
 
-    private final PaginationParametersValidator paginationParametersValidator;
-
-    public void validate(
+    public static void validate(
             final Integer pageNumber,
             final Integer pageSize,
             final String sortAttribute,
             final String sortDirection,
             final List<Integer> productRatings) {
-        List<String> errors = new ArrayList<>(paginationParametersValidator.validate(
+        List<String> errors = new ArrayList<>(PaginationParametersValidator.validate(
                 pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES));
 
         if (productRatings != null) {

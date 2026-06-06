@@ -49,9 +49,6 @@ class ProductServiceTest {
     @Mock
     private PaginationConfig paginationConfig;
 
-    @Mock
-    private GetProductsRequestValidator getProductsRequestValidator;
-
     @InjectMocks
     private ProductService productService;
 
@@ -207,7 +204,6 @@ class ProductServiceTest {
             Pageable pageable = pageableCaptor.getValue();
             assertThat(pageable.getPageNumber()).isEqualTo(1);
             assertThat(pageable.getPageSize()).isEqualTo(10);
-            verify(getProductsRequestValidator).validate(1, 10, "price", "asc", null, null, null, null, null, "latte");
         }
 
         @Test

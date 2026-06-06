@@ -8,18 +8,15 @@ import org.junit.jupiter.api.Test;
 
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
 
 @DisplayName("OrderPageRequestFactory")
 class OrderPageRequestFactoryTest {
 
-    private final OrderPageRequestFactory factory = new OrderPageRequestFactory(
-            new PaginationConfig(
-                    0,
-                    new PaginationConfig.Products(50, "name", "desc"),
-                    new PaginationConfig.Reviews(10, "createdAt", "desc"),
-                    new PaginationConfig.Orders(10, 50, "createdAt", "desc")),
-            new PaginationParametersValidator());
+    private final OrderPageRequestFactory factory = new OrderPageRequestFactory(new PaginationConfig(
+            0,
+            new PaginationConfig.Products(50, "name", "desc"),
+            new PaginationConfig.Reviews(10, "createdAt", "desc"),
+            new PaginationConfig.Orders(10, 50, "createdAt", "desc")));
 
     @Test
     @DisplayName("builds pageable with defaults")

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -21,6 +20,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.product.entity.ProductImage;
 import com.zufar.icedlatte.product.repository.ProductImageRepository;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductImageReceiver unit tests")
@@ -34,11 +35,13 @@ class ProductImageReceiverTest {
     @Mock
     private ProductImageRepository productImageRepository;
 
-    @InjectMocks
     private ProductImageReceiver receiver;
+    private SimpleMeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
+        receiver = new ProductImageReceiver(fileStorageService, productImageRepository, meterRegistry);
         ReflectionTestUtils.setField(receiver, "placeholderImageUrl", PLACEHOLDER);
     }
 
@@ -75,6 +78,10 @@ class ProductImageReceiverTest {
             when(fileStorageService.findFileUrl(productId)).thenThrow(new RuntimeException("S3 down"));
 
             assertThat(receiver.getProductFileUrl(productId)).isEqualTo(PLACEHOLDER);
+            assertThat(meterRegistry
+                            .counter("product.image.fallback", "mode", "single")
+                            .count())
+                    .isEqualTo(1);
             verify(fileStorageService).findFileUrl(productId);
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
@@ -171,6 +178,10 @@ class ProductImageReceiverTest {
 
             assertThat(result).containsEntry(productId1, PLACEHOLDER);
             assertThat(result).containsEntry(productId2, PLACEHOLDER);
+            assertThat(meterRegistry
+                            .counter("product.image.fallback", "mode", "batch")
+                            .count())
+                    .isEqualTo(1);
             verify(fileStorageService).findFileUrls(List.of(productId1, productId2));
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }

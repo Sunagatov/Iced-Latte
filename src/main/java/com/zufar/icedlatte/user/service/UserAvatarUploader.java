@@ -19,8 +19,8 @@ import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -98,7 +98,7 @@ public class UserAvatarUploader {
 
     private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {
         if (!fileStorageWriterApi.isEnabled()) {
-            throw new FileUploadException(fileName, new IllegalStateException("File storage is not configured"));
+            throw new UserAvatarUploadException(userId, fileName);
         }
         fileStorageWriterApi.store(file, new FileMetadataDto(userId, bucketName, fileName));
     }

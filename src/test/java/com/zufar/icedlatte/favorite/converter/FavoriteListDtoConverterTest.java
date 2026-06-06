@@ -15,14 +15,12 @@ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 class FavoriteListDtoConverterTest {
 
-    private final FavoriteListDtoConverter converter = new FavoriteListDtoConverter();
-
     @Test
     @DisplayName("converts product snapshots to ListOfFavoriteProductsDto")
     void convertSnapshotsToDto() {
         UUID productId = UUID.randomUUID();
 
-        ListOfFavoriteProductsDto result = converter.toDto(List.of(productSnapshot(productId)));
+        ListOfFavoriteProductsDto result = FavoriteListDtoConverter.toDto(List.of(productSnapshot(productId)));
 
         assertThat(result.getProducts()).hasSize(1);
         assertThat(result.getProducts().getFirst().getId()).isEqualTo(productId);
@@ -42,7 +40,7 @@ class FavoriteListDtoConverterTest {
         UUID firstId = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
         ListOfFavoriteProductsDto result =
-                converter.toDto(List.of(productSnapshot(secondId), productSnapshot(firstId)));
+                FavoriteListDtoConverter.toDto(List.of(productSnapshot(secondId), productSnapshot(firstId)));
 
         assertThat(result.getProducts()).extracting(ProductSummaryDto::getId).containsExactly(firstId, secondId);
     }

@@ -15,16 +15,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
 import com.zufar.icedlatte.favorite.exception.FavoriteProductNotFoundException;
 import com.zufar.icedlatte.favorite.exception.InvalidFavoriteRequestException;
 import com.zufar.icedlatte.favorite.repository.FavoriteRepository;
 import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
-import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProductsDto;
-import com.zufar.icedlatte.openapi.dto.ProductSummaryDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
+import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FavoriteService unit tests")
@@ -39,39 +37,28 @@ class FavoriteServiceTest {
     @Mock
     private ProductCatalogApi productCatalogApi;
 
-    @Mock
-    private FavoriteListDtoConverter favoriteListDtoConverter;
-
     @Test
     @DisplayName("getEnrichedFavoriteList returns enriched DTO when list exists")
     void getEnrichedFavoriteListReturnsDto() {
         UUID userId = UUID.randomUUID();
         FavoriteListEntity entity = new FavoriteListEntity();
         entity.setFavoriteItems(new HashSet<>());
-        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
-        response.setProducts(List.of());
-
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
-        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
 
         var result = favoriteService.getEnrichedFavoriteList(userId);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getProducts()).isEmpty();
     }
 
     @Test
     @DisplayName("getEnrichedFavoriteList returns empty DTO when list does not exist")
     void getEnrichedFavoriteListReturnsEmptyDtoWhenListDoesNotExist() {
         UUID userId = UUID.randomUUID();
-        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
-        response.setProducts(List.of());
-
         when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.empty());
-        when(favoriteListDtoConverter.toDto(List.of())).thenReturn(response);
 
         var result = favoriteService.getEnrichedFavoriteList(userId);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getProducts()).isEmpty();
         verifyNoInteractions(productCatalogApi);
     }
 
@@ -83,22 +70,27 @@ class FavoriteServiceTest {
 
         FavoriteListEntity entity = favoriteList(userId);
 
-        ProductSummaryDto productDto = new ProductSummaryDto();
-        productDto.setId(productId);
-
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(List.of(productId));
 
-        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
-        response.setProducts(List.of(productDto));
+        FavoriteListEntity refreshed = favoriteList(userId);
+        refreshed
+                .getFavoriteItems()
+                .add(FavoriteItemEntity.builder()
+                        .id(UUID.randomUUID())
+                        .favoriteListEntity(refreshed)
+                        .productId(productId)
+                        .build());
 
-        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity), Optional.of(refreshed));
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
-        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
+        when(productCatalogApi.getProductsByIds(List.of(productId))).thenReturn(List.of(productSnapshot(productId)));
 
         var result = favoriteService.add(request, userId);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getProducts())
+                .extracting(com.zufar.icedlatte.openapi.dto.ProductSummaryDto::getId)
+                .containsExactly(productId);
         verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(entity.getId()), eq(productId));
         verify(favoriteRepository).touchFavoriteList(entity.getId());
         verify(favoriteRepository).flush();
@@ -115,19 +107,15 @@ class FavoriteServiceTest {
         ListOfFavoriteProducts request = new ListOfFavoriteProducts();
         request.setProductIds(List.of(productId));
 
-        ListOfFavoriteProductsDto response = new ListOfFavoriteProductsDto();
-        response.setProducts(List.of());
-
         when(favoriteRepository.findByUserId(userId))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(createdList))
                 .thenReturn(Optional.of(createdList));
         when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
-        when(favoriteListDtoConverter.toDto(any())).thenReturn(response);
 
         var result = favoriteService.add(request, userId);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result.getProducts()).isEmpty();
         verify(favoriteRepository).insertFavoriteListIfAbsent(any(UUID.class), eq(userId));
         verify(favoriteRepository).insertFavoriteItemIfAbsent(any(UUID.class), eq(createdList.getId()), eq(productId));
     }
@@ -242,5 +230,21 @@ class FavoriteServiceTest {
                 .userId(userId)
                 .favoriteItems(new HashSet<>())
                 .build();
+    }
+
+    private static ProductSnapshot productSnapshot(UUID id) {
+        return new ProductSnapshot(
+                id,
+                "Coffee",
+                "Desc",
+                java.math.BigDecimal.TEN,
+                100,
+                true,
+                null,
+                java.math.BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
     }
 }

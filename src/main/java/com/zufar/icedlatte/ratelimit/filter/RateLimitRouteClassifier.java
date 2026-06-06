@@ -1,0 +1,66 @@
+package com.zufar.icedlatte.ratelimit.filter;
+
+import java.util.Set;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.ratelimit.dto.RateLimitCategory;
+
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+class RateLimitRouteClassifier {
+
+    private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
+
+    static boolean shouldSkip(HttpServletRequest request) {
+        String method = request.getMethod();
+        String path = request.getRequestURI();
+        return "OPTIONS".equalsIgnoreCase(method) || isActuatorPath(path) || path.startsWith(ApiPaths.DOCS_ROOT);
+    }
+
+    static RateLimitCategory classify(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return switch (path) {
+            case String uri
+            when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
+            case String uri when isPasswordResetPath(uri) -> RateLimitCategory.AUTH;
+            case String uri
+            when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
+            case String uri
+            when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
+            case String uri when uri.startsWith(ApiPaths.API_ROOT + "/v1/telemetry/") -> RateLimitCategory.TELEMETRY;
+            case String uri when isFileUploadRequest(request, uri) -> RateLimitCategory.FILE_UPLOAD;
+            case String _ when !READ_METHODS.contains(request.getMethod()) -> RateLimitCategory.WRITE;
+            default -> RateLimitCategory.GLOBAL;
+        };
+    }
+
+    static boolean isStrictPreAuthPath(String path) {
+        return path.equals(ApiPaths.AUTH_AUTHENTICATE)
+                || path.equals(ApiPaths.AUTH + "/register")
+                || isPasswordResetPath(path);
+    }
+
+    private static boolean isActuatorPath(String path) {
+        return path.startsWith(ApiPaths.ACTUATOR_ROOT) || path.startsWith(ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+    }
+
+    private static boolean isFileUploadRequest(HttpServletRequest request, String path) {
+        String contentType = request.getContentType();
+        return contentType != null
+                && contentType.startsWith("multipart/")
+                && (path.endsWith("/avatar") || path.contains("/images"));
+    }
+
+    private static boolean isGlobalAuthPath(String path) {
+        return path.startsWith(ApiPaths.AUTH_OAUTH + "/")
+                || path.equals(ApiPaths.AUTH_AUTHENTICATE)
+                || path.equals(ApiPaths.AUTH + "/register");
+    }
+
+    private static boolean isPasswordResetPath(String path) {
+        return path.equals(ApiPaths.AUTH_PASSWORD_FORGOT) || path.equals(ApiPaths.AUTH_PASSWORD_CHANGE);
+    }
+}

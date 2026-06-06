@@ -7,8 +7,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.stereotype.Component;
-
 import com.zufar.icedlatte.cart.api.dto.CartItemSnapshot;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.cart.entity.ShoppingCart;
@@ -19,10 +17,12 @@ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartItemDto;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
 
-@Component
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ShoppingCartDtoConverter {
 
-    public ShoppingCartDto toDto(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
+    public static ShoppingCartDto toDto(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
         String errorMessage = "Cart items must not be null";
         Set<ShoppingCartItem> cartItems = cart.getItems();
 
@@ -53,7 +53,7 @@ public class ShoppingCartDtoConverter {
                 .closedAt(cart.getClosedAt());
     }
 
-    private ShoppingCartItemDto toItemDto(ShoppingCartItem item, ProductSnapshot productInfo) {
+    private static ShoppingCartItemDto toItemDto(ShoppingCartItem item, ProductSnapshot productInfo) {
         return new ShoppingCartItemDto()
                 .id(item.getId())
                 .productInfo(toSummaryDto(productInfo))
@@ -74,7 +74,7 @@ public class ShoppingCartDtoConverter {
                 .weight(productInfo.weight());
     }
 
-    public CartSnapshot toSnapshot(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
+    public static CartSnapshot toSnapshot(final ShoppingCart cart, final Map<UUID, ProductSnapshot> productsById) {
         String errorMessage = "Cart items must not be null";
         List<CartItemSnapshot> items = Objects.requireNonNull(cart.getItems(), errorMessage).stream()
                 .map(item -> {

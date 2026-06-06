@@ -23,8 +23,8 @@ import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
-import com.zufar.icedlatte.filestorage.exception.FileUploadException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
+import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserAvatarUploader unit tests")
@@ -101,7 +101,7 @@ class UserAvatarUploaderTest {
     }
 
     @Test
-    @DisplayName("uploadUserAvatar throws FileUploadException when upload is skipped (storage unavailable)")
+    @DisplayName("uploadUserAvatar throws user-owned exception when upload is skipped (storage unavailable)")
     void uploadUserAvatarSkipsMetadataWhenUploadSkipped() throws Exception {
         UUID userId = UUID.randomUUID();
         when(file.getContentType()).thenReturn("image/jpeg");
@@ -109,7 +109,7 @@ class UserAvatarUploaderTest {
         when(fileStorageService.isEnabled()).thenReturn(false);
 
         assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
-                .isInstanceOf(FileUploadException.class);
+                .isInstanceOf(UserAvatarUploadException.class);
 
         verify(fileStorageService).isEnabled();
         verify(fileStorageService, never()).store(any(), any());
