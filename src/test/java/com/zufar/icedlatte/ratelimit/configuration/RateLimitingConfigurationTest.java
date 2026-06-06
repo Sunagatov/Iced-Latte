@@ -37,7 +37,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("fail-open limiter allows traffic when Redis execution fails")
         void failOpenLimiterAllowsWhenRedisFails() {
-            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:search:ip:1.2.3.4")), eq("1000")))
+            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:1000:search:ip:1.2.3.4")), eq("1000")))
                     .thenThrow(new IllegalStateException("redis down"));
 
             RateLimiter limiter = configuration.openRedisRateLimiter(redisTemplate);
@@ -52,7 +52,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("fail-closed limiter blocks traffic when Redis execution fails")
         void failClosedLimiterBlocksWhenRedisFails() {
-            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:auth:ip:1.2.3.4")), eq("1000")))
+            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:1000:auth:ip:1.2.3.4")), eq("1000")))
                     .thenThrow(new IllegalStateException("redis down"));
 
             RateLimiter limiter = configuration.closedRedisRateLimiter(redisTemplate);
@@ -66,7 +66,7 @@ class RateLimitingConfigurationTest {
         @Test
         @DisplayName("maps Redis counter result into the public rate-limit contract")
         void mapsRedisCounterResult() {
-            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:global:user:alice")), eq("60000")))
+            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:60000:global:user:alice")), eq("60000")))
                     .thenReturn(List.of(3L, 42_000L));
 
             RateLimiter limiter = configuration.openRedisRateLimiter(redisTemplate);
@@ -77,7 +77,20 @@ class RateLimitingConfigurationTest {
             assertThat(result.limit()).isEqualTo(5);
             assertThat(result.remaining()).isEqualTo(2);
             assertThat(result.resetTimeMillis()).isBetween(before + 41_000L, before + 43_000L);
-            verify(redisTemplate).execute(anyRedisScript(), eq(List.of("rate:global:user:alice")), eq("60000"));
+            verify(redisTemplate).execute(anyRedisScript(), eq(List.of("rate:60000:global:user:alice")), eq("60000"));
+        }
+
+        @Test
+        @DisplayName("includes the window duration in Redis keys")
+        void includesWindowDurationInRedisKey() {
+            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:5000:global:user:alice")), eq("5000")))
+                    .thenReturn(List.of(1L, 5_000L));
+
+            RateLimiter limiter = configuration.openRedisRateLimiter(redisTemplate);
+            var result = limiter.tryConsume("global:user:alice", 5, Duration.ofSeconds(5));
+
+            assertThat(result.allowed()).isTrue();
+            verify(redisTemplate).execute(anyRedisScript(), eq(List.of("rate:5000:global:user:alice")), eq("5000"));
         }
     }
 

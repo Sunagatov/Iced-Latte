@@ -80,9 +80,10 @@ public class RateLimitingConfiguration {
     private RateLimiter redisRateLimiterWithPolicy(RedisTemplate<String, String> redisTemplate, FailPolicy policy) {
         return (key, maxTokens, windowDuration) -> {
             try {
+                long windowMillis = windowDuration.toMillis();
                 @SuppressWarnings("rawtypes")
                 List result = redisTemplate.execute(
-                        RATE_LIMIT_SCRIPT, List.of("rate:" + key), String.valueOf(windowDuration.toMillis()));
+                        RATE_LIMIT_SCRIPT, List.of(redisKey(key, windowMillis)), String.valueOf(windowMillis));
                 long count = ((Number) result.getFirst()).longValue();
                 long pttl = ((Number) result.get(1)).longValue();
                 long resetTimeMillis = System.currentTimeMillis() + Math.max(0, pttl);
@@ -118,7 +119,9 @@ public class RateLimitingConfiguration {
         @Override
         public RateLimitResult tryConsume(String key, int maxTokens, Duration windowDuration) {
             try {
-                FixedWindow window = windows.get(key, _ -> new FixedWindow(windowDuration.toMillis()));
+                long windowMillis = windowDuration.toMillis();
+                FixedWindow window =
+                        windows.asMap().compute(key, (_, existing) -> fixedWindowFor(existing, windowMillis));
                 return window.tryConsume(maxTokens);
             } catch (Exception e) {
                 logRepeatedLimiterFailure("rate_limit.cache_error", key, failPolicy, e, false);
@@ -132,6 +135,13 @@ public class RateLimitingConfiguration {
             }
         }
 
+        private static FixedWindow fixedWindowFor(FixedWindow existing, long windowMillis) {
+            if (existing == null || existing.windowMillis() != windowMillis) {
+                return new FixedWindow(windowMillis);
+            }
+            return existing;
+        }
+
         private static class FixedWindow {
             private long count = 0;
             private long windowStartMillis;
@@ -140,6 +150,10 @@ public class RateLimitingConfiguration {
             FixedWindow(long windowMillis) {
                 this.windowMillis = windowMillis;
                 this.windowStartMillis = System.currentTimeMillis();
+            }
+
+            long windowMillis() {
+                return windowMillis;
             }
 
             synchronized RateLimitResult tryConsume(int maxTokens) {
@@ -159,6 +173,10 @@ public class RateLimitingConfiguration {
 
     private static long windowSeconds(Duration windowDuration) {
         return Math.max(1, windowDuration.toSeconds());
+    }
+
+    private static String redisKey(String key, long windowMillis) {
+        return "rate:" + windowMillis + ":" + key;
     }
 
     private static long windowSeconds(long windowMillis) {

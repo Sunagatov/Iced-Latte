@@ -293,17 +293,16 @@ class RateLimitingFilterTest {
     void validateRejectsNonPositiveAuthLimit() {
         RateLimitProperties properties = properties();
         properties.getAuth().setMaxRequests(0);
-        filter = new RateLimitingFilter(
-                openRateLimiter,
-                closedRateLimiter,
-                new SimpleMeterRegistry(),
-                clientIpExtractor,
-                authenticatedRequestIdentityProvider,
-                properties,
-                problemTypeUriFactory,
-                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
-        assertThatThrownBy(filter::validate)
+        assertThatThrownBy(() -> new RateLimitingFilter(
+                        openRateLimiter,
+                        closedRateLimiter,
+                        new SimpleMeterRegistry(),
+                        clientIpExtractor,
+                        authenticatedRequestIdentityProvider,
+                        properties,
+                        problemTypeUriFactory,
+                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("auth.max-requests must be > 0");
     }
@@ -313,17 +312,16 @@ class RateLimitingFilterTest {
     void validateRejectsNonPositiveSearchWindow() {
         RateLimitProperties properties = properties();
         properties.getSearch().setWindowDuration(Duration.ZERO);
-        filter = new RateLimitingFilter(
-                openRateLimiter,
-                closedRateLimiter,
-                new SimpleMeterRegistry(),
-                clientIpExtractor,
-                authenticatedRequestIdentityProvider,
-                properties,
-                problemTypeUriFactory,
-                new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000));
 
-        assertThatThrownBy(filter::validate)
+        assertThatThrownBy(() -> new RateLimitingFilter(
+                        openRateLimiter,
+                        closedRateLimiter,
+                        new SimpleMeterRegistry(),
+                        clientIpExtractor,
+                        authenticatedRequestIdentityProvider,
+                        properties,
+                        problemTypeUriFactory,
+                        new CaffeineSizeProperties(1_000, 5_000, 10_000, 1_000, 10_000)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("search.window-duration must be positive");
     }

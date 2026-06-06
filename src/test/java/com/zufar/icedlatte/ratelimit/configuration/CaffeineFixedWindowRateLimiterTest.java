@@ -1,17 +1,16 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.Duration;
-import java.util.concurrent.locks.LockSupport;
-
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
+import java.time.Duration;
+import java.util.concurrent.locks.LockSupport;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("CaffeineFixedWindowRateLimiter unit tests")
 class CaffeineFixedWindowRateLimiterTest {
@@ -67,11 +66,26 @@ class CaffeineFixedWindowRateLimiterTest {
             limiter.tryConsume("search", 2, shortWindow);
             RateLimitResult blocked = limiter.tryConsume("search", 2, shortWindow);
 
-            RateLimitResult afterReset = awaitWindowReset(limiter, "search", 2, shortWindow);
+            RateLimitResult afterReset = awaitWindowReset(limiter, shortWindow);
 
             assertThat(blocked.allowed()).isFalse();
             assertThat(afterReset.allowed()).isTrue();
             assertThat(afterReset.remaining()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("starts a fresh fixed window when a key is reused with a different duration")
+        void resetsWindowWhenDurationChanges() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
+
+            limiter.tryConsume("shared-key", 1, Duration.ofMinutes(1));
+            RateLimitResult blocked = limiter.tryConsume("shared-key", 1, Duration.ofMinutes(1));
+            RateLimitResult durationChanged = limiter.tryConsume("shared-key", 1, Duration.ofSeconds(5));
+
+            assertThat(blocked.allowed()).isFalse();
+            assertThat(durationChanged.allowed()).isTrue();
+            assertThat(durationChanged.remaining()).isZero();
+            assertThat(durationChanged.windowSeconds()).isEqualTo(5);
         }
 
         @Test
@@ -99,11 +113,11 @@ class CaffeineFixedWindowRateLimiterTest {
     }
 
     private static RateLimitResult awaitWindowReset(
-            CaffeineFixedWindowRateLimiter limiter, String key, int maxRequests, Duration window) {
+            CaffeineFixedWindowRateLimiter limiter, Duration window) {
         long deadline = System.nanoTime() + Duration.ofSeconds(1).toNanos();
         RateLimitResult result;
         do {
-            result = limiter.tryConsume(key, maxRequests, window);
+            result = limiter.tryConsume("search", 2, window);
             if (result.allowed()) {
                 return result;
             }

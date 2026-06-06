@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,11 +46,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final Cache<String, Boolean> warnedKeys;
 
-    @PostConstruct
-    void validate() {
-        RateLimitPropertiesValidator.validate(properties);
-    }
-
     public RateLimitingFilter(
             @Qualifier("openRateLimiter") RateLimiter openRateLimiter,
             @Qualifier("closedRateLimiter") RateLimiter closedRateLimiter,
@@ -61,7 +55,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitProperties properties,
             ProblemTypeUriFactory problemTypeUriFactory,
             CaffeineSizeProperties caffeineSizeProperties) {
-        RateLimitPropertiesValidator.assertPositiveBanConfiguration(properties);
+        RateLimitPropertiesValidator.validate(properties);
         this.openRateLimiter = openRateLimiter;
         this.closedRateLimiter = closedRateLimiter;
         this.meterRegistry = meterRegistry;

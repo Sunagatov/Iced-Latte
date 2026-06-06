@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.ratelimit.filter;
 
+import java.util.Locale;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,8 @@ import lombok.experimental.UtilityClass;
 class RateLimitRouteClassifier {
 
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
+    private static final String AUTH_REGISTER = ApiPaths.AUTH + "/register";
+    private static final String TELEMETRY_ROOT = ApiPaths.API_ROOT + "/v1/telemetry/";
 
     static boolean shouldSkip(HttpServletRequest request) {
         String method = request.getMethod();
@@ -30,17 +33,16 @@ class RateLimitRouteClassifier {
             when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
             case String uri
             when uri.equals(ApiPaths.PRODUCTS) && request.getParameter("keyword") != null -> RateLimitCategory.SEARCH;
-            case String uri when uri.startsWith(ApiPaths.API_ROOT + "/v1/telemetry/") -> RateLimitCategory.TELEMETRY;
+            case String uri when uri.startsWith(TELEMETRY_ROOT) -> RateLimitCategory.TELEMETRY;
             case String uri when isFileUploadRequest(request, uri) -> RateLimitCategory.FILE_UPLOAD;
-            case String _ when !READ_METHODS.contains(request.getMethod()) -> RateLimitCategory.WRITE;
+            case String _
+            when !READ_METHODS.contains(request.getMethod().toUpperCase(Locale.ROOT)) -> RateLimitCategory.WRITE;
             default -> RateLimitCategory.GLOBAL;
         };
     }
 
     static boolean isStrictPreAuthPath(String path) {
-        return path.equals(ApiPaths.AUTH_AUTHENTICATE)
-                || path.equals(ApiPaths.AUTH + "/register")
-                || isPasswordResetPath(path);
+        return path.equals(ApiPaths.AUTH_AUTHENTICATE) || path.equals(AUTH_REGISTER) || isPasswordResetPath(path);
     }
 
     private static boolean isActuatorPath(String path) {
@@ -57,7 +59,7 @@ class RateLimitRouteClassifier {
     private static boolean isGlobalAuthPath(String path) {
         return path.startsWith(ApiPaths.AUTH_OAUTH + "/")
                 || path.equals(ApiPaths.AUTH_AUTHENTICATE)
-                || path.equals(ApiPaths.AUTH + "/register");
+                || path.equals(AUTH_REGISTER);
     }
 
     private static boolean isPasswordResetPath(String path) {
