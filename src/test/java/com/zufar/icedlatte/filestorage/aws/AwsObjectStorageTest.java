@@ -22,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
@@ -49,6 +50,25 @@ class AwsObjectStorageTest {
 
     @TempDir
     private Path tempDir;
+
+    @Test
+    @DisplayName("upload stores images with inline content disposition")
+    void uploadStoresImagesWithInlineContentDisposition() {
+        AwsObjectStorage storage = new AwsObjectStorage(s3Client, s3Presigner, properties(""));
+        MockMultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png", new byte[] {1, 2, 3});
+        when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+                .thenReturn(PutObjectResponse.builder().build());
+
+        storage.upload(file, "avatars", "user-avatar.png");
+
+        ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(requestCaptor.capture(), any(RequestBody.class));
+        assertThat(requestCaptor.getValue().bucket()).isEqualTo("avatars");
+        assertThat(requestCaptor.getValue().key()).isEqualTo("user-avatar.png");
+        assertThat(requestCaptor.getValue().contentType()).isEqualTo("image/png");
+        assertThat(requestCaptor.getValue().contentLength()).isEqualTo(3);
+        assertThat(requestCaptor.getValue().contentDisposition()).isEqualTo("inline");
+    }
 
     @Test
     @DisplayName("public URL includes bucket when base URL does not")

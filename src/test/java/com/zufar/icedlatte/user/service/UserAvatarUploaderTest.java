@@ -54,6 +54,7 @@ class UserAvatarUploaderTest {
             new byte[] {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     private static final byte[] PNG_HEADER =
             new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
+    private static final byte[] WEBP_HEADER = new byte[] {0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50};
 
     @BeforeEach
     void injectBucket() throws Exception {
@@ -68,7 +69,7 @@ class UserAvatarUploaderTest {
     @DisplayName("uploadUserAvatar deletes old metadata, uploads file, and saves new metadata")
     void uploadUserAvatarFullFlow() throws Exception {
         UUID userId = UUID.randomUUID();
-        String expectedFileName = "user-avatar-" + userId;
+        String expectedFileName = "user-avatar-" + userId + ".jpg";
         when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileStorageService.isEnabled()).thenReturn(true);
@@ -82,6 +83,21 @@ class UserAvatarUploaderTest {
         assertThat(saved.relatedObjectId()).isEqualTo(userId);
         assertThat(saved.bucketName()).isEqualTo(BUCKET);
         assertThat(saved.fileName()).isEqualTo(expectedFileName);
+    }
+
+    @Test
+    @DisplayName("uploadUserAvatar preserves the validated avatar file extension")
+    void uploadUserAvatarPreservesValidatedFileExtension() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/webp; charset=binary");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(WEBP_HEADER));
+        when(fileStorageService.isEnabled()).thenReturn(true);
+
+        uploader.uploadUserAvatar(userId, file, "unused-turnstile-token");
+
+        ArgumentCaptor<FileMetadataDto> captor = ArgumentCaptor.forClass(FileMetadataDto.class);
+        verify(fileStorageService).store(eq(file), captor.capture());
+        assertThat(captor.getValue().fileName()).isEqualTo("user-avatar-" + userId + ".webp");
     }
 
     @Test

@@ -59,7 +59,7 @@ public class UserAvatarUploader {
         String contentType = normalizeContentType(file);
         validateAvatarFile(userId, file, contentType);
 
-        String fileName = avatarFileName(userId);
+        String fileName = avatarFileName(userId, contentType);
         uploadAvatarFile(file, userId, fileName);
         invalidateAvatarCache(fileName);
     }
@@ -77,11 +77,23 @@ public class UserAvatarUploader {
 
     private String normalizeContentType(MultipartFile file) {
         String contentType = file.getContentType();
-        return contentType == null ? "" : contentType.toLowerCase(java.util.Locale.ROOT);
+        if (contentType == null) {
+            return "";
+        }
+        return contentType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
     }
 
-    private String avatarFileName(UUID userId) {
-        return AVATAR_NAME_PREFIX + userId;
+    private String avatarFileName(UUID userId, String contentType) {
+        return AVATAR_NAME_PREFIX + userId + avatarExtension(contentType);
+    }
+
+    private String avatarExtension(String contentType) {
+        return switch (contentType) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> "";
+        };
     }
 
     private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {

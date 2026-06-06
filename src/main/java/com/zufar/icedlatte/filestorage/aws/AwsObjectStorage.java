@@ -58,6 +58,7 @@ public class AwsObjectStorage implements ObjectStorage {
                     .key(fileName)
                     .contentType(file.getContentType())
                     .contentLength(file.getSize())
+                    .contentDisposition("inline")
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
