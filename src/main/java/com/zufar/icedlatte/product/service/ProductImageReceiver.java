@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.product.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,12 +65,18 @@ public class ProductImageReceiver {
 
     @Transactional(readOnly = true)
     public Map<UUID, List<String>> getProductImageUrlsBatch(final List<UUID> productIds) {
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
         return productImageRepository.findByProductIdInOrderByProductIdAscPositionAscIdAsc(productIds).stream()
                 .collect(Collectors.groupingBy(
                         ProductImage::getProductId, Collectors.mapping(ProductImage::getUrl, Collectors.toList())));
     }
 
     public Map<UUID, String> getProductFileUrls(final List<UUID> productIds) {
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
         Map<UUID, String> fileUrls;
         try {
             fileUrls = fileUrlResolverApi.findFileUrls(productIds);
@@ -83,7 +90,8 @@ public class ProductImageReceiver {
             fileUrls = Map.of();
         }
         final Map<UUID, String> resolved = fileUrls;
-        return productIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> resolved.getOrDefault(id, placeholderImageUrl)));
+        Map<UUID, String> productFileUrls = new LinkedHashMap<>();
+        productIds.forEach(id -> productFileUrls.put(id, resolved.getOrDefault(id, placeholderImageUrl)));
+        return productFileUrls;
     }
 }

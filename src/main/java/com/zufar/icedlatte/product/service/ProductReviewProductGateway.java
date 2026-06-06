@@ -44,10 +44,9 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void updateAiSummary(final UUID productId, final String summary) {
-        productInfoRepository.findById(productId).ifPresent(product -> {
-            product.setAiSummary(summary);
-            productInfoRepository.save(product);
-        });
-        productCacheEvictor.evictProductByIdAfterCommit(productId);
+        int updatedRows = productInfoRepository.updateAiSummary(productId, summary);
+        if (updatedRows > 0) {
+            productCacheEvictor.evictProductByIdAfterCommit(productId);
+        }
     }
 }

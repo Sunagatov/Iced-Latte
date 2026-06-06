@@ -24,6 +24,9 @@ public class ProductPictureLinkUpdater {
     }
 
     public List<ProductInfoDto> updateBatch(List<ProductInfoDto> products) {
+        if (products.isEmpty()) {
+            return products;
+        }
         List<UUID> productIds = products.stream().map(ProductInfoDto::getId).toList();
 
         Map<UUID, String> fileUrls = productImageReceiver.getProductFileUrls(productIds);

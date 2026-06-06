@@ -3,7 +3,6 @@ package com.zufar.icedlatte.product.service;
 import static com.zufar.icedlatte.product.specification.ProductSpecifications.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -64,12 +63,7 @@ public class ProductService implements ProductCatalogApi {
 
     @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
     public List<ProductInfoDto> getProductDtosByIds(final @Nullable List<@Nullable UUID> ids) {
-        validateProductIds(ids);
-        List<@Nullable UUID> nonNullIds = Objects.requireNonNull(ids);
-        List<UUID> validatedIds = new ArrayList<>(nonNullIds.size());
-        for (@Nullable UUID id : nonNullIds) {
-            validatedIds.add(Objects.requireNonNull(id));
-        }
+        List<UUID> validatedIds = validateProductIds(ids);
         if (validatedIds.isEmpty()) {
             return List.of();
         }
@@ -166,14 +160,15 @@ public class ProductService implements ProductCatalogApi {
 
     @Override
     @Transactional(readOnly = true)
-    public Set<UUID> findExistingProductIds(final Set<UUID> productIds) {
-        if (productIds.isEmpty()) {
+    public Set<UUID> findExistingProductIds(final @Nullable Set<@Nullable UUID> productIds) {
+        Set<UUID> validatedProductIds = validateProductIdSet(productIds);
+        if (validatedProductIds.isEmpty()) {
             return Set.of();
         }
-        return productInfoRepository.findExistingIds(productIds);
+        return productInfoRepository.findExistingIds(validatedProductIds);
     }
 
-    private static void validateProductIds(@Nullable List<@Nullable UUID> ids) {
+    private static List<UUID> validateProductIds(@Nullable List<@Nullable UUID> ids) {
         if (ids == null) {
             throw new BadRequestException("Product ids must not be null.");
         }
@@ -183,5 +178,20 @@ public class ProductService implements ProductCatalogApi {
         if (new HashSet<>(ids).size() != ids.size()) {
             throw new BadRequestException("Product ids must not contain duplicate values.");
         }
+        return ids.stream().map(ProductService::requireProductId).toList();
+    }
+
+    private static Set<UUID> validateProductIdSet(@Nullable Set<@Nullable UUID> productIds) {
+        if (productIds == null) {
+            throw new BadRequestException("Product ids must not be null.");
+        }
+        if (productIds.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestException("Product ids must not contain null values.");
+        }
+        return productIds.stream().map(ProductService::requireProductId).collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static UUID requireProductId(@Nullable UUID productId) {
+        return Objects.requireNonNull(productId);
     }
 }

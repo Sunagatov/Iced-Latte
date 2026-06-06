@@ -1,9 +1,7 @@
 package com.zufar.icedlatte.product.service;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.zufar.icedlatte.product.entity.ProductInfo;
 import com.zufar.icedlatte.product.repository.ProductInfoRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,12 +63,23 @@ class ProductReviewProductGatewayTest {
     @DisplayName("updateAiSummary persists a product summary when the product exists")
     void updateAiSummaryPersistsProductSummary() {
         UUID productId = UUID.randomUUID();
-        ProductInfo product = new ProductInfo();
-        when(productInfoRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productInfoRepository.updateAiSummary(productId, "summary")).thenReturn(1);
 
         gateway.updateAiSummary(productId, "summary");
 
-        verify(productInfoRepository).save(product);
+        verify(productInfoRepository).updateAiSummary(productId, "summary");
         verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
+    }
+
+    @Test
+    @DisplayName("updateAiSummary does not evict product cache when no product row is updated")
+    void updateAiSummaryDoesNotEvictWhenProductDoesNotExist() {
+        UUID productId = UUID.randomUUID();
+        when(productInfoRepository.updateAiSummary(productId, "summary")).thenReturn(0);
+
+        gateway.updateAiSummary(productId, "summary");
+
+        verify(productInfoRepository).updateAiSummary(productId, "summary");
+        verifyNoInteractions(productCacheEvictor);
     }
 }

@@ -6,8 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -264,6 +266,49 @@ class ProductServiceTest {
             assertThat(productService.existsById(productId)).isTrue();
 
             verify(productInfoRepository).existsById(productId);
+            verifyNoMoreInteractions(productInfoRepository);
+        }
+
+        @Test
+        @DisplayName("findExistingProductIds returns empty set for empty input")
+        void findExistingProductIdsReturnsEmptyForEmptyInput() {
+            assertThat(productService.findExistingProductIds(Set.of())).isEmpty();
+
+            verifyNoInteractions(productInfoRepository);
+        }
+
+        @Test
+        @DisplayName("findExistingProductIds rejects null product id set")
+        void findExistingProductIdsRejectsNullSet() {
+            assertThatThrownBy(() -> productService.findExistingProductIds(null))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("null");
+
+            verifyNoInteractions(productInfoRepository);
+        }
+
+        @Test
+        @DisplayName("findExistingProductIds rejects null product id values")
+        void findExistingProductIdsRejectsNullValues() {
+            Set<UUID> productIds = new HashSet<>();
+            productIds.add(null);
+
+            assertThatThrownBy(() -> productService.findExistingProductIds(productIds))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("null");
+
+            verifyNoInteractions(productInfoRepository);
+        }
+
+        @Test
+        @DisplayName("findExistingProductIds delegates with validated ids")
+        void findExistingProductIdsDelegatesWithValidatedIds() {
+            UUID productId = UUID.randomUUID();
+            when(productInfoRepository.findExistingIds(Set.of(productId))).thenReturn(Set.of(productId));
+
+            assertThat(productService.findExistingProductIds(Set.of(productId))).containsExactly(productId);
+
+            verify(productInfoRepository).findExistingIds(Set.of(productId));
             verifyNoMoreInteractions(productInfoRepository);
         }
     }

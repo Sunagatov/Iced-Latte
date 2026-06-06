@@ -21,9 +21,13 @@ public class ProductNotFoundException extends RuntimeException {
     }
 
     public ProductNotFoundException(final List<UUID> productIds) {
-        super(String.format(
-                "Products with productIds = %s are not found.",
-                productIds.stream().map(UUID::toString).collect(Collectors.joining(", "))));
-        this.productIds = productIds;
+        super(message(productIds));
+        this.productIds = List.copyOf(productIds);
+    }
+
+    private static String message(List<UUID> productIds) {
+        String errorMessage = "Products with productIds = %s are not found.";
+        String productIdsAsString = productIds.stream().map(UUID::toString).collect(Collectors.joining(", "));
+        return String.format(errorMessage, productIdsAsString);
     }
 }

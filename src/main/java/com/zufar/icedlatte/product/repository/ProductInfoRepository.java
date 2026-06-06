@@ -64,4 +64,8 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
                                                          WHERE pr.product_id = p.id)
                     """)
     void updateAllReviewsCounts();
+
+    @Modifying
+    @Query("UPDATE ProductInfo p SET p.aiSummary = :summary WHERE p.id = :productId")
+    int updateAiSummary(@Param("productId") UUID productId, @Param("summary") String summary);
 }

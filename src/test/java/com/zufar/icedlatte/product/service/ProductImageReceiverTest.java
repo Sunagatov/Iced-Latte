@@ -125,6 +125,14 @@ class ProductImageReceiverTest {
     class GetProductImageUrlsBatch {
 
         @Test
+        @DisplayName("returns an empty map for an empty batch without querying the repository")
+        void returnsEmptyMapForEmptyBatch() {
+            assertThat(receiver.getProductImageUrlsBatch(List.of())).isEmpty();
+
+            verifyNoInteractions(fileStorageService, productImageRepository);
+        }
+
+        @Test
         @DisplayName("groups image URLs by product id in repository order")
         void groupsImageUrlsByProductIdInRepositoryOrder() {
             UUID productId1 = UUID.randomUUID();
@@ -151,6 +159,14 @@ class ProductImageReceiverTest {
     class GetProductFileUrls {
 
         @Test
+        @DisplayName("returns an empty map for an empty batch without calling the provider")
+        void returnsEmptyMapForEmptyBatch() {
+            assertThat(receiver.getProductFileUrls(List.of())).isEmpty();
+
+            verifyNoInteractions(fileStorageService, productImageRepository);
+        }
+
+        @Test
         @DisplayName("fills placeholders for products missing from the provider result")
         void fillsPlaceholdersForProductsMissingFromProviderResult() {
             UUID productId1 = UUID.randomUUID();
@@ -163,6 +179,20 @@ class ProductImageReceiverTest {
             assertThat(result).containsEntry(productId1, "https://cdn.example.com/img1.jpg");
             assertThat(result).containsEntry(productId2, PLACEHOLDER);
             verify(fileStorageService).findFileUrls(List.of(productId1, productId2));
+            verifyNoMoreInteractions(fileStorageService, productImageRepository);
+        }
+
+        @Test
+        @DisplayName("keeps batch URL resolution stable when duplicate product ids are passed")
+        void keepsBatchUrlResolutionStableForDuplicateProductIds() {
+            UUID productId = UUID.randomUUID();
+            when(fileStorageService.findFileUrls(List.of(productId, productId)))
+                    .thenReturn(Map.of(productId, "https://cdn.example.com/img.jpg"));
+
+            Map<UUID, String> result = receiver.getProductFileUrls(List.of(productId, productId));
+
+            assertThat(result).containsOnly(Map.entry(productId, "https://cdn.example.com/img.jpg"));
+            verify(fileStorageService).findFileUrls(List.of(productId, productId));
             verifyNoMoreInteractions(fileStorageService, productImageRepository);
         }
 

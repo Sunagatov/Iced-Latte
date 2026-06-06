@@ -57,6 +57,15 @@ class ProductPictureLinkUpdaterTest {
     class UpdateBatch {
 
         @Test
+        @DisplayName("returns an empty batch without image receiver calls")
+        void returnsEmptyBatchWithoutImageReceiverCalls() {
+            List<ProductInfoDto> products = List.of();
+
+            assertThat(updater.updateBatch(products)).isSameAs(products);
+            verifyNoInteractions(productImageReceiver);
+        }
+
+        @Test
         @DisplayName("enriches every dto from the batch lookups")
         void enrichesEveryDtoFromBatchLookups() {
             UUID productId1 = UUID.randomUUID();
