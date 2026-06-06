@@ -218,6 +218,26 @@ class RateLimitingFilterTest {
     }
 
     @Test
+    @DisplayName("blank extracted IP is normalized before keying")
+    void blankExtractedIpIsNormalizedBeforeKeying() throws Exception {
+        when(clientIpExtractor.extract(any())).thenReturn("  ");
+        when(authenticatedRequestIdentityProvider.findIdentity(any(MockHttpServletRequest.class)))
+                .thenReturn(Optional.empty());
+        when(openRateLimiter.tryConsume(any(), anyInt(), any()))
+                .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
+
+        filter.doFilterInternal(
+                new MockHttpServletRequest("GET", "/api/v1/products"),
+                new MockHttpServletResponse(),
+                mock(FilterChain.class));
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(openRateLimiter, org.mockito.Mockito.times(2)).tryConsume(keyCaptor.capture(), anyInt(), any());
+        assertThat(keyCaptor.getAllValues()).anyMatch(key -> key.contains("global:ip:unknown"));
+        assertThat(keyCaptor.getAllValues()).noneMatch(key -> key.endsWith(":ip:  "));
+    }
+
+    @Test
     @DisplayName("invalid token falls back to IP-based key")
     void invalidTokenStillUsesIpKey() throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("7.7.7.7");

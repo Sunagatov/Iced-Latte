@@ -35,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
+    private static final String UNKNOWN_IDENTITY = "unknown";
+
     private final RateLimiter openRateLimiter;
     private final RateLimiter closedRateLimiter;
     private final MeterRegistry meterRegistry;
@@ -81,7 +83,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        String ip = clientIpExtractor.extract(request);
+        String ip = normalizeIdentity(clientIpExtractor.extract(request));
 
         if (banTracker.isBanned(ip)) {
             meterRegistry.counter("rate_limit.requests.banned").increment();
@@ -178,9 +180,17 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
         return authenticatedRequestIdentityProvider.findIdentity(request)
-                .map(ClientIpExtractor::sanitize)
-                .map(String::trim)
+                .map(RateLimitingFilter::sanitizeIdentity)
                 .filter(identity -> !identity.isBlank());
+    }
+
+    private static String normalizeIdentity(String identity) {
+        String normalized = sanitizeIdentity(identity);
+        return normalized.isBlank() ? UNKNOWN_IDENTITY : normalized;
+    }
+
+    private static String sanitizeIdentity(String identity) {
+        return ClientIpExtractor.sanitize(identity).trim();
     }
 
     private void logExceeded(

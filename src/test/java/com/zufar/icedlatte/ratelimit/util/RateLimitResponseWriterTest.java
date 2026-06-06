@@ -22,7 +22,7 @@ class RateLimitResponseWriterTest {
     void writesRateLimitHeaders() {
         MockHttpServletResponse response = new MockHttpServletResponse();
         long resetTimeMillis = System.currentTimeMillis() + 30_000;
-        RateLimitResult result = new RateLimitResult(true, 60, -5, resetTimeMillis, 60);
+        RateLimitResult result = new RateLimitResult(true, 60, 0, resetTimeMillis, 60);
 
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
 
@@ -34,6 +34,16 @@ class RateLimitResponseWriterTest {
         // IETF structured fields
         assertThat(response.getHeader("RateLimit-Policy")).isEqualTo("\"default\";q=60;w=60");
         assertThat(response.getHeader("RateLimit")).startsWith("\"default\";r=0;t=");
+    }
+
+    @Test
+    @DisplayName("rate-limit result normalizes invalid numeric values")
+    void rateLimitResultNormalizesInvalidNumericValues() {
+        RateLimitResult result = new RateLimitResult(false, -1, -5, System.currentTimeMillis(), 0);
+
+        assertThat(result.limit()).isZero();
+        assertThat(result.remaining()).isZero();
+        assertThat(result.windowSeconds()).isEqualTo(1);
     }
 
     @Test
