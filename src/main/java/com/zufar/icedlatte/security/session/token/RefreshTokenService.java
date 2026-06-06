@@ -7,12 +7,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.audit.Identifiable;
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
 import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
 import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +33,7 @@ public class RefreshTokenService {
     private final SessionTokenService sessionTokenService;
 
     @Transactional
-    public RefreshTokenResult refresh(HttpServletRequest request) {
+    public RefreshTokenResult refresh(HttpServletRequest request, AuthSessionRequestMetadata requestMetadata) {
         log.debug("auth.token.refreshing");
         String rawToken = jwtBearerTokenResolver.extract(request);
         String hash = jwtTokenBlacklist.hash(rawToken);
@@ -50,7 +52,7 @@ public class RefreshTokenService {
             String userEmail = extractRefreshTokenEmail(rawToken);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             JwtAccountStatusValidator.requireActive(userDetails);
-            var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, request);
+            var response = sessionTokenService.migrateLegacyRefreshToken(userDetails, rawToken, requestMetadata);
             log.info("auth.token.refresh_legacy_migrated");
             return new RefreshTokenResult(response, true);
         }
@@ -58,9 +60,21 @@ public class RefreshTokenService {
         String userEmail = extractRefreshTokenEmail(rawToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
         JwtAccountStatusValidator.requireActive(userDetails);
+        requireSessionOwner(session, userDetails);
         var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
         log.debug("auth.token.refreshed");
         return new RefreshTokenResult(response, false);
+    }
+
+    private void requireSessionOwner(AuthSessionEntity session, UserDetails userDetails) {
+        if (userDetails instanceof Identifiable user && session.getUserId().equals(user.getId())) {
+            return;
+        }
+        log.warn(
+                "auth.token.refresh_session_owner_mismatch: sessionId={}",
+                AuthSessionService.maskSessionId(session.getId()));
+        authSessionService.revokeAllForCompromisedUserBySessionId(session.getId());
+        throw new JwtTokenBlacklistedException("Refresh token session owner mismatch");
     }
 
     private String extractRefreshTokenEmail(String rawToken) {

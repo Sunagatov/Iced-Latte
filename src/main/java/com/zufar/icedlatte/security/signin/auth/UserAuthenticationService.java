@@ -1,7 +1,5 @@
 package com.zufar.icedlatte.security.signin.auth;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.exception.InvalidCredentialsException;
@@ -37,24 +36,30 @@ public class UserAuthenticationService {
     private final LoginAttemptProperties loginAttemptProperties;
 
     public AuthenticationTokens authenticate(
-            final UserAuthenticationRequest request, final HttpServletRequest httpRequest) {
+            final UserAuthenticationRequest request,
+            final AuthSessionRequestMetadata requestMetadata) {
         turnstileVerifier.verify(request.getTurnstileToken());
         UserDetails userDetails = verifyCredentials(request);
         loginAttemptService.resetAfterSuccessfulAuthentication(EmailNormalizer.normalize(request.getEmail()));
-        return sessionTokenService.issueForNewSession(userDetails, httpRequest);
+        return sessionTokenService.issueForNewSession(userDetails, requestMetadata);
     }
 
     public UserDetails verifyCredentials(final UserAuthenticationRequest request) {
         String userEmail = EmailNormalizer.normalize(request.getEmail());
         String userPassword = request.getPassword();
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userEmail, userPassword));
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(userEmail, userPassword);
+
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+
             if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
                 // amazonq-ignore-next-line
                 throw new InvalidCredentialsException();
             }
+
             return userDetails;
+
         } catch (UsernameNotFoundException | BadCredentialsException exception) {
             loginAttemptService.recordFailure(userEmail);
             throw new InvalidCredentialsException(exception);

@@ -5,8 +5,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +17,7 @@ import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 import com.zufar.icedlatte.security.oauth.entity.OAuthIdentityEntity;
 import com.zufar.icedlatte.security.oauth.repository.OAuthIdentityRepository;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
@@ -53,7 +52,7 @@ public class OAuthLoginService {
 
     @Transactional
     public AuthenticationTokens handle(
-            OAuthProvider provider, String authorizationCode, HttpServletRequest httpRequest) {
+            OAuthProvider provider, String authorizationCode, AuthSessionRequestMetadata requestMetadata) {
         OAuthProviderClient client =
                 findClient(provider).orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);
@@ -91,7 +90,7 @@ public class OAuthLoginService {
 
         ensureUserCanSignIn(user);
 
-        return sessionTokenService.issueForNewSession(SecurityUserDetails.from(user), httpRequest);
+        return sessionTokenService.issueForNewSession(SecurityUserDetails.from(user), requestMetadata);
     }
 
     private UserAuthenticationSnapshot findOrCreateUserAndIdentity(

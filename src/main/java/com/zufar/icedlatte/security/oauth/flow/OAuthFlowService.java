@@ -8,14 +8,17 @@ import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,7 @@ public class OAuthFlowService {
     private final OAuthTokenHandoffStore oAuthTokenHandoffStore;
     private final OAuthRedirectService oAuthRedirectService;
     private final OAuthStateCookieService oAuthStateCookieService;
+    private final ClientIpExtractor clientIpExtractor;
 
     public Optional<URI> initiate(
             OAuthProvider provider, String redirectUrl, HttpServletRequest request, HttpServletResponse response) {
@@ -85,12 +89,19 @@ public class OAuthFlowService {
         }
         String callbackUrl = callbackBase.orElseThrow();
         try {
-            AuthenticationTokens tokens = oAuthLoginService.handle(provider, code, request);
+            AuthenticationTokens tokens = oAuthLoginService.handle(provider, code, requestMetadata(request));
             String handoffCode = oAuthTokenHandoffStore.store(tokens);
             return URI.create(oAuthRedirectService.callbackUrlWithHandoffCode(callbackUrl, handoffCode));
         } catch (BadRequestException | UnauthorizedException e) {
             log.error(
                     "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
+                    provider.id(),
+                    e.getClass().getSimpleName(),
+                    e);
+            return oAuthRedirectService.frontendErrorRedirect(callbackUrl);
+        } catch (RuntimeException e) {
+            log.error(
+                    "auth.oauth.callback.unexpected_failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
                     provider.id(),
                     e.getClass().getSimpleName(),
                     e);
@@ -105,6 +116,11 @@ public class OAuthFlowService {
         return oAuthTokenHandoffStore
                 .consume(code)
                 .orElseThrow(() -> new BadRequestException("OAuth token code is invalid or expired."));
+    }
+
+    private AuthSessionRequestMetadata requestMetadata(HttpServletRequest request) {
+        return new AuthSessionRequestMetadata(
+                request.getHeader(HttpHeaders.USER_AGENT), clientIpExtractor.extract(request));
     }
 
     private static String generateStateNonce() {

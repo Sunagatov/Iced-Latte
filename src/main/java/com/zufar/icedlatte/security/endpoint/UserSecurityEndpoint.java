@@ -7,8 +7,12 @@ import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
 import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
@@ -35,6 +40,7 @@ import com.zufar.icedlatte.openapi.security.api.SecurityApi;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.flow.OAuthFlowService;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.session.revocation.TokenRevocationService;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
@@ -55,6 +61,10 @@ public class UserSecurityEndpoint implements SecurityApi {
 
     public static final String USER_SECURITY_API_URL = ApiPaths.AUTH;
 
+    private static final String X_REFRESH_TOKEN_HEADER = "X-Refresh-Token";
+    private static final String OAUTH_HANDOFF_CODE_PATTERN = "^[A-Za-z0-9_-]{43}$";
+    private static final String UNSUPPORTED_OAUTH_PROVIDER_REASON = "OAuth provider is not supported.";
+
     private final UserAuthenticationService userAuthenticationService;
     private final EmailVerificationService emailVerificationService;
     private final AuthSessionService authSessionService;
@@ -66,6 +76,7 @@ public class UserSecurityEndpoint implements SecurityApi {
     private final HttpServletRequest httpRequest;
     private final HttpServletResponse httpResponse;
     private final OAuthFlowService oAuthFlowService;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Value("${email.enabled:false}")
     private boolean emailEnabled;
@@ -73,15 +84,16 @@ public class UserSecurityEndpoint implements SecurityApi {
     @Override
     @GetMapping("/oauth/{provider}")
     public ResponseEntity<Void> initiateOAuth(
-            @PathVariable String provider, @Valid @RequestParam(required = false) URI redirectUrl) {
+            @PathVariable String provider,
+            @Valid @RequestParam(required = false) URI redirectUrl) {
         OAuthProvider oAuthProvider = parseProvider(provider);
+        String redirectUrlAsString = redirectUrl == null ? null : redirectUrl.toString();
         return oAuthFlowService
-                .initiate(oAuthProvider, redirectUrl == null ? null : redirectUrl.toString(), httpRequest, httpResponse)
-                .map(authUri -> ResponseEntity.status(HttpStatus.FOUND)
-                        .location(authUri)
-                        .<Void>build())
-                .orElseGet(() ->
-                        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());
+                .initiate(oAuthProvider, redirectUrlAsString, httpRequest, httpResponse)
+                .map(UserSecurityEndpoint::redirect)
+                .orElseGet(() -> ResponseEntity
+                        .status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .build());
     }
 
     @Override
@@ -91,15 +103,16 @@ public class UserSecurityEndpoint implements SecurityApi {
             @Valid @RequestParam(required = false) String code,
             @Valid @RequestParam(required = false) String state) {
         OAuthProvider oAuthProvider = parseProvider(provider);
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(oAuthFlowService.completeCallback(oAuthProvider, code, state, httpRequest, httpResponse))
-                .build();
+        URI location = oAuthFlowService.completeCallback(oAuthProvider, code, state, httpRequest, httpResponse);
+        return redirect(location);
     }
 
     @Override
     @PostMapping("/oauth/token")
-    public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(@RequestParam String code) {
-        return ResponseEntity.ok(toResponse(oAuthFlowService.completeTokenHandoff(code)));
+    public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(
+            @NotNull @Pattern(regexp = OAUTH_HANDOFF_CODE_PATTERN) @Size(min = 43, max = 43) @RequestParam String code) {
+        AuthenticationTokens authenticationTokens = oAuthFlowService.completeTokenHandoff(code);
+        return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 
     @Override
@@ -110,14 +123,15 @@ public class UserSecurityEndpoint implements SecurityApi {
             emailVerificationService.sendEmailVerificationCode(request);
             return ResponseEntity.ok().build();
         }
-        return ResponseEntity.ok(toResponse(userRegistrationService.register(request, httpRequest)));
+        AuthenticationTokens authenticationTokens = userRegistrationService.register(request, requestMetadata());
+        return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 
     @Override
     @PostMapping("/confirm")
     public ResponseEntity<UserAuthenticationResponse> confirmEmail(
             @Valid @RequestBody final ConfirmEmailRequest confirmEmailRequest) {
-        var response = emailVerificationService.confirmEmailByCode(confirmEmailRequest.getToken(), httpRequest);
+        var response = emailVerificationService.confirmEmailByCode(confirmEmailRequest.getToken(), requestMetadata());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(response));
     }
 
@@ -125,22 +139,23 @@ public class UserSecurityEndpoint implements SecurityApi {
     @PostMapping("/authenticate")
     public ResponseEntity<UserAuthenticationResponse> authenticate(
             @Valid @RequestBody final UserAuthenticationRequest request) {
-        AuthenticationTokens authenticationTokens = userAuthenticationService.authenticate(request, httpRequest);
+        AuthenticationTokens authenticationTokens = userAuthenticationService.authenticate(request, requestMetadata());
         return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 
     @Override
     @PostMapping("/refresh")
     public ResponseEntity<UserAuthenticationResponse> refreshToken() {
-        RefreshTokenResult result = refreshTokenService.refresh(httpRequest);
-        return ResponseEntity.status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
+        RefreshTokenResult result = refreshTokenService.refresh(httpRequest, requestMetadata());
+        return ResponseEntity
+                .status(result.migratedLegacyToken() ? HttpStatus.CREATED : HttpStatus.OK)
                 .body(toResponse(result.tokens()));
     }
 
     @Override
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @RequestHeader(name = "X-Refresh-Token", required = false) String xRefreshToken) {
+            @RequestHeader(name = X_REFRESH_TOKEN_HEADER, required = false) String xRefreshToken) {
         tokenRevocationService.revokeTokens(xRefreshToken, httpRequest);
         return ResponseEntity.ok().build();
     }
@@ -181,9 +196,21 @@ public class UserSecurityEndpoint implements SecurityApi {
     }
 
     private OAuthProvider parseProvider(String provider) {
-        return OAuthProvider.fromId(provider)
-                .orElseThrow(
-                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "OAuth provider is not supported."));
+        return OAuthProvider
+                .fromId(provider)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, UNSUPPORTED_OAUTH_PROVIDER_REASON));
+    }
+
+    private AuthSessionRequestMetadata requestMetadata() {
+        String userAgent = httpRequest.getHeader(HttpHeaders.USER_AGENT);
+        String ipAddress = clientIpExtractor.extract(httpRequest);
+        return new AuthSessionRequestMetadata(userAgent, ipAddress);
+    }
+
+    private static ResponseEntity<Void> redirect(URI location) {
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(location)
+                .build();
     }
 
     private static UserAuthenticationResponse toResponse(AuthenticationTokens tokens) {

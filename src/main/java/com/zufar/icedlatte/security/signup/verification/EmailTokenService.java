@@ -39,7 +39,7 @@ public class EmailTokenService {
 
     public String generateEmailVerificationToken(UserRegistrationRequest request) {
         String email = EmailNormalizer.normalize(request.getEmail());
-        validateCooldown(email);
+        validateCooldown(email, TokenPurpose.EMAIL_VERIFICATION);
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         var registration = new EmailRegistrationPayload(request.getFirstName(), request.getLastName(), email);
         var payload = new EmailVerificationTokenPayload(email, registration, encodedPassword);
@@ -48,7 +48,7 @@ public class EmailTokenService {
 
     public String generatePasswordResetToken(String email) {
         String normalizedEmail = EmailNormalizer.normalize(email);
-        validateCooldown(normalizedEmail);
+        validateCooldown(normalizedEmail, TokenPurpose.PASSWORD_RESET);
         var payload = new PasswordResetTokenPayload(normalizedEmail);
         return generate(normalizedEmail, TokenPurpose.PASSWORD_RESET, tokenPayloadProtector.protect(payload));
     }
@@ -69,7 +69,7 @@ public class EmailTokenService {
 
             if (temporaryStore.putIfAbsent(tokenKey, protectedPayload, ttl)) {
                 String value = OffsetDateTime.now().plus(ttl).toString();
-                String key = cooldownKey(email);
+                String key = cooldownKey(purpose, email);
                 temporaryStore.put(key, value, ttl);
                 return token;
             }
@@ -84,14 +84,17 @@ public class EmailTokenService {
                 .take(tokenKey(purpose, token))
                 .map(protectedEntry -> tokenPayloadProtector.unprotect(protectedEntry, payloadType))
                 .orElseThrow(() -> new BadRequestException("Incorrect token"));
-        temporaryStore.remove(cooldownKey(payload.email()));
+        temporaryStore.remove(cooldownKey(purpose, payload.email()));
         return payload;
     }
 
-    private void validateCooldown(String email) {
-        temporaryStore.get(cooldownKey(email)).map(OffsetDateTime::parse).ifPresent(expiry -> {
-            throw new TimeTokenException(expiry);
-        });
+    private void validateCooldown(String email, TokenPurpose purpose) {
+        temporaryStore
+                .get(cooldownKey(purpose, email))
+                .map(OffsetDateTime::parse)
+                .ifPresent(expiry -> {
+                    throw new TimeTokenException(expiry);
+                });
     }
 
     private String nextToken() {
@@ -131,7 +134,7 @@ public class EmailTokenService {
         }
     }
 
-    private static String cooldownKey(String email) {
-        return COOLDOWN_KEY_PREFIX + hashToken(email);
+    private static String cooldownKey(TokenPurpose purpose, String email) {
+        return COOLDOWN_KEY_PREFIX + purpose.name().toLowerCase(Locale.ROOT) + ":" + hashToken(email);
     }
 }

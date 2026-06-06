@@ -5,13 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.SessionInfo;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
@@ -30,11 +27,13 @@ public class AuthSessionService {
 
     private final AuthSessionRepository sessionRepository;
     private final JwtProperties jwtProperties;
-    private final ClientIpExtractor clientIpExtractor;
 
     @Transactional
     public AuthSessionEntity createSession(
-            UUID sessionId, UUID userId, String refreshTokenHash, HttpServletRequest request) {
+            UUID sessionId,
+            UUID userId,
+            String refreshTokenHash,
+            AuthSessionRequestMetadata requestMetadata) {
         OffsetDateTime now = now();
         AuthSessionEntity session = AuthSessionEntity.builder()
                 .id(sessionId)
@@ -42,8 +41,8 @@ public class AuthSessionService {
                 .refreshTokenHash(refreshTokenHash)
                 .createdAt(now)
                 .expiresAt(expiresAt(now))
-                .userAgent(request.getHeader(HttpHeaders.USER_AGENT))
-                .ipAddress(clientIpExtractor.extract(request))
+                .userAgent(requestMetadata.userAgent())
+                .ipAddress(requestMetadata.ipAddress())
                 .compromised(false)
                 .build();
         sessionRepository.save(session);
@@ -70,7 +69,7 @@ public class AuthSessionService {
         });
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId) {
         sessionRepository.revokeAllByUserId(userId, now());
         log.info("auth.session.revoked_all: userId={}", userId);

@@ -3,8 +3,6 @@ package com.zufar.icedlatte.security.session.token;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.slf4j.MDC;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -14,6 +12,7 @@ import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,8 +27,10 @@ public class SessionTokenService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthSessionService authSessionService;
 
-    public AuthenticationTokens issueForNewSession(UserDetails userDetails, HttpServletRequest request) {
-        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
+    public AuthenticationTokens issueForNewSession(
+            UserDetails userDetails, AuthSessionRequestMetadata requestMetadata) {
+        SessionAuthentication sessionAuthentication =
+                createManagedSession(userDetails, UUID.randomUUID(), requestMetadata);
         return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 
@@ -43,21 +44,22 @@ public class SessionTokenService {
     }
 
     public AuthenticationTokens migrateLegacyRefreshToken(
-            UserDetails userDetails, String legacyRefreshToken, HttpServletRequest request) {
-        SessionAuthentication sessionAuthentication = createManagedSession(userDetails, UUID.randomUUID(), request);
+            UserDetails userDetails, String legacyRefreshToken, AuthSessionRequestMetadata requestMetadata) {
+        SessionAuthentication sessionAuthentication =
+                createManagedSession(userDetails, UUID.randomUUID(), requestMetadata);
         jwtTokenBlacklist.blacklistRefreshToken(legacyRefreshToken);
         return withSessionMdc(sessionAuthentication.session(), sessionAuthentication::response);
     }
 
     private SessionAuthentication createManagedSession(
-            UserDetails userDetails, UUID sessionId, HttpServletRequest request) {
+            UserDetails userDetails, UUID sessionId, AuthSessionRequestMetadata requestMetadata) {
         if (!(userDetails instanceof Identifiable user)) {
             throw new IllegalArgumentException("Expected identifiable user details but got: "
                     + userDetails.getClass().getName());
         }
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails, sessionId);
         AuthSessionEntity session = authSessionService.createSession(
-                sessionId, user.getId(), jwtTokenBlacklist.hash(refreshToken), request);
+                sessionId, user.getId(), jwtTokenBlacklist.hash(refreshToken), requestMetadata);
         AuthenticationTokens response = buildTokenPair(userDetails, session.getId(), refreshToken);
         return new SessionAuthentication(session, response);
     }

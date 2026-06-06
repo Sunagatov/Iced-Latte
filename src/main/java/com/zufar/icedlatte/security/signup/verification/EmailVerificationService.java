@@ -1,12 +1,11 @@
 package com.zufar.icedlatte.security.signup.verification;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
@@ -36,7 +35,9 @@ public class EmailVerificationService {
         emailConfirmation.sendTemporaryCode(normalizedEmail, token);
     }
 
-    public AuthenticationTokens confirmEmailByCode(String token, HttpServletRequest httpRequest) {
+    public AuthenticationTokens confirmEmailByCode(
+            String token,
+            AuthSessionRequestMetadata requestMetadata) {
         EmailVerificationTokenPayload payload = emailTokenService.consumeEmailVerificationToken(token);
         String encodedPassword = payload.encodedPassword();
         if (encodedPassword == null || encodedPassword.isBlank()) {
@@ -44,7 +45,7 @@ public class EmailVerificationService {
         }
         UserRegistrationRequest registrationRequest = toRegistrationRequest(payload.registration());
         return userRegistrationService.completeEmailVerifiedRegistration(
-                registrationRequest, encodedPassword, httpRequest);
+                registrationRequest, encodedPassword, requestMetadata);
     }
 
     public void confirmResetPasswordEmailByCode(String token, String newPassword) {

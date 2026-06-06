@@ -2,8 +2,6 @@ package com.zufar.icedlatte.security.signup.registration;
 
 import java.util.Objects;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
+import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.security.session.token.SessionTokenService;
 import com.zufar.icedlatte.security.signin.auth.SecurityUserDetails;
@@ -40,25 +39,26 @@ public class UserRegistrationService {
 
     @Transactional
     public AuthenticationTokens register(
-            final UserRegistrationRequest userRegistrationRequest, final HttpServletRequest httpRequest) {
+            final UserRegistrationRequest userRegistrationRequest,
+            final AuthSessionRequestMetadata requestMetadata) {
         ensureRegistrationAllowed(userRegistrationRequest);
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
-        return persistPasswordUser(userRegistrationRequest, encryptedPassword, httpRequest);
+        return persistPasswordUser(userRegistrationRequest, encryptedPassword, requestMetadata);
     }
 
     @Transactional
     public AuthenticationTokens completeEmailVerifiedRegistration(
             final UserRegistrationRequest userRegistrationRequest,
             final String encodedPassword,
-            final HttpServletRequest httpRequest) {
-        return persistPasswordUser(userRegistrationRequest, encodedPassword, httpRequest);
+            final AuthSessionRequestMetadata requestMetadata) {
+        return persistPasswordUser(userRegistrationRequest, encodedPassword, requestMetadata);
     }
 
     private AuthenticationTokens persistPasswordUser(
             final UserRegistrationRequest userRegistrationRequest,
             final String encodedPassword,
-            final HttpServletRequest httpRequest) {
+            final AuthSessionRequestMetadata requestMetadata) {
         String email = EmailNormalizer.normalize(userRegistrationRequest.getEmail());
 
         try {
@@ -68,7 +68,8 @@ public class UserRegistrationService {
                     email,
                     Objects.requireNonNull(encodedPassword));
             log.info("auth.registration.succeeded: userId={}", snapshot.userId());
-            return sessionTokenService.issueForNewSession(SecurityUserDetails.from(snapshot), httpRequest);
+            SecurityUserDetails securityUserDetails = SecurityUserDetails.from(snapshot);
+            return sessionTokenService.issueForNewSession(securityUserDetails, requestMetadata);
         } catch (DataIntegrityViolationException e) {
             log.warn("auth.registration.failed: reason=email_already_registered, source=database_constraint");
             throw duplicateEmailException(e);
@@ -89,6 +90,9 @@ public class UserRegistrationService {
 
     private static UserRegistrationException duplicateEmailException(Throwable cause) {
         String message = "This email is already registered. Please sign in or use a different email.";
-        return cause == null ? new UserRegistrationException(message) : new UserRegistrationException(message, cause);
+        if (cause == null) {
+            return new UserRegistrationException(message);
+        }
+        return new UserRegistrationException(message, cause);
     }
 }
