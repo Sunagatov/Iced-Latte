@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +43,7 @@ class OAuthLoginServiceTest {
     private static final AuthSessionRequestMetadata REQUEST_METADATA =
             new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
-    @Mock
-    private OAuthProviderClient providerClient;
+    private FakeOAuthProviderClient providerClient;
 
     @Mock
     private OAuthIdentityRepository oAuthIdentityRepository;
@@ -64,6 +64,7 @@ class OAuthLoginServiceTest {
 
     @BeforeEach
     void setUp() {
+        providerClient = new FakeOAuthProviderClient();
         service = new OAuthLoginService(
                 List.of(providerClient),
                 oAuthIdentityRepository,
@@ -308,9 +309,7 @@ class OAuthLoginServiceTest {
 
     private void stubProfile(
             String providerSubject, String email, boolean emailVerified, String firstName, String lastName) {
-        when(providerClient.provider()).thenReturn(OAuthProvider.GOOGLE);
-        when(providerClient.exchangeCode(AUTH_CODE))
-                .thenReturn(profile(providerSubject, email, emailVerified, firstName, lastName));
+        providerClient.profile = profile(providerSubject, email, emailVerified, firstName, lastName);
     }
 
     private void stubNoIdentity() {
@@ -370,5 +369,25 @@ class OAuthLoginServiceTest {
     private static OAuthProfile profile(
             String providerSubject, String email, boolean emailVerified, String firstName, String lastName) {
         return new OAuthProfile(providerSubject, email, emailVerified, firstName, lastName);
+    }
+
+    private static final class FakeOAuthProviderClient implements OAuthProviderClient {
+
+        private OAuthProfile profile;
+
+        @Override
+        public OAuthProvider provider() {
+            return OAuthProvider.GOOGLE;
+        }
+
+        @Override
+        public URI buildAuthorizationUri(String state) {
+            return URI.create("https://accounts.google.test/oauth?state=" + state);
+        }
+
+        @Override
+        public OAuthProfile exchangeCode(String authorizationCode) {
+            return profile;
+        }
     }
 }

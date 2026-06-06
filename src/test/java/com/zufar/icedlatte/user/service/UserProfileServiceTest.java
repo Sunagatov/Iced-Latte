@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
@@ -145,13 +146,12 @@ class UserProfileServiceTest {
     @DisplayName("deleteProfile deletes user and then requests post-delete cleanup")
     void deleteProfileDeletesUserAndRequestsCleanup() {
         UUID userId = UUID.randomUUID();
-        when(singleUserProvider.getUserEntityById(userId))
-                .thenReturn(UserEntity.builder().id(userId).build());
+        UserEntity userEntity = UserEntity.builder().id(userId).build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
         userProfileService.deleteProfile(userId);
 
-        verify(singleUserProvider).getUserEntityById(userId);
-        verify(userRepository).deleteById(userId);
+        verify(userRepository).delete(userEntity);
         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         verify(fileStorageWriterApi).deleteFile(userId);
     }
@@ -160,11 +160,11 @@ class UserProfileServiceTest {
     @DisplayName("deleteProfile throws when user is missing")
     void deleteProfileThrowsWhenUserIsMissing() {
         UUID userId = UUID.randomUUID();
-        when(singleUserProvider.getUserEntityById(userId)).thenThrow(new UserNotFoundException(userId));
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userProfileService.deleteProfile(userId)).isInstanceOf(UserNotFoundException.class);
 
-        verify(userRepository, never()).deleteById(any());
+        verify(userRepository, never()).delete(any());
         verifyNoInteractions(eventPublisher, fileStorageWriterApi);
     }
 
@@ -186,6 +186,35 @@ class UserProfileServiceTest {
         userProfileService.deleteAvatar(userId);
 
         verify(fileStorageWriterApi).deleteFile(userId);
+    }
+
+    @Nested
+    @DisplayName("account access")
+    class AccountAccess {
+
+        @Test
+        @DisplayName("lockAccount normalizes email before updating account state")
+        void lockAccountNormalizesEmail() {
+            when(userRepository.setAccountNonLockedStatus("user@example.com", false))
+                    .thenReturn(1);
+
+            int updatedRows = userProfileService.lockAccount(" User@Example.COM ");
+
+            assertThat(updatedRows).isEqualTo(1);
+            verify(userRepository).setAccountNonLockedStatus("user@example.com", false);
+        }
+
+        @Test
+        @DisplayName("unlockAccount normalizes email before updating account state")
+        void unlockAccountNormalizesEmail() {
+            when(userRepository.setAccountNonLockedStatus("user@example.com", true))
+                    .thenReturn(1);
+
+            int updatedRows = userProfileService.unlockAccount(" User@Example.COM ");
+
+            assertThat(updatedRows).isEqualTo(1);
+            verify(userRepository).setAccountNonLockedStatus("user@example.com", true);
+        }
     }
 
     @Nested
@@ -245,6 +274,30 @@ class UserProfileServiceTest {
 
             verify(userRepository).changeUserPassword("encoded_new", userId);
             verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        }
+
+        @Test
+        @DisplayName("direct overload requests session revocation only after commit")
+        void changePasswordDirectOverloadRequestsSessionRevocationAfterCommit() {
+            UUID userId = UUID.randomUUID();
+            when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
+            when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
+
+            TransactionSynchronizationManager.initSynchronization();
+            try {
+                userProfileService.changePassword(userId, "new_plain");
+
+                verify(eventPublisher, never()).publishEvent(any());
+
+                TransactionSynchronizationManager.getSynchronizations().forEach(synchronization -> {
+                    synchronization.beforeCommit(false);
+                    synchronization.afterCommit();
+                });
+
+                verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+            } finally {
+                TransactionSynchronizationManager.clearSynchronization();
+            }
         }
 
         @Test

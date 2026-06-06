@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +20,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
-public class ProductReviewDtoConverterTest {
+class ProductReviewDtoConverterTest {
 
     private ProductReviewDtoConverter converter;
 
@@ -32,7 +31,7 @@ public class ProductReviewDtoConverterTest {
 
     @Test
     @DisplayName("Convert ProductReview entity to ProductReviewDto")
-    void converProductReviewToProductReviewDto() {
+    void convertProductReviewToProductReviewDto() {
 
         ProductReview expectedProductReview = ProductReview.builder()
                 .id(UUID.randomUUID())
@@ -50,10 +49,8 @@ public class ProductReviewDtoConverterTest {
         assertThat(actualProductReviewDto.getProductRating()).isEqualTo(expectedProductReview.getProductRating());
         assertThat(actualProductReviewDto.getText()).isEqualTo(expectedProductReview.getText());
         assertThat(actualProductReviewDto.getCreatedAt()).isEqualTo(expectedProductReview.getCreatedAt());
-        assertThat(actualProductReviewDto.getUserName())
-                .isEqualTo(Optional.of(user).get().firstName());
-        assertThat(actualProductReviewDto.getUserLastname())
-                .isEqualTo(Optional.of(user).get().lastName());
+        assertThat(actualProductReviewDto.getUserName()).isEqualTo(user.firstName());
+        assertThat(actualProductReviewDto.getUserLastname()).isEqualTo(user.lastName());
         assertThat(actualProductReviewDto.getLikesCount()).isEqualTo(expectedProductReview.getLikesCount());
         assertThat(actualProductReviewDto.getDislikesCount()).isEqualTo(expectedProductReview.getDislikesCount());
     }

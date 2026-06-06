@@ -18,13 +18,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
-import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadataFactory;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +56,7 @@ class OAuthFlowServiceTest {
     private OAuthStateCookieService oAuthStateCookieService;
 
     @Mock
-    private AuthSessionRequestMetadataFactory requestMetadataFactory;
+    private ClientIpExtractor clientIpExtractor;
 
     private OAuthFlowService service;
 
@@ -67,8 +68,9 @@ class OAuthFlowServiceTest {
                 oAuthTokenHandoffStore,
                 new OAuthRedirectService("https://app.example.com"),
                 oAuthStateCookieService,
-                requestMetadataFactory);
-        lenient().when(requestMetadataFactory.from(request)).thenReturn(REQUEST_METADATA);
+                clientIpExtractor);
+        lenient().when(request.getHeader(HttpHeaders.USER_AGENT)).thenReturn(REQUEST_METADATA.userAgent());
+        lenient().when(clientIpExtractor.extract(request)).thenReturn(REQUEST_METADATA.ipAddress());
     }
 
     @Test

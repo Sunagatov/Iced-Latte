@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -50,14 +49,13 @@ class ProductReviewsProviderTest {
     @Mock
     private UserLookupApi userLookupApi;
 
-    @InjectMocks
     private ProductReviewsProvider provider;
 
     private UUID productId;
     private UUID userId;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         var paginationConfig = new PaginationConfig(
                 0,
                 new PaginationConfig.Products(50, "name", "desc"),
@@ -65,10 +63,12 @@ class ProductReviewsProviderTest {
                 new PaginationConfig.Orders(10, 50, "createdAt", "desc"));
         productId = UUID.randomUUID();
         userId = UUID.randomUUID();
-
-        var paginationConfigField = ProductReviewsProvider.class.getDeclaredField("paginationConfig");
-        paginationConfigField.setAccessible(true);
-        paginationConfigField.set(provider, paginationConfig);
+        provider = new ProductReviewsProvider(
+                reviewRepository,
+                productReviewDtoConverter,
+                productReviewValidator,
+                paginationConfig,
+                userLookupApi);
     }
 
     @Test

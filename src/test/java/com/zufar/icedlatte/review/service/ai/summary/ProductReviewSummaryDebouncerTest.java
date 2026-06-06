@@ -1,17 +1,6 @@
-package com.zufar.icedlatte.review.ai.summary;
+package com.zufar.icedlatte.review.service.ai.summary;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,11 +8,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
-import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProductReviewSummaryDebouncer unit tests")
@@ -47,6 +45,9 @@ class ProductReviewSummaryDebouncerTest {
     @Mock
     private ScheduledFuture<Object> existingFuture;
 
+    @Mock
+    private ScheduledFuture<Object> replacementFuture;
+
     private ProductReviewSummaryDebouncer debouncer;
 
     @BeforeEach
@@ -65,25 +66,32 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("schedule replaces an existing debounce task for the same product")
     void scheduleReplacesExistingDebounceTaskForSameProduct() {
         UUID productId = UUID.randomUUID();
-        pending().put(productId, existingFuture);
-        doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
+        doReturn(existingFuture, replacementFuture)
+                .when(scheduler)
+                .schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
 
+        debouncer.schedule(productId);
         debouncer.schedule(productId);
 
         verify(existingFuture).cancel(false);
-        verify(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
-        assertThat(pending()).containsEntry(productId, future);
-        assertThat(firstTriggerTime()).containsKey(productId);
+        verify(scheduler, times(2)).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
     }
 
     @Test
     @DisplayName("schedule executes immediately after the max wait window")
     void scheduleExecutesImmediatelyAfterMaxWaitWindow() {
         UUID productId = UUID.randomUUID();
-        firstTriggerTime().put(productId, System.currentTimeMillis() - 601_000L);
+        ProductReviewSummaryDebouncer immediateDebouncer = new ProductReviewSummaryDebouncer(
+                Duration.ofMinutes(2),
+                Duration.ZERO,
+                3,
+                productSummaryService,
+                productReviewProductGateway,
+                selfProvider,
+                scheduler);
         doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(0L), eq(TimeUnit.SECONDS));
 
-        debouncer.schedule(productId);
+        immediateDebouncer.schedule(productId);
 
         verify(scheduler).schedule(any(Runnable.class), eq(0L), eq(TimeUnit.SECONDS));
     }
@@ -93,6 +101,7 @@ class ProductReviewSummaryDebouncerTest {
     void scheduledRunnableCallsProxiedBeanSummaryMethod() {
         UUID productId = UUID.randomUUID();
         when(selfProvider.getObject()).thenReturn(debouncer);
+        when(productSummaryService.summarize(productId)).thenReturn("Fresh summary");
         when(future.isDone()).thenReturn(true);
         when(scheduler.schedule(any(Runnable.class), any(Long.class), eq(TimeUnit.SECONDS)))
                 .thenAnswer(invocation -> {
@@ -104,22 +113,26 @@ class ProductReviewSummaryDebouncerTest {
         debouncer.schedule(productId);
 
         verify(selfProvider).getObject();
-        assertThat(pending()).doesNotContainKey(productId);
+        verify(productReviewProductGateway).updateAiSummary(productId, "Fresh summary");
     }
 
     @Test
-    @DisplayName("runSummary saves the generated summary and clears pending state")
-    void runSummarySavesGeneratedSummaryAndClearsPendingState() {
+    @DisplayName("runSummary clears pending state before future schedules")
+    void runSummaryClearsPendingStateBeforeFutureSchedules() {
         UUID productId = UUID.randomUUID();
         when(productSummaryService.summarize(productId)).thenReturn("Fresh summary");
-        pending().put(productId, future);
-        firstTriggerTime().put(productId, 123L);
+        doReturn(existingFuture, replacementFuture)
+                .when(scheduler)
+                .schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
+
+        debouncer.schedule(productId);
 
         debouncer.runSummary(productId);
+        debouncer.schedule(productId);
 
         verify(productReviewProductGateway).updateAiSummary(productId, "Fresh summary");
-        assertThat(pending()).doesNotContainKey(productId);
-        assertThat(firstTriggerTime()).doesNotContainKey(productId);
+        verify(existingFuture, never()).cancel(false);
+        verify(scheduler, times(2)).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
     }
 
     @Test
@@ -160,27 +173,14 @@ class ProductReviewSummaryDebouncerTest {
     @DisplayName("runSummary stops retrying after max retry attempts")
     void runSummaryStopsRetryingAfterMaxRetryAttempts() {
         UUID productId = UUID.randomUUID();
-        retryCounts().put(productId, 3);
         when(productSummaryService.summarize(productId)).thenThrow(new RuntimeException("timeout"));
+        doReturn(future).when(scheduler).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
 
         debouncer.runSummary(productId);
+        debouncer.runSummary(productId);
+        debouncer.runSummary(productId);
+        debouncer.runSummary(productId);
 
-        verify(scheduler, never()).schedule(any(Runnable.class), any(Long.class), eq(TimeUnit.SECONDS));
-        assertThat(retryCounts()).doesNotContainKey(productId);
-    }
-
-    @SuppressWarnings("unchecked")
-    private ConcurrentHashMap<UUID, ScheduledFuture<?>> pending() {
-        return (ConcurrentHashMap<UUID, ScheduledFuture<?>>) ReflectionTestUtils.getField(debouncer, "pendingDebounce");
-    }
-
-    @SuppressWarnings("unchecked")
-    private ConcurrentHashMap<UUID, Long> firstTriggerTime() {
-        return (ConcurrentHashMap<UUID, Long>) ReflectionTestUtils.getField(debouncer, "firstTriggerTime");
-    }
-
-    @SuppressWarnings("unchecked")
-    private ConcurrentHashMap<UUID, Integer> retryCounts() {
-        return (ConcurrentHashMap<UUID, Integer>) ReflectionTestUtils.getField(debouncer, "retryCounts");
+        verify(scheduler, times(3)).schedule(any(Runnable.class), eq(120L), eq(TimeUnit.SECONDS));
     }
 }

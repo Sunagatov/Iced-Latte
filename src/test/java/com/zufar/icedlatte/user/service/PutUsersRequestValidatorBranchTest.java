@@ -1,14 +1,18 @@
 package com.zufar.icedlatte.user.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 
+import jakarta.validation.Validation;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 
 @DisplayName("PutUsersRequestValidator additional branch tests")
 class PutUsersRequestValidatorBranchTest {
@@ -47,6 +51,17 @@ class PutUsersRequestValidatorBranchTest {
         assertThatThrownBy(() -> PutUsersRequestValidator.validate("John123", "Doe", null, null, null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("can only contain letters");
+    }
+
+    @Test
+    @DisplayName("Generated update request contract accepts right single quotation mark")
+    void validate_generatedUpdateRequestAcceptsRightSingleQuotationMark() {
+        try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            var validator = validatorFactory.getValidator();
+            var request = new UpdateUserAccountRequest("D’Arcy", "O’Connor");
+
+            assertThat(validator.validate(request)).isEmpty();
+        }
     }
 
     @Test

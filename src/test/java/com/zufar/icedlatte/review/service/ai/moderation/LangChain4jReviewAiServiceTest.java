@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
+import com.zufar.icedlatte.review.exception.ReviewSummaryException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,8 +99,8 @@ class LangChain4jReviewAiServiceTest {
         when(reviewAiService.aggregateSummary(anyString())).thenThrow(new RuntimeException("timeout"));
 
         assertThatThrownBy(() -> service.summarize(productId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("AI summary generation failed");
+                .isInstanceOf(ReviewSummaryException.class)
+                .hasMessage("AI summary generation failed for product " + productId);
     }
 
     @Test
