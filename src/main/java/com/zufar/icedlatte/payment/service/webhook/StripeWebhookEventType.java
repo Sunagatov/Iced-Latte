@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 enum StripeWebhookEventType {
     CHECKOUT_SESSION_COMPLETED("checkout.session.completed"),
     CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED("checkout.session.async_payment_succeeded"),
@@ -8,10 +11,6 @@ enum StripeWebhookEventType {
     CHARGE_REFUNDED("charge.refunded");
 
     private final String value;
-
-    StripeWebhookEventType(String value) {
-        this.value = value;
-    }
 
     boolean matches(String eventType) {
         return value.equals(eventType);

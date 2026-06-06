@@ -16,10 +16,12 @@ import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserAvatarUploader {
 
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
@@ -28,17 +30,6 @@ public class UserAvatarUploader {
     private final ObjectProvider<FileCacheInvalidationApi> cacheInvalidator;
     private final TurnstileVerifier turnstileVerifier;
     private final TurnstileProperties turnstileProperties;
-
-    public UserAvatarUploader(
-            FileStorageWriterApi fileStorageWriterApi,
-            ObjectProvider<FileCacheInvalidationApi> cacheInvalidator,
-            TurnstileVerifier turnstileVerifier,
-            TurnstileProperties turnstileProperties) {
-        this.fileStorageWriterApi = fileStorageWriterApi;
-        this.cacheInvalidator = cacheInvalidator;
-        this.turnstileVerifier = turnstileVerifier;
-        this.turnstileProperties = turnstileProperties;
-    }
 
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
