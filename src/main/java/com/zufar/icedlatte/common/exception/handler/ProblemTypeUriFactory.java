@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.common.exception.handler;
 
-import java.net.URI;
-import java.util.Objects;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.net.URI;
+import java.util.Objects;
 
 @Component
 public class ProblemTypeUriFactory {
@@ -12,10 +12,10 @@ public class ProblemTypeUriFactory {
     private final String typeBaseUrl;
 
     public ProblemTypeUriFactory(@Value("${problem.type-base-url}") String typeBaseUrl) {
-        String normalizedBaseUrl = Objects.requireNonNull(typeBaseUrl, "problem.type-base-url must be configured")
-                .trim();
+        String errorMessage = "problem.type-base-url must be configured";
+        String normalizedBaseUrl = Objects.requireNonNull(typeBaseUrl, errorMessage).trim();
         if (normalizedBaseUrl.isBlank()) {
-            throw new IllegalArgumentException("problem.type-base-url must be configured");
+            throw new IllegalArgumentException(errorMessage);
         }
         this.typeBaseUrl = normalizedBaseUrl.endsWith("/") ? normalizedBaseUrl : normalizedBaseUrl + "/";
     }
@@ -29,6 +29,9 @@ public class ProblemTypeUriFactory {
         if (normalizedTypeSlug.isBlank()) {
             throw new IllegalArgumentException("typeSlug must not be blank");
         }
-        return normalizedTypeSlug.contains(":") ? normalizedTypeSlug : typeBaseUrl + normalizedTypeSlug;
+        if (normalizedTypeSlug.contains(":")) {
+            return normalizedTypeSlug;
+        }
+        return typeBaseUrl + normalizedTypeSlug;
     }
 }
