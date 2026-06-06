@@ -1,16 +1,17 @@
 package com.zufar.icedlatte.ratelimit.configuration;
 
-import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
-import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.concurrent.locks.LockSupport;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.CaffeineFixedWindowRateLimiter;
+import com.zufar.icedlatte.ratelimit.configuration.RateLimitingConfiguration.FailPolicy;
 
 @DisplayName("CaffeineFixedWindowRateLimiter unit tests")
 class CaffeineFixedWindowRateLimiterTest {
@@ -112,8 +113,7 @@ class CaffeineFixedWindowRateLimiterTest {
         }
     }
 
-    private static RateLimitResult awaitWindowReset(
-            CaffeineFixedWindowRateLimiter limiter, Duration window) {
+    private static RateLimitResult awaitWindowReset(CaffeineFixedWindowRateLimiter limiter, Duration window) {
         long deadline = System.nanoTime() + Duration.ofSeconds(1).toNanos();
         RateLimitResult result;
         do {

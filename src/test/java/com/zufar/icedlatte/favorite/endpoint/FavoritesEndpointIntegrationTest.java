@@ -83,9 +83,8 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
     @DisplayName("Should reject oversized favorites request")
     void shouldRejectOversizedFavoritesRequest() {
         AuthenticatedUser user = registerAndAuthenticateUser();
-        String productIds = Stream.generate(() -> "\"" + PRODUCT_ID_ONE + "\"")
-                .limit(101)
-                .collect(Collectors.joining(", "));
+        String productIds =
+                Stream.generate(() -> "\"" + PRODUCT_ID_ONE + "\"").limit(101).collect(Collectors.joining(", "));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
                 .body("""
@@ -177,9 +176,8 @@ class FavoritesEndpointIntegrationTest extends AuthenticatedUserIntegrationSuppo
                 {
                   "productIds": [%s]
                 }
-        """.formatted(Arrays.stream(productIds)
-                .map(id -> "\"" + id + "\"")
-                .collect(Collectors.joining(", ")));
+        """.formatted(
+                        Arrays.stream(productIds).map(id -> "\"" + id + "\"").collect(Collectors.joining(", ")));
 
         given(authenticatedJsonSpec(FavoritesEndpoint.FAVORITES_URL, user.accessToken()))
                 .body(body)

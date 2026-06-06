@@ -366,7 +366,8 @@ class ShoppingCartServiceTest {
     void deleteItemsRejectsNullItemIds() {
         UUID userId = UUID.randomUUID();
 
-        assertThatThrownBy(() -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
+        assertThatThrownBy(
+                        () -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
         verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);

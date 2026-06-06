@@ -14,8 +14,7 @@ class FileMetadataDtoTest {
     @DisplayName("rejects missing related object id")
     @SuppressWarnings("DataFlowIssue")
     void rejectsMissingRelatedObjectId() {
-        assertThatThrownBy(() -> new FileMetadataDto(null, "bucket", "key"))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> new FileMetadataDto(null, "bucket", "key")).isInstanceOf(NullPointerException.class);
     }
 
     @Test

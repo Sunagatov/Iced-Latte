@@ -21,9 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(name = "sentry.enabled", havingValue = "true")
 public class SentryConfiguration {
 
-    private static final Set<String> SENSITIVE_HEADER_NAMES = Set.of(
-            HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
-    private static final Set<String> SENSITIVE_BREADCRUMB_KEYS = Set.of("email", "password", "phone");
+    private static final Set<String> SENSITIVE_HEADER_NAMES =
+            Set.of(HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
+    private static final Set<String> SENSITIVE_BREADCRUMB_KEYS =
+            Set.of("email", "Email", "EMAIL", "password", "Password", "PASSWORD", "phone", "Phone", "PHONE");
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -108,12 +109,7 @@ public class SentryConfiguration {
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
-        if (breadcrumb.getData() == null) {
-            return;
-        }
-        breadcrumb.getData()
-                .keySet()
-                .removeIf(key -> SENSITIVE_BREADCRUMB_KEYS.contains(key.toLowerCase(Locale.ROOT)));
+        SENSITIVE_BREADCRUMB_KEYS.forEach(breadcrumb::removeData);
     }
 
     private void addCustomTags(SentryEvent event) {

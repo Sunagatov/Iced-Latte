@@ -179,7 +179,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> resolveUserIdentity(HttpServletRequest request) {
-        return authenticatedRequestIdentityProvider.findIdentity(request)
+        return authenticatedRequestIdentityProvider
+                .findIdentity(request)
                 .map(RateLimitingFilter::sanitizeIdentity)
                 .filter(identity -> !identity.isBlank());
     }

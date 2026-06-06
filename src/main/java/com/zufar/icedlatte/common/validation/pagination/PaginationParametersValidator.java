@@ -21,11 +21,13 @@ public class PaginationParametersValidator {
             final Set<String> allowedSortAttributeValues) {
         List<String> errors = new ArrayList<>();
         if (pageNumber != null && pageNumber < 0) {
-            String errorMessage = "'%s' is the incorrect 'PageNumber' attribute value. 'PageNumber' value should be non negative integer number value.";
+            String errorMessage =
+                    "'%s' is the incorrect 'PageNumber' attribute value. 'PageNumber' value should be non negative integer number value.";
             errors.add(error(errorMessage.formatted(pageNumber)));
         }
         if (pageSize != null && pageSize < 1) {
-            String errorMessage = "'%s' is the incorrect 'PageSize' attribute value. 'PageSize' value should be a positive integer.";
+            String errorMessage =
+                    "'%s' is the incorrect 'PageSize' attribute value. 'PageSize' value should be a positive integer.";
             errors.add(error(errorMessage.formatted(pageSize)));
         }
         String normalizedSortAttribute = sortAttribute == null ? null : sortAttribute.trim();
@@ -35,7 +37,8 @@ public class PaginationParametersValidator {
         }
         String normalizedSortDirection = sortDirection == null ? null : sortDirection.trim();
         if (normalizedSortDirection != null
-                && !ALLOWED_SORT_DIRECTION_VALUES.contains(normalizedSortDirection.toLowerCase(java.util.Locale.ROOT))) {
+                && !ALLOWED_SORT_DIRECTION_VALUES.contains(
+                        normalizedSortDirection.toLowerCase(java.util.Locale.ROOT))) {
             String errorMessage = "'%s' is incorrect 'sortDirection' value. Allowed 'sortDirection' values are '%s'.";
             errors.add(error(errorMessage.formatted(sortDirection, ALLOWED_SORT_DIRECTION_VALUES)));
         }

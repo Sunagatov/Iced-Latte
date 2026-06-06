@@ -31,7 +31,8 @@ class RateLimitPropertiesValidator {
         if (properties.getBanDuration() == null
                 || properties.getBanDuration().isZero()
                 || properties.getBanDuration().isNegative()) {
-            String errorMessage = "security.rate-limit.ban-duration must be positive, got: " + properties.getBanDuration();
+            String errorMessage =
+                    "security.rate-limit.ban-duration must be positive, got: " + properties.getBanDuration();
             throw new IllegalStateException(errorMessage);
         }
         if (properties.getBanDuration().toMillis() < 1) {
@@ -47,19 +48,20 @@ class RateLimitPropertiesValidator {
             throw new IllegalStateException(errorMessage);
         }
         if (bucket.getMaxRequests() <= 0) {
-            String errorMessage = "security.rate-limit." + bucketName + ".max-requests must be > 0, got: " + bucket.getMaxRequests();
+            String errorMessage =
+                    "security.rate-limit." + bucketName + ".max-requests must be > 0, got: " + bucket.getMaxRequests();
             throw new IllegalStateException(errorMessage);
         }
         if (bucket.getWindowDuration() == null
                 || bucket.getWindowDuration().isZero()
                 || bucket.getWindowDuration().isNegative()) {
-            String errorMessage = "security.rate-limit." + bucketName
-                    + ".window-duration must be positive, got: " + bucket.getWindowDuration();
+            String errorMessage = "security.rate-limit." + bucketName + ".window-duration must be positive, got: "
+                    + bucket.getWindowDuration();
             throw new IllegalStateException(errorMessage);
         }
         if (bucket.getWindowDuration().toMillis() < 1) {
-            String errorMessage = "security.rate-limit." + bucketName
-                    + ".window-duration must be at least 1ms, got: " + bucket.getWindowDuration();
+            String errorMessage = "security.rate-limit." + bucketName + ".window-duration must be at least 1ms, got: "
+                    + bucket.getWindowDuration();
             throw new IllegalStateException(errorMessage);
         }
     }

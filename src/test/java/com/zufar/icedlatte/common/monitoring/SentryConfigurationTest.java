@@ -66,8 +66,8 @@ class SentryConfigurationTest {
         breadcrumb.setData("safe", "ok");
 
         Breadcrumb result = Objects.requireNonNull(callback.execute(breadcrumb, hint));
-        Object email = result.getData("email");
-        Object password = result.getData("password");
+        Object email = result.getData("Email");
+        Object password = result.getData("PASSWORD");
         Object phone = result.getData("phone");
         Object safe = result.getData("safe");
 

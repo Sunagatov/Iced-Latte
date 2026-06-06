@@ -46,7 +46,8 @@ class RateLimitRouteClassifier {
     }
 
     private static boolean isActuatorPath(String path) {
-        return isPathUnder(path, ApiPaths.ACTUATOR_ROOT) || isPathUnder(path, ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
+        return isPathUnder(path, ApiPaths.ACTUATOR_ROOT)
+                || isPathUnder(path, ApiPaths.API_ROOT + ApiPaths.ACTUATOR_ROOT);
     }
 
     private static boolean isDocsPath(String path) {

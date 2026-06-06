@@ -281,10 +281,7 @@ class FavoriteServiceTest {
     }
 
     private static FavoriteListEntity favoriteList(UUID userId) {
-        return FavoriteListEntity.builder()
-                .id(UUID.randomUUID())
-                .userId(userId)
-                .build();
+        return FavoriteListEntity.builder().id(UUID.randomUUID()).userId(userId).build();
     }
 
     private static FavoriteItemEntity favoriteItem(FavoriteListEntity favoriteList, UUID productId) {

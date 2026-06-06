@@ -27,8 +27,8 @@ class AuditConfigTest {
     @DisplayName("returns authenticated user id as auditor")
     void returnsAuthenticatedUserIdAsAuditor() {
         UUID userId = UUID.randomUUID();
-        TestingAuthenticationToken authentication = new TestingAuthenticationToken(
-                new TestPrincipal(userId), "credentials");
+        TestingAuthenticationToken authentication =
+                new TestingAuthenticationToken(new TestPrincipal(userId), "credentials");
         authentication.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
