@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.service;
 
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,10 @@ public class UserAvatarUploader {
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
 
-    public void uploadUserAvatar(final UUID userId, final MultipartFile file, final String turnstileToken) {
+    public void uploadUserAvatar(
+            final UUID userId,
+            final MultipartFile file,
+            @Nullable final String turnstileToken) {
         if (turnstileProperties.avatarEnabled()) {
             turnstileVerifier.verify(turnstileToken);
         }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -77,7 +78,7 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> uploadUserAvatar(
             @RequestPart("file") MultipartFile file,
-            @RequestPart(value = "turnstileToken", required = false) String turnstileToken) {
+            @Size(max = 2048) @RequestParam(value = "turnstileToken", required = false) String turnstileToken) {
         var userId = currentUserId();
         userAvatarUploader.uploadUserAvatar(userId, file, turnstileToken);
         log.info("user.avatar.uploaded: userId={}", userId);
