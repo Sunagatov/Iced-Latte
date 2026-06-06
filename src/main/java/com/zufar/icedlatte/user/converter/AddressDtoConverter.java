@@ -21,11 +21,7 @@ public interface AddressDtoConverter {
         if (dto == null) {
             return null;
         }
-        boolean allBlank = isBlank(dto.getCountry())
-                && isBlank(dto.getCity())
-                && isBlank(dto.getLine())
-                && isBlank(dto.getPostcode());
-        if (allBlank) {
+        if (isBlankAddress(dto)) {
             return null;
         }
         return Address.builder()
@@ -36,7 +32,22 @@ public interface AddressDtoConverter {
                 .build();
     }
 
-    private static boolean isBlank(@Nullable String s) {
-        return s == null || s.isBlank();
+    static boolean isBlankAddress(@Nullable AddressDto dto) {
+        return dto == null
+                || isBlank(dto.getCountry())
+                        && isBlank(dto.getCity())
+                        && isBlank(dto.getLine())
+                        && isBlank(dto.getPostcode());
+    }
+
+    static String requireAddressPart(@Nullable String value, String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("address." + fieldName + " is required");
+        }
+        return value;
+    }
+
+    private static boolean isBlank(@Nullable String value) {
+        return value == null || value.isBlank();
     }
 }

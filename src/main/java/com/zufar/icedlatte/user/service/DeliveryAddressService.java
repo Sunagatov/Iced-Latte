@@ -39,10 +39,7 @@ public class DeliveryAddressService implements UserAddressApi {
     @Override
     @Transactional(readOnly = true)
     public UserAddressSnapshot getDeliveryAddress(UUID userId, UUID deliveryAddressId) {
-        var entity = addressRepository
-                .findByIdAndUserId(deliveryAddressId, userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Delivery address with id = %s is not found.", deliveryAddressId)));
+        var entity = findAddressOrThrow(userId, deliveryAddressId);
         return new UserAddressSnapshot(entity.getCountry(), entity.getCity(), entity.getLine(), entity.getPostcode());
     }
 
@@ -58,10 +55,7 @@ public class DeliveryAddressService implements UserAddressApi {
 
     @Transactional
     public DeliveryAddressDto update(UUID userId, UUID addressId, DeliveryAddressRequest request) {
-        var entity = addressRepository
-                .findByIdAndUserId(addressId, userId)
-                .orElseThrow(() ->
-                        new NotFoundException(String.format("Delivery address with id = %s is not found.", addressId)));
+        var entity = findAddressOrThrow(userId, addressId);
         entity.setLabel(request.getLabel());
         entity.setLine(request.getLine());
         entity.setCity(request.getCity());
@@ -73,10 +67,7 @@ public class DeliveryAddressService implements UserAddressApi {
     @Transactional
     public void delete(UUID userId, UUID addressId) {
         lockUser(userId);
-        var entity = addressRepository
-                .findByIdAndUserId(addressId, userId)
-                .orElseThrow(() ->
-                        new NotFoundException(String.format("Delivery address with id = %s is not found.", addressId)));
+        var entity = findAddressOrThrow(userId, addressId);
         var replacement = entity.isDefault()
                 ? addressRepository.findFirstByUserIdAndIdNotOrderByIdAsc(userId, addressId)
                 : Optional.<DeliveryAddressEntity>empty();
@@ -91,10 +82,7 @@ public class DeliveryAddressService implements UserAddressApi {
     @Transactional
     public DeliveryAddressDto setDefault(UUID userId, UUID addressId) {
         lockUser(userId);
-        var entity = addressRepository
-                .findByIdAndUserId(addressId, userId)
-                .orElseThrow(() ->
-                        new NotFoundException(String.format("Delivery address with id = %s is not found.", addressId)));
+        var entity = findAddressOrThrow(userId, addressId);
         if (entity.isDefault()) {
             return converter.toDto(entity);
         }
@@ -105,5 +93,12 @@ public class DeliveryAddressService implements UserAddressApi {
 
     private UserEntity lockUser(UUID userId) {
         return userRepository.findByIdForUpdate(userId).orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    private DeliveryAddressEntity findAddressOrThrow(UUID userId, UUID addressId) {
+        String errorMessage = String.format("Delivery address with id = %s is not found.", addressId);
+        return addressRepository
+                .findByIdAndUserId(addressId, userId)
+                .orElseThrow(() -> new NotFoundException(errorMessage));
     }
 }

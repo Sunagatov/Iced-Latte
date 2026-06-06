@@ -20,7 +20,7 @@ public class PutUsersRequestValidator {
     private static final int MAX_ADDRESS_FIELD_LENGTH = 128;
     private static final Pattern NAME_PATTERN =
             Pattern.compile("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s'\\u2019\\-]+$");
-    private static final String PHONE_REGEXP = "^\\+[1-9]\\d{6,14}$";
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+[1-9]\\d{6,14}$");
     private static final String PHONE_ERROR = "Phone must be in international E.164 format, e.g. +12025550123.";
 
     public static void validate(
@@ -29,12 +29,22 @@ public class PutUsersRequestValidator {
             @Nullable String phoneNumber,
             @Nullable LocalDate birthDate,
             @Nullable AddressDto addressDto) {
+        validate(firstName, lastName, phoneNumber, birthDate, addressDto, LocalDate.now());
+    }
+
+    static void validate(
+            @Nullable String firstName,
+            @Nullable String lastName,
+            @Nullable String phoneNumber,
+            @Nullable LocalDate birthDate,
+            @Nullable AddressDto addressDto,
+            LocalDate today) {
         List<String> errors = new ArrayList<>();
 
         validateName(firstName, "First name", errors);
         validateName(lastName, "Last name", errors);
         validatePhone(phoneNumber, errors);
-        validateBirthDate(birthDate, errors);
+        validateBirthDate(birthDate, today, errors);
         validateAddress(addressDto, errors);
 
         if (!errors.isEmpty()) {
@@ -66,14 +76,17 @@ public class PutUsersRequestValidator {
     }
 
     private static void validatePhone(@Nullable String phoneNumber, List<String> errors) {
-        if (phoneNumber != null && !phoneNumber.isBlank() && !phoneNumber.matches(PHONE_REGEXP)) {
+        if (phoneNumber != null
+                && !phoneNumber.isBlank()
+                && !PHONE_PATTERN.matcher(phoneNumber).matches()) {
             errors.add(error(PHONE_ERROR));
         }
     }
 
-    private static void validateBirthDate(@Nullable LocalDate birthDate, List<String> errors) {
-        if (birthDate == null) return;
-        LocalDate today = LocalDate.now();
+    private static void validateBirthDate(@Nullable LocalDate birthDate, LocalDate today, List<String> errors) {
+        if (birthDate == null) {
+            return;
+        }
         if (!birthDate.isBefore(today)) {
             errors.add(error("Date of birth must be in the past."));
         } else if (birthDate.isAfter(today.minusYears(13))) {

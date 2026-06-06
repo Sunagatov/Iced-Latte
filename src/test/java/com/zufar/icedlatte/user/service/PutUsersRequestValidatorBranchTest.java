@@ -13,11 +13,13 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 @DisplayName("PutUsersRequestValidator additional branch tests")
 class PutUsersRequestValidatorBranchTest {
 
+    private static final LocalDate TODAY = LocalDate.of(2026, 6, 6);
+
     @Test
     @DisplayName("Future birth date throws BadRequestException")
     void validate_futureBirthDate_throws() {
-        LocalDate futureDate = LocalDate.now().plusDays(1);
-        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, futureDate, null))
+        LocalDate futureDate = TODAY.plusDays(1);
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, futureDate, null, TODAY))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("must be in the past");
     }
@@ -25,8 +27,8 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Birth date less than 13 years ago throws BadRequestException")
     void validate_under13BirthDate_throws() {
-        LocalDate recentDate = LocalDate.now().minusYears(10);
-        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, recentDate, null))
+        LocalDate recentDate = TODAY.minusYears(10);
+        assertThatThrownBy(() -> PutUsersRequestValidator.validate("John", "Doe", null, recentDate, null, TODAY))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("at least 13 years old");
     }
@@ -50,8 +52,8 @@ class PutUsersRequestValidatorBranchTest {
     @Test
     @DisplayName("Valid birth date exactly 13 years ago passes validation")
     void validate_exactly13YearsAgo_passes() {
-        LocalDate date = LocalDate.now().minusYears(13).minusDays(1);
-        assertThatCode(() -> PutUsersRequestValidator.validate("John", "Doe", null, date, null))
+        LocalDate date = TODAY.minusYears(13).minusDays(1);
+        assertThatCode(() -> PutUsersRequestValidator.validate("John", "Doe", null, date, null, TODAY))
                 .doesNotThrowAnyException();
     }
 

@@ -1,13 +1,16 @@
 package com.zufar.icedlatte.user.converter;
 
-import org.jspecify.annotations.Nullable;
-import org.mapstruct.*;
-
 import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.entity.Address;
 import com.zufar.icedlatte.user.entity.UserEntity;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
 
 @SuppressWarnings("NullableProblems")
 @Mapper(
@@ -41,15 +44,15 @@ public interface UserDtoConverter {
     @AfterMapping
     default void updateAddress(@MappingTarget UserEntity entity, UpdateUserAccountRequest request) {
         AddressDto dto = request.getAddress();
-        if (dto == null || isBlankAddress(dto)) {
+        if (AddressDtoConverter.isBlankAddress(dto)) {
             entity.setAddress(null);
             return;
         }
 
-        String country = requireAddressPart(dto.getCountry(), "country");
-        String city = requireAddressPart(dto.getCity(), "city");
-        String line = requireAddressPart(dto.getLine(), "line");
-        String postcode = requireAddressPart(dto.getPostcode(), "postcode");
+        String country = AddressDtoConverter.requireAddressPart(dto.getCountry(), "country");
+        String city = AddressDtoConverter.requireAddressPart(dto.getCity(), "city");
+        String line = AddressDtoConverter.requireAddressPart(dto.getLine(), "line");
+        String postcode = AddressDtoConverter.requireAddressPart(dto.getPostcode(), "postcode");
 
         if (entity.getAddress() == null) {
             entity.setAddress(Address.builder()
@@ -62,23 +65,5 @@ public interface UserDtoConverter {
         }
 
         entity.getAddress().update(country, city, line, postcode);
-    }
-
-    private static boolean isBlankAddress(AddressDto dto) {
-        return isBlank(dto.getCountry())
-                && isBlank(dto.getCity())
-                && isBlank(dto.getLine())
-                && isBlank(dto.getPostcode());
-    }
-
-    private static boolean isBlank(@Nullable String value) {
-        return value == null || value.isBlank();
-    }
-
-    private static String requireAddressPart(@Nullable String value, String fieldName) {
-        if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("address." + fieldName + " is required");
-        }
-        return value;
     }
 }

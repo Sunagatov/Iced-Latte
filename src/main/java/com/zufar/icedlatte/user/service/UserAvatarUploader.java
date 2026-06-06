@@ -1,9 +1,5 @@
 package com.zufar.icedlatte.user.service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -28,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class UserAvatarUploader {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
     private static final String AVATAR_NAME_PREFIX = "user-avatar-";
 
     private final FileStorageWriterApi fileStorageWriterApi;
@@ -56,7 +51,7 @@ public class UserAvatarUploader {
             turnstileVerifier.verify(turnstileToken);
         }
 
-        String contentType = normalizeContentType(file);
+        String contentType = AvatarContentTypes.normalize(file);
         validateAvatarFile(userId, file, contentType);
 
         String fileName = avatarFileName(userId, contentType);
@@ -65,35 +60,18 @@ public class UserAvatarUploader {
     }
 
     private void validateAvatarFile(UUID userId, MultipartFile file, String contentType) {
-        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+        if (!AvatarContentTypes.ALLOWED_CONTENT_TYPES.contains(contentType)) {
             log.warn("avatar.upload.rejected: reason=invalid_content_type, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
+            throw new InvalidAvatarFileTypeException(file.getContentType(), AvatarContentTypes.ALLOWED_CONTENT_TYPES);
         }
-        if (detectContentType(file).filter(contentType::equals).isEmpty()) {
+        if (AvatarContentTypes.detect(file).filter(contentType::equals).isEmpty()) {
             log.warn("avatar.upload.rejected: reason=magic_bytes_mismatch, userId={}", userId);
-            throw new InvalidAvatarFileTypeException(file.getContentType(), ALLOWED_CONTENT_TYPES);
+            throw new InvalidAvatarFileTypeException(file.getContentType(), AvatarContentTypes.ALLOWED_CONTENT_TYPES);
         }
-    }
-
-    private String normalizeContentType(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType == null) {
-            return "";
-        }
-        return contentType.split(";", 2)[0].trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     private String avatarFileName(UUID userId, String contentType) {
-        return AVATAR_NAME_PREFIX + userId + avatarExtension(contentType);
-    }
-
-    private String avatarExtension(String contentType) {
-        return switch (contentType) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> "";
-        };
+        return AVATAR_NAME_PREFIX + userId + AvatarContentTypes.extensionFor(contentType);
     }
 
     private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {
@@ -105,54 +83,5 @@ public class UserAvatarUploader {
 
     private void invalidateAvatarCache(String fileName) {
         cacheInvalidator.ifAvailable(invalidator -> invalidator.invalidate(fileName));
-    }
-
-    private static Optional<String> detectContentType(MultipartFile file) {
-        try (InputStream in = file.getInputStream()) {
-            byte[] h = in.readNBytes(12);
-            if (isJpeg(h)) {
-                return Optional.of("image/jpeg");
-            }
-            if (isPng(h)) {
-                return Optional.of("image/png");
-            }
-            if (isWebp(h)) {
-                return Optional.of("image/webp");
-            }
-            return Optional.empty();
-        } catch (IOException ex) {
-            return Optional.empty();
-        }
-    }
-
-    // FF D8 FF
-    private static boolean isJpeg(byte[] h) {
-        return h.length >= 3 && (h[0] & 0xFF) == 0xFF && (h[1] & 0xFF) == 0xD8 && (h[2] & 0xFF) == 0xFF;
-    }
-
-    // 89 50 4E 47 0D 0A 1A 0A
-    private static boolean isPng(byte[] h) {
-        return h.length >= 8
-                && (h[0] & 0xFF) == 0x89
-                && (h[1] & 0xFF) == 0x50
-                && (h[2] & 0xFF) == 0x4E
-                && (h[3] & 0xFF) == 0x47
-                && (h[4] & 0xFF) == 0x0D
-                && (h[5] & 0xFF) == 0x0A
-                && (h[6] & 0xFF) == 0x1A
-                && (h[7] & 0xFF) == 0x0A;
-    }
-
-    // 52 49 46 46 ?? ?? ?? ?? 57 45 42 50  (RIFF....WEBP)
-    private static boolean isWebp(byte[] h) {
-        return h.length >= 12
-                && (h[0] & 0xFF) == 0x52 // R
-                && (h[1] & 0xFF) == 0x49 // I
-                && (h[2] & 0xFF) == 0x46 // F
-                && (h[3] & 0xFF) == 0x46 // F
-                && (h[8] & 0xFF) == 0x57 // W
-                && (h[9] & 0xFF) == 0x45 // E
-                && (h[10] & 0xFF) == 0x42 // B
-                && (h[11] & 0xFF) == 0x50; // P
     }
 }

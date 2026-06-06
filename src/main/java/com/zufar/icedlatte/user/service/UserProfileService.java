@@ -85,13 +85,13 @@ public class UserProfileService implements UserAccessControlApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int lockAccount(String email) {
-        return userRepository.setAccountLockedStatus(email, false);
+        return userRepository.setAccountNonLockedStatus(email, false);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int unlockAccount(String email) {
-        return userRepository.setAccountLockedStatus(email, true);
+        return userRepository.setAccountNonLockedStatus(email, true);
     }
 
     @Transactional(readOnly = true)
