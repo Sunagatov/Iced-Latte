@@ -88,6 +88,15 @@ class TurnstileVerifierTest {
         }
 
         @Test
+        @DisplayName("should trim secret key")
+        void trimsSecretKey() {
+            TurnstileProperties properties = new TurnstileProperties(
+                    true, false, false, false, " test-secret ", Duration.ofMillis(500), Duration.ofSeconds(1));
+
+            Assertions.assertThat(properties.secretKey()).isEqualTo("test-secret");
+        }
+
+        @Test
         @DisplayName("should fail fast when enabled without secret key")
         void failFastWhenEnabledWithoutSecretKey() {
             Assertions.assertThatThrownBy(() -> bindTurnstileProperties("turnstile.enabled", "true"))
@@ -105,6 +114,19 @@ class TurnstileVerifierTest {
                     .hasRootCauseInstanceOf(IllegalStateException.class)
                     .hasRootCauseMessage(
                             "turnstile.enabled must be true when feature-specific Turnstile protection is enabled");
+        }
+
+        @Test
+        @DisplayName("should fail fast when timeout settings are not positive")
+        void failFastWhenTimeoutSettingsAreNotPositive() {
+            Assertions.assertThatThrownBy(() -> new TurnstileProperties(
+                            false, false, false, false, "", Duration.ZERO, Duration.ofSeconds(1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("turnstile.connect-timeout must be positive");
+            Assertions.assertThatThrownBy(() -> new TurnstileProperties(
+                            false, false, false, false, "", Duration.ofSeconds(1), Duration.ZERO))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("turnstile.read-timeout must be positive");
         }
 
         private void bindTurnstileProperties(String... entries) {

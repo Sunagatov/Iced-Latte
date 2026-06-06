@@ -14,6 +14,8 @@ class RetryAttemptSupportTest {
     @Test
     @DisplayName("backs off exponentially with an upper bound")
     void backsOffExponentiallyWithUpperBound() {
+        assertThat(RetryAttemptSupport.backoffSeconds(-1)).isEqualTo(1);
+        assertThat(RetryAttemptSupport.backoffSeconds(0)).isEqualTo(1);
         assertThat(RetryAttemptSupport.backoffSeconds(1)).isEqualTo(2);
         assertThat(RetryAttemptSupport.backoffSeconds(3)).isEqualTo(8);
         assertThat(RetryAttemptSupport.backoffSeconds(100)).isEqualTo(300);
@@ -38,5 +40,13 @@ class RetryAttemptSupportTest {
 
         assertThat(error).hasSize(1000);
         assertThat(error).startsWith("IllegalStateException: ");
+    }
+
+    @Test
+    @DisplayName("strips line breaks from stored error text")
+    void stripsLineBreaksFromStoredErrorText() {
+        String error = RetryAttemptSupport.sanitizedError(new IllegalStateException("first\r\nsecond"));
+
+        assertThat(error).isEqualTo("IllegalStateException: first__second");
     }
 }

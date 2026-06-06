@@ -58,6 +58,18 @@ class CorrelationFilterTest {
     }
 
     @Test
+    @DisplayName("generates correlation id when provided header is blank")
+    void generatesCorrelationIdWhenProvidedHeaderIsBlank() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Correlation-ID", "   ");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, mock(FilterChain.class));
+
+        assertThat(response.getHeader("X-Correlation-ID")).isNotBlank();
+    }
+
+    @Test
     @DisplayName("populates MDC during filter chain and clears it afterwards")
     void populatesMdcDuringFilterChainAndClearsItAfterwards() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();

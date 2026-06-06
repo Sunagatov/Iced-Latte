@@ -8,15 +8,24 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @DisplayName("ProblemDetailFactory unit tests")
 class ProblemDetailFactoryTest {
 
     private final ProblemDetailFactory factory =
             new ProblemDetailFactory(new ProblemTypeUriFactory("https://errors.example.test/problems"));
+
+    @AfterEach
+    void tearDown() {
+        RequestContextHolder.resetRequestAttributes();
+    }
 
     @Test
     @DisplayName("build() sets type URI correctly")
@@ -30,6 +39,13 @@ class ProblemDetailFactoryTest {
     void absoluteUriSlugUsedDirectly() {
         ProblemDetail pd = factory.build("about:blank", "Method Not Allowed", HttpStatus.METHOD_NOT_ALLOWED, "detail");
         assertThat(pd.getType()).isEqualTo(URI.create("about:blank"));
+    }
+
+    @Test
+    @DisplayName("build() trims type slug before creating URI")
+    void trimsTypeSlugBeforeCreatingUri() {
+        ProblemDetail pd = factory.build(" validation-failed ", "Validation failed", HttpStatus.BAD_REQUEST, "detail");
+        assertThat(pd.getType()).isEqualTo(URI.create("https://errors.example.test/problems/validation-failed"));
     }
 
     @Test
@@ -67,5 +83,16 @@ class ProblemDetailFactoryTest {
         ProblemDetail pd = factory.build(
                 "internal-error", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR, "secret stack trace");
         assertThat(pd.getDetail()).isEqualTo("An internal server error occurred.");
+    }
+
+    @Test
+    @DisplayName("instance URI escapes request paths safely")
+    void instanceUriEscapesRequestPathsSafely() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products/iced latte");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        ProblemDetail pd = factory.build("not-found", "Not Found", HttpStatus.NOT_FOUND, "missing");
+
+        assertThat(pd.getInstance()).isEqualTo(URI.create("/api/v1/products/iced%20latte"));
     }
 }

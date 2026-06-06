@@ -55,10 +55,16 @@ public class ShoppingCartItem {
 
     @Override
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || Hibernate.getClass(this) != Hibernate.getClass(object)) return false;
+        if (this == object) {
+            return true;
+        }
+        if (object == null || Hibernate.getClass(this) != Hibernate.getClass(object)) {
+            return false;
+        }
         ShoppingCartItem that = (ShoppingCartItem) object;
-        if (id == null || that.id == null) return false;
+        if (id == null || that.id == null) {
+            return false;
+        }
         return Objects.equals(id, that.id);
     }
 

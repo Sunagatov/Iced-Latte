@@ -65,6 +65,15 @@ class ClientIpExtractorTest {
         }
 
         @Test
+        @DisplayName("does not resolve hostnames when matching CIDR trusted proxy rules")
+        void doesNotResolveHostnamesWhenMatchingCidrTrustedProxyRules() {
+            setTrustedProxies(List.of("127.0.0.0/8", "localhost/8"));
+            HttpServletRequest request = request("localhost", "5.6.7.8, localhost");
+
+            assertThat(extractor.extract(request)).isEqualTo("localhost");
+        }
+
+        @Test
         @DisplayName("falls back to remote address when XFF is absent")
         void fallsBackToRemoteAddressWhenXffIsAbsent() {
             setTrustedProxies(List.of("10.0.0.1"));

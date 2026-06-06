@@ -64,6 +64,13 @@ class PaginationParametersValidatorTest {
         }
 
         @Test
+        @DisplayName("trims sort attribute and direction before validation")
+        void trimsSortAttributeAndDirectionBeforeValidation() {
+            assertThat(PaginationParametersValidator.validate(0, 10, " name ", " desc ", allowed))
+                    .isEmpty();
+        }
+
+        @Test
         @DisplayName("reports invalid sort direction")
         void reportsInvalidSortDirection() {
             List<String> errors = PaginationParametersValidator.validate(0, 10, "name", "sideways", allowed);

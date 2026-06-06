@@ -44,6 +44,14 @@ class PageRequestFactoryTest {
         }
 
         @Test
+        @DisplayName("trims sort inputs")
+        void trimsSortInputs() {
+            Pageable pageable = PageRequestFactory.of(0, 20, " createdAt ", " desc ");
+
+            assertThat(pageable.getSort()).containsExactly(Sort.Order.desc("createdAt"), Sort.Order.asc("id"));
+        }
+
+        @Test
         @DisplayName("does not append duplicate id tiebreaker when sorting by id")
         void doesNotAppendDuplicateIdTiebreakerWhenSortingById() {
             Pageable pageable = PageRequestFactory.of(3, 15, "id", "asc");

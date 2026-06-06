@@ -70,12 +70,15 @@ class ShoppingCartDtoConverterTest {
     }
 
     @Test
-    @DisplayName("Should fail when cart items are not initialized")
-    void shouldFailWhenCartItemsAreNotInitialized() {
+    @DisplayName("Should treat a newly constructed shopping cart as empty")
+    void shouldTreatNewlyConstructedShoppingCartAsEmpty() {
         ShoppingCart cart = new ShoppingCart();
         cart.setId(UUID.randomUUID());
 
-        assertThatThrownBy(() -> ShoppingCartDtoConverter.toDto(cart, Map.of()))
-                .isInstanceOf(NullPointerException.class);
+        ShoppingCartDto result = ShoppingCartDtoConverter.toDto(cart, Map.of());
+
+        assertEquals(0, result.getItemsQuantity());
+        assertEquals(0, result.getProductsQuantity());
+        assertEquals(BigDecimal.ZERO, result.getItemsTotalPrice());
     }
 }

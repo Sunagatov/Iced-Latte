@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.common.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 
@@ -41,5 +42,13 @@ class CachePropertiesTest {
         assertThat(properties.getSellersTtl()).isEqualTo(Duration.ofHours(6));
         assertThat(properties.getImageUrlTtl()).isEqualTo(Duration.ofMinutes(5));
         assertThat(properties.getImageUrlsTtl()).isEqualTo(Duration.ofMinutes(45));
+    }
+
+    @Test
+    @DisplayName("rejects non-positive Caffeine cache sizes")
+    void rejectsNonPositiveCaffeineCacheSizes() {
+        assertThatThrownBy(() -> new CaffeineSizeProperties(0, 5_000, 10_000, 1_000, 10_000))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("cache.caffeine.rate-limit-warn-size must be positive");
     }
 }

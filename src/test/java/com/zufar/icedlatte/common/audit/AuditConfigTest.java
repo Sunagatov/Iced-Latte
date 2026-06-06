@@ -13,8 +13,6 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.zufar.icedlatte.user.entity.UserEntity;
-
 @DisplayName("AuditConfig")
 class AuditConfigTest {
 
@@ -29,8 +27,8 @@ class AuditConfigTest {
     @DisplayName("returns authenticated user id as auditor")
     void returnsAuthenticatedUserIdAsAuditor() {
         UUID userId = UUID.randomUUID();
-        UserEntity user = UserEntity.builder().id(userId).build();
-        TestingAuthenticationToken authentication = new TestingAuthenticationToken(user, "credentials");
+        TestingAuthenticationToken authentication = new TestingAuthenticationToken(
+                new TestPrincipal(userId), "credentials");
         authentication.setAuthenticated(true);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -67,5 +65,13 @@ class AuditConfigTest {
         Object value = dateTimeProvider.getNow().orElseThrow();
 
         assertThat(value).isInstanceOf(OffsetDateTime.class);
+    }
+
+    private record TestPrincipal(UUID id) implements Identifiable {
+
+        @Override
+        public UUID getId() {
+            return id;
+        }
     }
 }

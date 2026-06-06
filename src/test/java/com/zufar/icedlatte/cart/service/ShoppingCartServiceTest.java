@@ -3,11 +3,20 @@ package com.zufar.icedlatte.cart.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -353,6 +362,7 @@ class ShoppingCartServiceTest {
 
     @Test
     @DisplayName("deleteItems rejects null item ids before touching repositories")
+    @SuppressWarnings("DataFlowIssue")
     void deleteItemsRejectsNullItemIds() {
         UUID userId = UUID.randomUUID();
 

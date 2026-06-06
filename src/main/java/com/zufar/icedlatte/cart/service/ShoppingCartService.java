@@ -1,9 +1,16 @@
 package com.zufar.icedlatte.cart.service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -102,9 +109,9 @@ public class ShoppingCartService implements CartCheckoutApi {
     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto deleteItems(final List<UUID> itemIds, final UUID userId) {
-        validateDeleteItemIds(itemIds);
-        shoppingCartItemRepository.deleteByIdInAndUserId(itemIds, userId);
-        log.info("cart.items.deleted: count={}, userId={}", itemIds.size(), userId);
+        List<UUID> validatedItemIds = validateAndCopyDeleteItemIds(itemIds);
+        shoppingCartItemRepository.deleteByIdInAndUserId(validatedItemIds, userId);
+        log.info("cart.items.deleted: count={}, userId={}", validatedItemIds.size(), userId);
         return getByUserId(userId);
     }
 
@@ -113,8 +120,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     private ShoppingCart createNewShoppingCart(UUID userId) {
-        ShoppingCart shoppingCart =
-                ShoppingCart.builder().userId(userId).items(new HashSet<>()).build();
+        ShoppingCart shoppingCart = ShoppingCart.builder().userId(userId).build();
         ShoppingCart savedCart = shoppingCartRepository.saveAndFlush(shoppingCart);
         log.info("cart.created: userId={}", userId);
         return savedCart;
@@ -210,7 +216,7 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
     }
 
-    private static void validateAddCartItemRequests(Set<AddCartItemRequest> itemsToAdd) {
+    private static void validateAddCartItemRequests(Collection<AddCartItemRequest> itemsToAdd) {
         if (itemsToAdd.isEmpty()) {
             throw new InvalidCartItemRequestException("Cart items to add must not be empty.");
         }
@@ -219,13 +225,18 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
     }
 
-    private static void validateDeleteItemIds(List<UUID> itemIds) {
+    private static List<UUID> validateAndCopyDeleteItemIds(List<? extends @Nullable UUID> itemIds) {
         if (itemIds.isEmpty()) {
             throw new InvalidCartItemRequestException("Cart item ids to delete must not be empty.");
         }
-        if (itemIds.stream().anyMatch(Objects::isNull)) {
-            throw new InvalidCartItemRequestException("Cart item ids to delete must not contain null values.");
+        List<UUID> validatedItemIds = new ArrayList<>(itemIds.size());
+        for (@Nullable UUID itemId : itemIds) {
+            if (itemId == null) {
+                throw new InvalidCartItemRequestException("Cart item ids to delete must not contain null values.");
+            }
+            validatedItemIds.add(itemId);
         }
+        return List.copyOf(validatedItemIds);
     }
 
     @Override
