@@ -525,6 +525,8 @@ support-chat:
     first-message-enabled: ${SUPPORT_CHAT_TURNSTILE_FIRST_MESSAGE_ENABLED:false}
     long-inactivity-duration: ${SUPPORT_CHAT_TURNSTILE_LONG_INACTIVITY_DURATION:PT24H}
     abuse-cooldown-duration: ${SUPPORT_CHAT_TURNSTILE_ABUSE_COOLDOWN_DURATION:PT5M}
+  websocket:
+    max-active-sessions-per-user: ${SUPPORT_CHAT_WEBSOCKET_MAX_ACTIVE_SESSIONS_PER_USER:5}
   rate-limits:
     per-minute:
       max-requests: 20

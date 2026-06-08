@@ -26,6 +26,7 @@ import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageExcept
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededException;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
@@ -106,7 +107,7 @@ public class SupportChatService {
                 conversationId, createdAfter, pageable);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = SupportChatOwnerDeliveryFailedException.class)
     public SupportMessageEntity sendCustomerMessage(
             CurrentUserSnapshot user,
             UUID conversationId,
@@ -121,6 +122,9 @@ public class SupportChatService {
 
         var existing = messageRepository.findByConversationIdAndClientMessageId(conversationId, clientMessageId);
         if (existing.isPresent()) {
+            if (existing.get().getDeliveryStatus() == SupportMessageDeliveryStatus.FAILED) {
+                throw new SupportChatOwnerDeliveryFailedException();
+            }
             return existing.get();
         }
 
@@ -151,6 +155,9 @@ public class SupportChatService {
                 conversation.getId(),
                 saved.getId(),
                 deliveryResult.delivered());
+        if (!deliveryResult.delivered()) {
+            throw new SupportChatOwnerDeliveryFailedException();
+        }
         return saved;
     }
 
@@ -282,8 +289,8 @@ public class SupportChatService {
     private OwnerMessageDeliveryResult sendToOwner(
             SupportConversationEntity conversation, SupportMessageEntity saved, CurrentUserSnapshot user) {
         try {
-            OwnerMessage ownerMessage =
-                    new OwnerMessage(conversation.getId(), saved.getId(), user.id(), user.email(), saved.getBody());
+            OwnerMessage ownerMessage = new OwnerMessage(
+                    conversation.getId(), saved.getId(), user.displayName(), user.email(), saved.getBody());
 
             return ownerMessageSender.send(ownerMessage);
         } catch (RuntimeException ex) {

@@ -39,6 +39,7 @@ import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageExcept
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededException;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
@@ -156,8 +157,8 @@ class SupportChatServiceTest {
     }
 
     @Test
-    @DisplayName("Owner delivery exception does not roll back accepted customer message")
-    void sendCustomerMessage_ownerSenderThrows_marksFailedWithoutLeakingException() {
+    @DisplayName("Owner delivery exception stores failed message and returns generic support failure")
+    void sendCustomerMessage_ownerSenderThrows_marksFailedAndThrowsGenericFailure() {
         SupportMessageEntity saved = savedCustomerMessage("Hello");
         when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
@@ -171,10 +172,11 @@ class SupportChatServiceTest {
         when(ownerMessageSender.send(any(OwnerMessage.class)))
                 .thenThrow(new IllegalStateException("owner unavailable"));
 
-        var result = enabledService()
-                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10");
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
+                .isInstanceOf(SupportChatOwnerDeliveryFailedException.class);
 
-        assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
+        assertThat(saved.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
     }
 

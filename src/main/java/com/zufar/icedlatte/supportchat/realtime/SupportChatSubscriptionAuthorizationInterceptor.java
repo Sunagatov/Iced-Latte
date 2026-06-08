@@ -29,12 +29,16 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     private final SupportChatProperties properties;
     private final SupportChatEligibilityService eligibilityService;
     private final SupportConversationRepository conversationRepository;
+    private final SupportChatWebSocketSessionRegistry sessionRegistry;
 
     @Override
     public @Nullable Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
             authorizeSubscription(accessor);
+        }
+        if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+            unregisterSession(accessor);
         }
         return message;
     }
@@ -60,6 +64,16 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
                 .isPresent();
         if (!ownsConversation) {
             throw new AccessDeniedException("Access denied.");
+        }
+        if (!sessionRegistry.register(userId, sessionId(accessor))) {
+            throw new AccessDeniedException("Access denied.");
+        }
+    }
+
+    private void unregisterSession(StompHeaderAccessor accessor) {
+        String sessionId = accessor.getSessionId();
+        if (sessionId != null) {
+            sessionRegistry.unregister(sessionId);
         }
     }
 
@@ -93,5 +107,13 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
             return Optional.of(identifiable.getId());
         }
         return Optional.empty();
+    }
+
+    private static String sessionId(StompHeaderAccessor accessor) {
+        String sessionId = accessor.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new AccessDeniedException("Access denied.");
+        }
+        return sessionId;
     }
 }

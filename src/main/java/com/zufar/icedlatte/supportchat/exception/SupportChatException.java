@@ -6,6 +6,7 @@ public abstract sealed class SupportChatException extends RuntimeException
                 SupportChatConversationNotFoundException,
                 SupportChatDisabledException,
                 SupportChatEmailVerificationRequiredException,
+                SupportChatOwnerDeliveryFailedException,
                 SupportChatRateLimitExceededException {
 
     protected SupportChatException(String message) {

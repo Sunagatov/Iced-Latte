@@ -24,7 +24,7 @@ public class DefaultCurrentUserProvider implements CurrentUserProvider, CurrentU
     @Override
     public @NonNull CurrentUserSnapshot get() {
         var user = userLookupApi.getUserById(getUserId());
-        return new CurrentUserSnapshot(user.id(), user.email());
+        return new CurrentUserSnapshot(user.id(), user.email(), displayName(user.firstName(), user.lastName()));
     }
 
     @Override
@@ -34,5 +34,13 @@ public class DefaultCurrentUserProvider implements CurrentUserProvider, CurrentU
             throw new UnauthorizedException("Authentication required.");
         }
         return principal.getId();
+    }
+
+    private static String displayName(String firstName, String lastName) {
+        return (safe(firstName) + " " + safe(lastName)).trim();
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

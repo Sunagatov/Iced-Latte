@@ -2,7 +2,9 @@ package com.zufar.icedlatte.supportchat.realtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.security.Principal;
 import java.time.Duration;
@@ -103,15 +105,85 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         verifyNoInteractions(eligibilityService, conversationRepository);
     }
 
+    @Test
+    @DisplayName("Rejects support chat subscription when per-user session limit is reached")
+    void preSend_supportChatSubscriptionPastSessionLimit_rejectsSubscription() {
+        SupportConversationEntity conversation = conversation(USER_ID);
+        SupportChatWebSocketSessionRegistry sessionRegistry = new SupportChatWebSocketSessionRegistry(1);
+        SupportChatSubscriptionAuthorizationInterceptor interceptor =
+                new SupportChatSubscriptionAuthorizationInterceptor(
+                        enabledProperties(), eligibilityService, conversationRepository, sessionRegistry);
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+
+        interceptor.preSend(
+                subscriptionMessage(
+                        SupportChatWebSocketDestinations.conversationMessages(CONVERSATION_ID),
+                        new PrincipalUser(USER_ID),
+                        "session-1"),
+                channel);
+
+        assertThatThrownBy(() -> interceptor.preSend(
+                        subscriptionMessage(
+                                SupportChatWebSocketDestinations.conversationMessages(CONVERSATION_ID),
+                                new PrincipalUser(USER_ID),
+                                "session-2"),
+                        channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("Allows new support chat subscription after session disconnect")
+    void preSend_supportChatDisconnect_releasesSessionSlot() {
+        SupportConversationEntity conversation = conversation(USER_ID);
+        SupportChatWebSocketSessionRegistry sessionRegistry = new SupportChatWebSocketSessionRegistry(1);
+        SupportChatSubscriptionAuthorizationInterceptor interceptor =
+                new SupportChatSubscriptionAuthorizationInterceptor(
+                        enabledProperties(), eligibilityService, conversationRepository, sessionRegistry);
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+
+        interceptor.preSend(
+                subscriptionMessage(
+                        SupportChatWebSocketDestinations.conversationMessages(CONVERSATION_ID),
+                        new PrincipalUser(USER_ID),
+                        "session-1"),
+                channel);
+        interceptor.preSend(disconnectMessage(), channel);
+
+        Message<?> result = interceptor.preSend(
+                subscriptionMessage(
+                        SupportChatWebSocketDestinations.conversationMessages(CONVERSATION_ID),
+                        new PrincipalUser(USER_ID),
+                        "session-2"),
+                channel);
+
+        assertThat(result).isNotNull();
+    }
+
     private SupportChatSubscriptionAuthorizationInterceptor enabledInterceptor() {
         return new SupportChatSubscriptionAuthorizationInterceptor(
-                enabledProperties(), eligibilityService, conversationRepository);
+                enabledProperties(),
+                eligibilityService,
+                conversationRepository,
+                new SupportChatWebSocketSessionRegistry(5));
     }
 
     private static Message<?> subscriptionMessage(String destination, Principal principal) {
+        return subscriptionMessage(destination, principal, "session-1");
+    }
+
+    private static Message<?> subscriptionMessage(String destination, Principal principal, String sessionId) {
         StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
         accessor.setDestination(destination);
         accessor.setUser(principal);
+        accessor.setSessionId(sessionId);
+        return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
+    }
+
+    private static Message<?> disconnectMessage() {
+        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.DISCONNECT);
+        accessor.setSessionId("session-1");
         return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
     }
 

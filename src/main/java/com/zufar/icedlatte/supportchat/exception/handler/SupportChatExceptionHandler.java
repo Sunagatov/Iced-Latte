@@ -70,6 +70,13 @@ public class SupportChatExceptionHandler {
                                 "Too many support chat messages",
                                 HttpStatus.TOO_MANY_REQUESTS,
                                 ex.getMessage());
+                    case SupportChatOwnerDeliveryFailedException _ ->
+                        new ErrorMapping(
+                                "exception.support_chat.owner_delivery_failed",
+                                ProblemType.SUPPORT_CHAT_TEMPORARILY_UNAVAILABLE,
+                                "Support chat temporarily unavailable",
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                ex.getMessage());
                 };
 
         HttpStatus status = mapping.status();

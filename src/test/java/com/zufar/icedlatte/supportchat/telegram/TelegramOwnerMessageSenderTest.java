@@ -27,9 +27,8 @@ class TelegramOwnerMessageSenderTest {
 
     private static final UUID CONVERSATION_ID = UUID.randomUUID();
     private static final UUID MESSAGE_ID = UUID.randomUUID();
-    private static final UUID USER_ID = UUID.randomUUID();
     private static final OwnerMessage OWNER_MESSAGE =
-            new OwnerMessage(CONVERSATION_ID, MESSAGE_ID, USER_ID, "customer@example.com", "Hello support");
+            new OwnerMessage(CONVERSATION_ID, MESSAGE_ID, "Olivia Stone", "customer@example.com", "Hello support");
 
     private final SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
     private final FakeTelegramBotClient telegramBotClient = new FakeTelegramBotClient();
@@ -47,6 +46,11 @@ class TelegramOwnerMessageSenderTest {
         assertThat(result.delivered()).isTrue();
         assertThat(telegramBotClient.createForumTopicCalls).isZero();
         assertThat(telegramBotClient.lastThreadId).isEqualTo(123L);
+        assertThat(telegramBotClient.lastText)
+                .contains("Customer: Olivia Stone")
+                .contains("Email: customer@example.com")
+                .contains("Reply in this topic or reply to this bot message.")
+                .doesNotContain("User ID:");
     }
 
     @Test
@@ -160,7 +164,7 @@ class TelegramOwnerMessageSenderTest {
     private static SupportConversationEntity conversation() {
         SupportConversationEntity conversation = new SupportConversationEntity();
         conversation.setId(CONVERSATION_ID);
-        conversation.setUserId(USER_ID);
+        conversation.setUserId(UUID.randomUUID());
         return conversation;
     }
 
@@ -195,6 +199,7 @@ class TelegramOwnerMessageSenderTest {
         private int createForumTopicCalls;
         private int sendMessageCalls;
         private Long lastThreadId;
+        private String lastText;
 
         @Override
         public Optional<TelegramForumTopic> createForumTopic(String name) {
@@ -206,6 +211,7 @@ class TelegramOwnerMessageSenderTest {
         public Optional<TelegramMessageRef> sendMessage(Long messageThreadId, String text) {
             sendMessageCalls++;
             lastThreadId = messageThreadId;
+            lastText = text;
             if (sendMessageCalls <= nextMessages.size()) {
                 return Optional.ofNullable(nextMessages.get(sendMessageCalls - 1));
             }

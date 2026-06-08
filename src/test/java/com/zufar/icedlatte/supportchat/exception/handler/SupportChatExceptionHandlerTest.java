@@ -20,6 +20,7 @@ import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageExcept
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededException;
 
 @DisplayName("SupportChatExceptionHandler unit tests")
@@ -81,6 +82,15 @@ class SupportChatExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertProblemType(response, ProblemType.SUPPORT_CHAT_RATE_LIMITED);
+    }
+
+    @Test
+    @DisplayName("Maps owner delivery failure to generic temporary unavailability")
+    void ownerDeliveryFailed_mapsToServiceUnavailable() {
+        var response = handler.handleSupportChatException(new SupportChatOwnerDeliveryFailedException());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertProblemType(response, ProblemType.SUPPORT_CHAT_TEMPORARILY_UNAVAILABLE);
     }
 
     @Test

@@ -14,16 +14,21 @@ class TelegramOwnerMessageFormatter {
     }
 
     String format(OwnerMessage message) {
-        String header =
-                """
+        String header = """
                 Support chat message
                 Conversation: %s
                 Customer: %s
-                User ID: %s
+                Email: %s
                 Message ID: %s
+                Reply in this topic or reply to this bot message.
 
-                """.formatted(message.conversationId(), message.customerEmail(), message.userId(), message.messageId());
+                """.formatted(
+                        message.conversationId(), customerName(message), message.customerEmail(), message.messageId());
         return header + truncateBody(message.body(), TELEGRAM_TEXT_LIMIT - header.length());
+    }
+
+    private static String customerName(OwnerMessage message) {
+        return message.customerName().isBlank() ? message.customerEmail() : message.customerName();
     }
 
     private static String truncateBody(String body, int maxLength) {
