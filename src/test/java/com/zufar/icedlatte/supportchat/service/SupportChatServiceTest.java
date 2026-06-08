@@ -176,7 +176,7 @@ class SupportChatServiceTest {
     @DisplayName("Owner reply is persisted as visible sent message with Telegram correlation")
     void saveOwnerReply_valid_persistsVisibleOwnerMessage() {
         SupportConversationEntity conversation = conversation();
-        SupportMessageEntity saved = savedOwnerMessage("Owner answer");
+        SupportMessageEntity saved = savedOwnerMessage();
         when(messageRepository.existsByTelegramUpdateId(9001L)).thenReturn(false);
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
 
@@ -416,13 +416,13 @@ class SupportChatServiceTest {
         return message;
     }
 
-    private static SupportMessageEntity savedOwnerMessage(String body) {
+    private static SupportMessageEntity savedOwnerMessage() {
         SupportMessageEntity message = new SupportMessageEntity();
         message.setId(UUID.randomUUID());
         message.setConversationId(CONVERSATION_ID);
         message.setSenderType(SupportMessageSenderType.OWNER);
-        message.setBody(body);
-        message.setNormalizedBody(body.toLowerCase());
+        message.setBody("Owner answer");
+        message.setNormalizedBody("owner answer");
         message.setDeliveryStatus(SupportMessageDeliveryStatus.SENT);
         message.setVisibleToCustomer(true);
         message.setCreatedAt(OffsetDateTime.now());
