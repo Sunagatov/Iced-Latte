@@ -43,6 +43,7 @@ import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededExc
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
+import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
@@ -66,6 +67,9 @@ class SupportChatServiceTest {
 
     @Mock
     private OwnerMessageSender ownerMessageSender;
+
+    @Mock
+    private SupportChatMessagePublisher messagePublisher;
 
     @Mock
     private TurnstileVerifier turnstileVerifier;
@@ -193,6 +197,7 @@ class SupportChatServiceTest {
         assertThat(messageCaptor.getValue().getTelegramUpdateId()).isEqualTo(9001L);
         assertThat(messageCaptor.getValue().getTelegramMessageId()).isEqualTo(7001L);
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
+        verify(messagePublisher).publishOwnerReply(conversation, saved);
     }
 
     @Test
@@ -205,6 +210,7 @@ class SupportChatServiceTest {
         assertThat(result).isEmpty();
         verify(messageRepository, never()).save(any());
         verify(conversationRepository, never()).touchLastMessageAt(any());
+        verifyNoInteractions(messagePublisher);
     }
 
     @Test
@@ -347,6 +353,7 @@ class SupportChatServiceTest {
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
+                messagePublisher,
                 turnstileVerifier,
                 rateLimiter);
     }
@@ -358,6 +365,7 @@ class SupportChatServiceTest {
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
+                messagePublisher,
                 turnstileVerifier,
                 rateLimiter);
     }
@@ -369,6 +377,7 @@ class SupportChatServiceTest {
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
+                messagePublisher,
                 turnstileVerifier,
                 rateLimiter);
     }

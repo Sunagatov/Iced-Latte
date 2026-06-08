@@ -66,6 +66,32 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("successfully authenticates raw authorization header")
+    void successfullyAuthenticatesRawAuthorizationHeader() {
+        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
+                jwtBearerTokenResolver, jwtTokenClaims, userDetailsService, jwtTokenBlacklist);
+        UserDetails userDetails = new User("test@example.com", "password", Collections.emptyList());
+        String authorizationHeader = "Bearer mockJwtToken";
+        String jwtToken = "mockJwtToken";
+        String userEmail = "test@example.com";
+
+        when(jwtBearerTokenResolver.extract(authorizationHeader)).thenReturn(jwtToken);
+        when(jwtTokenClaims.extractAccessTokenEmail(jwtToken)).thenReturn(userEmail);
+        when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
+
+        var authenticationToken = jwtAuthenticationProvider.get(authorizationHeader);
+
+        assertThat(authenticationToken.getPrincipal()).isEqualTo(userDetails);
+        assertThat(authenticationToken.getCredentials()).isNull();
+        assertThat(authenticationToken.getDetails()).isNull();
+        verify(jwtBearerTokenResolver).extract(authorizationHeader);
+        verify(jwtTokenBlacklist).validateNotBlacklisted(jwtToken);
+        verify(jwtTokenClaims).extractAccessTokenEmail(jwtToken);
+        verify(userDetailsService).loadUserByUsername(userEmail);
+        verifyNoMoreInteractions(jwtBearerTokenResolver, jwtTokenBlacklist, jwtTokenClaims, userDetailsService);
+    }
+
+    @Test
     @DisplayName("rejects access token when loaded user account is inactive")
     void rejectsAccessTokenWhenLoadedUserAccountIsInactive() {
         JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(

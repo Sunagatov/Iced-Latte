@@ -62,12 +62,18 @@ public class SecurityRouteAuthorization {
         auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
 
         authorizeSupportChatRoutes(auth);
+        authorizeWebSocketRoutes(auth);
         authorizeAuthenticatedRoutes(auth);
         authorizePaymentRoutes(auth);
         authorizeProductReviewRoutes(auth);
         authorizePublicRoutes(auth);
         authorizeAdminRoutes(auth);
         authorizeFallbackRoutes(auth);
+    }
+
+    private void authorizeWebSocketRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(ApiPaths.WEBSOCKET, ApiPaths.WEBSOCKET_PATTERN).permitAll();
     }
 
     private void authorizeAuthenticatedRoutes(

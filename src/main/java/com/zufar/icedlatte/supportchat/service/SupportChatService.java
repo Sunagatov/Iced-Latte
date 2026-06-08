@@ -29,6 +29,7 @@ import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededExc
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
+import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
@@ -45,6 +46,7 @@ public class SupportChatService {
     private final SupportConversationRepository conversationRepository;
     private final SupportMessageRepository messageRepository;
     private final OwnerMessageSender ownerMessageSender;
+    private final SupportChatMessagePublisher messagePublisher;
     private final TurnstileVerifier turnstileVerifier;
 
     private final RateLimiter rateLimiter;
@@ -55,6 +57,7 @@ public class SupportChatService {
             SupportConversationRepository conversationRepository,
             SupportMessageRepository messageRepository,
             OwnerMessageSender ownerMessageSender,
+            SupportChatMessagePublisher messagePublisher,
             TurnstileVerifier turnstileVerifier,
             @Qualifier("openRateLimiter") RateLimiter rateLimiter) {
         this.properties = properties;
@@ -62,6 +65,7 @@ public class SupportChatService {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.ownerMessageSender = ownerMessageSender;
+        this.messagePublisher = messagePublisher;
         this.turnstileVerifier = turnstileVerifier;
         this.rateLimiter = rateLimiter;
     }
@@ -122,12 +126,15 @@ public class SupportChatService {
         message.setClientMessageId(clientMessageId);
         message.setBody(messageBody);
         message.setNormalizedBody(toDuplicateKey(messageBody));
+
         SupportMessageEntity saved = messageRepository.save(message);
+
         conversationRepository.touchLastMessageAt(conversation.getId());
 
         var deliveryResult = sendToOwner(conversation, saved, user);
-        saved.setDeliveryStatus(
-                deliveryResult.delivered() ? SupportMessageDeliveryStatus.SENT : SupportMessageDeliveryStatus.FAILED);
+        SupportMessageDeliveryStatus deliveryStatus =
+                deliveryResult.delivered() ? SupportMessageDeliveryStatus.SENT : SupportMessageDeliveryStatus.FAILED;
+        saved.setDeliveryStatus(deliveryStatus);
         log.info(
                 "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}",
                 conversation.getId(),
@@ -159,12 +166,17 @@ public class SupportChatService {
         message.setTelegramUpdateId(telegramUpdateId);
         message.setTelegramMessageId(telegramMessageId);
         SupportMessageEntity saved = messageRepository.save(message);
+
         conversationRepository.touchLastMessageAt(conversation.getId());
+
+        messagePublisher.publishOwnerReply(conversation, saved);
+
         log.info(
                 "support_chat.owner_reply.accepted: conversationId={}, messageId={}, telegramUpdateId={}",
                 conversation.getId(),
                 saved.getId(),
                 telegramUpdateId);
+
         return Optional.of(saved);
     }
 
@@ -236,8 +248,10 @@ public class SupportChatService {
     private OwnerMessageDeliveryResult sendToOwner(
             SupportConversationEntity conversation, SupportMessageEntity saved, CurrentUserSnapshot user) {
         try {
-            return ownerMessageSender.send(
-                    new OwnerMessage(conversation.getId(), saved.getId(), user.id(), user.email(), saved.getBody()));
+            OwnerMessage ownerMessage =
+                    new OwnerMessage(conversation.getId(), saved.getId(), user.id(), user.email(), saved.getBody());
+
+            return ownerMessageSender.send(ownerMessage);
         } catch (RuntimeException ex) {
             log.warn(
                     "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}",

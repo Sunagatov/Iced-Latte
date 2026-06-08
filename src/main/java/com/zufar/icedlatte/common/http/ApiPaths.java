@@ -42,4 +42,7 @@ public class ApiPaths {
     public static final String SUPPORT_CHAT = "/api/v1/support-chat";
     public static final String SUPPORT_CHAT_PATTERN = SUPPORT_CHAT + "/**";
     public static final String SUPPORT_CHAT_TELEGRAM_WEBHOOK = SUPPORT_CHAT + "/telegram/webhook";
+
+    public static final String WEBSOCKET = "/api/v1/ws";
+    public static final String WEBSOCKET_PATTERN = WEBSOCKET + "/**";
 }

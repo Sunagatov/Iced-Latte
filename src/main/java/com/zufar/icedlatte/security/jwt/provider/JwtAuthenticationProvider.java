@@ -28,7 +28,17 @@ public class JwtAuthenticationProvider {
 
     public Authentication get(final HttpServletRequest httpRequest) {
         String jwtToken = jwtBearerTokenResolver.extract(httpRequest);
+        UsernamePasswordAuthenticationToken authenticationToken = authenticate(jwtToken);
+        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
+        return authenticationToken;
+    }
 
+    public Authentication get(final String authorizationHeader) {
+        String jwtToken = jwtBearerTokenResolver.extract(authorizationHeader);
+        return authenticate(jwtToken);
+    }
+
+    private UsernamePasswordAuthenticationToken authenticate(String jwtToken) {
         jwtTokenBlacklist.validateNotBlacklisted(jwtToken);
 
         String userEmail = jwtTokenClaims.extractAccessTokenEmail(jwtToken);
@@ -37,7 +47,6 @@ public class JwtAuthenticationProvider {
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpRequest));
 
         log.debug("auth.success");
         return authenticationToken;
