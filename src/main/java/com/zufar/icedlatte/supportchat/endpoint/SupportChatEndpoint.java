@@ -2,6 +2,7 @@ package com.zufar.icedlatte.supportchat.endpoint;
 
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.CreateSupportChatMessageRequest;
 import com.zufar.icedlatte.openapi.dto.SupportChatConversationDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessageDto;
@@ -37,6 +39,8 @@ public class SupportChatEndpoint implements SupportChatApi {
     private final CurrentUserProvider currentUserProvider;
     private final SupportChatService supportChatService;
     private final SupportChatDtoConverter converter;
+    private final HttpServletRequest httpRequest;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     @GetMapping("/status")
@@ -70,7 +74,8 @@ public class SupportChatEndpoint implements SupportChatApi {
                 conversationId,
                 request.getClientMessageId(),
                 request.getBody(),
-                request.getTurnstileToken().orElse(null));
+                request.getTurnstileToken().orElse(null),
+                clientIpExtractor.extract(httpRequest));
         return ResponseEntity.ok(converter.toMessageDto(message));
     }
 }

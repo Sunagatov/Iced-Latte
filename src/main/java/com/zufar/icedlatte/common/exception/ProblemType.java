@@ -61,4 +61,5 @@ public class ProblemType {
     public static final String SUPPORT_CHAT_INVALID_MESSAGE = "support-chat-invalid-message";
     public static final String SUPPORT_CHAT_DUPLICATE_MESSAGE = "support-chat-duplicate-message";
     public static final String SUPPORT_CHAT_RATE_LIMITED = "support-chat-rate-limited";
+    public static final String SUPPORT_CHAT_TURNSTILE_FAILED = "support-chat-turnstile-failed";
 }

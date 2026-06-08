@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.supportchat.exception.*;
 
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,18 @@ public class SupportChatExceptionHandler {
         log.debug("{}: status={}", mapping.logTag(), status.value());
         return ResponseEntity.status(status)
                 .body(problemDetailFactory.build(mapping.typeSlug(), mapping.title(), status, mapping.detail()));
+    }
+
+    @ExceptionHandler(TurnstileVerificationException.class)
+    public ResponseEntity<ProblemDetail> handleTurnstileVerificationException(final TurnstileVerificationException ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        log.debug("exception.support_chat.turnstile_failed: status={}", status.value());
+        return ResponseEntity.status(status)
+                .body(problemDetailFactory.build(
+                        ProblemType.SUPPORT_CHAT_TURNSTILE_FAILED,
+                        "Support chat verification failed",
+                        status,
+                        "Please retry the verification challenge."));
     }
 
     private record ErrorMapping(String logTag, String typeSlug, String title, HttpStatus status, String detail) {}

@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
@@ -80,6 +81,16 @@ class SupportChatExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertProblemType(response, ProblemType.SUPPORT_CHAT_RATE_LIMITED);
+    }
+
+    @Test
+    @DisplayName("Maps Turnstile failures to support chat verification problem")
+    void turnstileFailure_mapsToSupportChatVerificationProblem() {
+        var response =
+                handler.handleTurnstileVerificationException(new TurnstileVerificationException("token rejected"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertProblemType(response, ProblemType.SUPPORT_CHAT_TURNSTILE_FAILED);
     }
 
     private static void assertProblemType(ResponseEntity<ProblemDetail> response, String expectedTypeSlug) {

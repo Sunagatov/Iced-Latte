@@ -20,6 +20,8 @@ public interface SupportMessageRepository extends JpaRepository<SupportMessageEn
 
     boolean existsByTelegramUpdateId(Long telegramUpdateId);
 
+    long deleteByCreatedAtBefore(OffsetDateTime createdAt);
+
     Optional<SupportMessageEntity> findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
             UUID conversationId, SupportMessageSenderType senderType);
 }

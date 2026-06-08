@@ -143,7 +143,8 @@ class SupportChatServiceTest {
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         var result = enabledService()
-                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "  Hello   support  ", null);
+                .sendCustomerMessage(
+                        USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "  Hello   support  ", null, "203.0.113.10");
 
         assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.SENT);
         ArgumentCaptor<SupportMessageEntity> messageCaptor = ArgumentCaptor.forClass(SupportMessageEntity.class);
@@ -170,7 +171,8 @@ class SupportChatServiceTest {
         when(ownerMessageSender.send(any(OwnerMessage.class)))
                 .thenThrow(new IllegalStateException("owner unavailable"));
 
-        var result = enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null);
+        var result = enabledService()
+                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10");
 
         assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
@@ -216,8 +218,8 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Disabled support chat rejects message before persistence")
     void sendCustomerMessage_disabled_throwsNotFound() {
-        assertThatThrownBy(() ->
-                        disabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null))
+        assertThatThrownBy(() -> disabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
                 .isInstanceOf(SupportChatDisabledException.class);
 
         verify(messageRepository, never()).save(any());
@@ -230,8 +232,8 @@ class SupportChatServiceTest {
         when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
 
-        assertThatThrownBy(() ->
-                        enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "   ", null))
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "   ", null, "203.0.113.10"))
                 .isInstanceOf(InvalidSupportChatMessageException.class);
 
         verify(rateLimiter, never()).tryConsume(any(), anyInt(), any());
@@ -246,8 +248,8 @@ class SupportChatServiceTest {
         when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
-        assertThatThrownBy(() ->
-                        enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null))
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
                 .isInstanceOf(SupportChatConversationNotFoundException.class);
 
         verify(messageRepository, never()).save(any());
@@ -263,7 +265,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.of(existing));
 
         var result = enabledService()
-                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Already accepted", null);
+                .sendCustomerMessage(
+                        USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Already accepted", null, "203.0.113.10");
 
         assertThat(result).isSameAs(existing);
         verify(messageRepository, never()).save(any());
@@ -283,8 +286,8 @@ class SupportChatServiceTest {
                         CONVERSATION_ID, SupportMessageSenderType.CUSTOMER))
                 .thenReturn(Optional.of(previous));
 
-        assertThatThrownBy(() ->
-                        enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, " hello ", null))
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, " hello ", null, "203.0.113.10"))
                 .isInstanceOf(DuplicateSupportChatMessageException.class);
         verify(messageRepository, never()).save(any());
     }
@@ -307,7 +310,8 @@ class SupportChatServiceTest {
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
-        var result = enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, " hello ", null);
+        var result = enabledService()
+                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, " hello ", null, "203.0.113.10");
 
         assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.SENT);
     }
@@ -324,9 +328,33 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.empty());
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(blockedRateLimit());
 
-        assertThatThrownBy(() ->
-                        enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null))
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
                 .isInstanceOf(SupportChatRateLimitExceededException.class);
+        verify(messageRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("IP rate limit is enforced before persistence")
+    void sendCustomerMessage_ipRateLimited_throwsTooManyRequests() {
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
+        when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
+                .thenReturn(Optional.empty());
+        when(messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
+                        CONVERSATION_ID, SupportMessageSenderType.CUSTOMER))
+                .thenReturn(Optional.empty());
+        when(rateLimiter.tryConsume(any(), anyInt(), any()))
+                .thenReturn(allowedRateLimit())
+                .thenReturn(allowedRateLimit())
+                .thenReturn(allowedRateLimit())
+                .thenReturn(allowedRateLimit())
+                .thenReturn(blockedRateLimit());
+
+        assertThatThrownBy(() -> enabledService()
+                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
+                .isInstanceOf(SupportChatRateLimitExceededException.class);
+        verify(rateLimiter).tryConsume(eq("support-chat:ip-minute:203.0.113.10"), eq(60), any());
         verify(messageRepository, never()).save(any());
     }
 
@@ -346,7 +374,32 @@ class SupportChatServiceTest {
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         turnstileEnabledService()
-                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", "turnstile-token");
+                .sendCustomerMessage(
+                        USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", "turnstile-token", "203.0.113.10");
+
+        verify(turnstileVerifier).verify("turnstile-token");
+    }
+
+    @Test
+    @DisplayName("Message after long inactivity verifies Turnstile when enabled")
+    void sendCustomerMessage_longInactiveConversationWithTurnstileEnabled_verifiesToken() {
+        SupportMessageEntity previous = savedCustomerMessage("Old message");
+        previous.setCreatedAt(OffsetDateTime.now().minusDays(2));
+        SupportMessageEntity saved = savedCustomerMessage("Hello again");
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
+        when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
+                .thenReturn(Optional.empty());
+        when(messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
+                        CONVERSATION_ID, SupportMessageSenderType.CUSTOMER))
+                .thenReturn(Optional.of(previous));
+        when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
+        when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
+
+        turnstileEnabledService()
+                .sendCustomerMessage(
+                        USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello again", "turnstile-token", "203.0.113.10");
 
         verify(turnstileVerifier).verify("turnstile-token");
     }
@@ -370,38 +423,44 @@ class SupportChatServiceTest {
     }
 
     private SupportChatService enabledService() {
+        SupportChatProperties supportChatProperties = properties(true);
         return new SupportChatService(
-                properties(true),
+                supportChatProperties,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
+                new SupportChatAbuseGuard(supportChatProperties),
                 rateLimiter);
     }
 
     private SupportChatService disabledService() {
+        SupportChatProperties supportChatProperties = properties(false);
         return new SupportChatService(
-                properties(false),
+                supportChatProperties,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
+                new SupportChatAbuseGuard(supportChatProperties),
                 rateLimiter);
     }
 
     private SupportChatService turnstileEnabledService() {
+        SupportChatProperties supportChatProperties = properties(true, true);
         return new SupportChatService(
-                properties(true, true),
+                supportChatProperties,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
+                new SupportChatAbuseGuard(supportChatProperties),
                 rateLimiter);
     }
 
@@ -416,12 +475,13 @@ class SupportChatServiceTest {
                 90,
                 OwnerMessageMode.FAKE,
                 new Telegram("", "", 0L, "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
-                new Turnstile(turnstileEnabled),
+                new Turnstile(turnstileEnabled, Duration.ofHours(24), Duration.ofMinutes(5)),
                 new RateLimits(
                         new Bucket(20, Duration.ofMinutes(1)),
                         new Bucket(100, Duration.ofHours(1)),
                         new Bucket(300, Duration.ofDays(1)),
-                        new Bucket(10, Duration.ofSeconds(10))));
+                        new Bucket(10, Duration.ofSeconds(10)),
+                        new Bucket(60, Duration.ofMinutes(1))));
     }
 
     private static SupportConversationEntity conversation() {

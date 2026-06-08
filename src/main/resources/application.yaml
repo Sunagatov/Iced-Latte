@@ -510,6 +510,8 @@ support-chat:
   enabled: ${SUPPORT_CHAT_ENABLED:false}
   message-max-length: 4000
   retention-days: 90
+  retention-cleanup-enabled: ${SUPPORT_CHAT_RETENTION_CLEANUP_ENABLED:true}
+  retention-cleanup-interval: ${SUPPORT_CHAT_RETENTION_CLEANUP_INTERVAL:PT24H}
   owner-message-mode: ${SUPPORT_CHAT_OWNER_MESSAGE_MODE:disabled}
   telegram:
     bot-token: ${SUPPORT_CHAT_TELEGRAM_BOT_TOKEN:}
@@ -521,6 +523,8 @@ support-chat:
     read-timeout: ${SUPPORT_CHAT_TELEGRAM_READ_TIMEOUT:5s}
   turnstile:
     first-message-enabled: ${SUPPORT_CHAT_TURNSTILE_FIRST_MESSAGE_ENABLED:false}
+    long-inactivity-duration: ${SUPPORT_CHAT_TURNSTILE_LONG_INACTIVITY_DURATION:PT24H}
+    abuse-cooldown-duration: ${SUPPORT_CHAT_TURNSTILE_ABUSE_COOLDOWN_DURATION:PT5M}
   rate-limits:
     per-minute:
       max-requests: 20
@@ -534,6 +538,9 @@ support-chat:
     per-conversation-burst:
       max-requests: 10
       window-duration: 10s
+    per-ip:
+      max-requests: 60
+      window-duration: 1m
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ⑧ OBSERVABILITY (Sentry + Actuator/Metrics + Tracing)

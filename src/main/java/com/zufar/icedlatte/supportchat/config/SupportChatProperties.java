@@ -19,13 +19,14 @@ public record SupportChatProperties(
         retentionDays = retentionDays == 0 ? 90 : retentionDays;
         ownerMessageMode = ownerMessageMode == null ? OwnerMessageMode.DISABLED : ownerMessageMode;
         telegram = telegram == null ? Telegram.disabled() : telegram;
-        turnstile = turnstile == null ? new Turnstile(false) : turnstile;
+        turnstile = turnstile == null ? Turnstile.defaults() : turnstile;
         rateLimits = rateLimits == null
                 ? new RateLimits(
                         new Bucket(20, Duration.ofMinutes(1)),
                         new Bucket(100, Duration.ofHours(1)),
                         new Bucket(300, Duration.ofDays(1)),
-                        new Bucket(10, Duration.ofSeconds(10)))
+                        new Bucket(10, Duration.ofSeconds(10)),
+                        new Bucket(60, Duration.ofMinutes(1)))
                 : rateLimits;
         if (messageMaxLength < 1 || messageMaxLength > 4000) {
             throw new IllegalStateException("support-chat.message-max-length must be between 1 and 4000");
@@ -88,9 +89,32 @@ public record SupportChatProperties(
         }
     }
 
-    public record Turnstile(boolean firstMessageEnabled) {}
+    public record Turnstile(
+            boolean firstMessageEnabled, Duration longInactivityDuration, Duration abuseCooldownDuration) {
 
-    public record RateLimits(Bucket perMinute, Bucket perHour, Bucket perDay, Bucket perConversationBurst) {}
+        public Turnstile {
+            longInactivityDuration = longInactivityDuration == null ? Duration.ofHours(24) : longInactivityDuration;
+            abuseCooldownDuration = abuseCooldownDuration == null ? Duration.ofMinutes(5) : abuseCooldownDuration;
+            if (longInactivityDuration.isZero() || longInactivityDuration.isNegative()) {
+                throw new IllegalStateException("support-chat.turnstile.long-inactivity-duration must be positive");
+            }
+            if (abuseCooldownDuration.isZero() || abuseCooldownDuration.isNegative()) {
+                throw new IllegalStateException("support-chat.turnstile.abuse-cooldown-duration must be positive");
+            }
+        }
+
+        private static Turnstile defaults() {
+            return new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5));
+        }
+    }
+
+    public record RateLimits(
+            Bucket perMinute, Bucket perHour, Bucket perDay, Bucket perConversationBurst, Bucket perIp) {
+
+        public RateLimits {
+            perIp = perIp == null ? new Bucket(60, Duration.ofMinutes(1)) : perIp;
+        }
+    }
 
     public record Bucket(int maxRequests, Duration windowDuration) {
 

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
@@ -48,6 +49,7 @@ public class SupportChatService {
     private final OwnerMessageSender ownerMessageSender;
     private final SupportChatMessagePublisher messagePublisher;
     private final TurnstileVerifier turnstileVerifier;
+    private final SupportChatAbuseGuard abuseGuard;
 
     private final RateLimiter rateLimiter;
 
@@ -59,6 +61,7 @@ public class SupportChatService {
             OwnerMessageSender ownerMessageSender,
             SupportChatMessagePublisher messagePublisher,
             TurnstileVerifier turnstileVerifier,
+            SupportChatAbuseGuard abuseGuard,
             @Qualifier("openRateLimiter") RateLimiter rateLimiter) {
         this.properties = properties;
         this.eligibilityService = eligibilityService;
@@ -67,6 +70,7 @@ public class SupportChatService {
         this.ownerMessageSender = ownerMessageSender;
         this.messagePublisher = messagePublisher;
         this.turnstileVerifier = turnstileVerifier;
+        this.abuseGuard = abuseGuard;
         this.rateLimiter = rateLimiter;
     }
 
@@ -104,7 +108,12 @@ public class SupportChatService {
 
     @Transactional
     public SupportMessageEntity sendCustomerMessage(
-            CurrentUserSnapshot user, UUID conversationId, UUID clientMessageId, String body, String turnstileToken) {
+            CurrentUserSnapshot user,
+            UUID conversationId,
+            UUID clientMessageId,
+            String body,
+            String turnstileToken,
+            String clientIp) {
         ensureAvailable(user);
         SupportConversationEntity conversation = ensureOwnsConversation(user.id(), conversationId);
         String messageBody = normalizeBody(body);
@@ -115,9 +124,11 @@ public class SupportChatService {
             return existing.get();
         }
 
-        preventRepeatedMessage(conversationId, messageBody);
-        enforceRateLimits(user.id(), conversationId);
-        verifyTurnstileIfRequired(conversationId, turnstileToken);
+        SupportMessageEntity previousCustomerMessage =
+                findPreviousCustomerMessage(conversationId).orElse(null);
+        preventRepeatedMessage(conversationId, messageBody, previousCustomerMessage);
+        enforceRateLimits(user.id(), conversationId, clientIp);
+        verifyTurnstileIfRequired(conversationId, previousCustomerMessage, turnstileToken);
 
         SupportMessageEntity message = new SupportMessageEntity();
         message.setConversationId(conversation.getId());
@@ -206,44 +217,66 @@ public class SupportChatService {
         }
     }
 
-    private void preventRepeatedMessage(UUID conversationId, String normalizedBody) {
+    private void preventRepeatedMessage(
+            UUID conversationId, String normalizedBody, SupportMessageEntity previousCustomerMessage) {
+        if (previousCustomerMessage == null
+                || previousCustomerMessage.getDeliveryStatus() == SupportMessageDeliveryStatus.FAILED) {
+            return;
+        }
+
         String duplicateCandidate = toDuplicateKey(normalizedBody);
-        messageRepository
-                .findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
-                        conversationId, SupportMessageSenderType.CUSTOMER)
-                .filter(previous -> previous.getDeliveryStatus() != SupportMessageDeliveryStatus.FAILED)
-                .filter(previous -> previous.getNormalizedBody().equals(duplicateCandidate))
-                .ifPresent(_ -> {
-                    throw new DuplicateSupportChatMessageException();
-                });
+        if (!previousCustomerMessage.getNormalizedBody().equals(duplicateCandidate)) {
+            return;
+        }
+
+        abuseGuard.requireTurnstileForNextMessage(conversationId);
+        log.info("support_chat.customer_message.duplicate_rejected: conversationId={}", conversationId);
+        throw new DuplicateSupportChatMessageException();
     }
 
-    private void enforceRateLimits(UUID userId, UUID conversationId) {
+    private void enforceRateLimits(UUID userId, UUID conversationId, String clientIp) {
         SupportChatProperties.RateLimits rateLimits = properties.rateLimits();
-        consume("support-chat:user-minute:" + userId, rateLimits.perMinute());
-        consume("support-chat:user-hour:" + userId, rateLimits.perHour());
-        consume("support-chat:user-day:" + userId, rateLimits.perDay());
-        consume("support-chat:conversation-burst:" + conversationId, rateLimits.perConversationBurst());
+        consume(conversationId, "support-chat:user-minute:" + userId, rateLimits.perMinute(), "user-minute");
+        consume(conversationId, "support-chat:user-hour:" + userId, rateLimits.perHour(), "user-hour");
+        consume(conversationId, "support-chat:user-day:" + userId, rateLimits.perDay(), "user-day");
+        consume(
+                conversationId,
+                "support-chat:conversation-burst:" + conversationId,
+                rateLimits.perConversationBurst(),
+                "conversation-burst");
+        consume(conversationId, "support-chat:ip-minute:" + clientIp, rateLimits.perIp(), "ip-minute");
     }
 
-    private void consume(String key, SupportChatProperties.Bucket bucket) {
+    private void consume(UUID conversationId, String key, SupportChatProperties.Bucket bucket, String keyType) {
         var result = rateLimiter.tryConsume(key, bucket.maxRequests(), bucket.windowDuration());
         if (!result.allowed()) {
+            abuseGuard.requireTurnstileForNextMessage(conversationId);
+            log.info(
+                    "support_chat.customer_message.rate_limited: conversationId={}, keyType={}",
+                    conversationId,
+                    keyType);
             throw new SupportChatRateLimitExceededException();
         }
     }
 
-    private void verifyTurnstileIfRequired(UUID conversationId, String turnstileToken) {
-        if (!properties.turnstile().firstMessageEnabled()) {
+    private void verifyTurnstileIfRequired(
+            UUID conversationId, SupportMessageEntity previousCustomerMessage, String turnstileToken) {
+        if (!abuseGuard.requiresTurnstile(previousCustomerMessage, conversationId)) {
             return;
         }
-        boolean hasMessages = messageRepository
-                .findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
-                        conversationId, SupportMessageSenderType.CUSTOMER)
-                .isPresent();
-        if (!hasMessages) {
+        try {
             turnstileVerifier.verify(turnstileToken);
+            abuseGuard.clearTurnstileRequirement(conversationId);
+        } catch (TurnstileVerificationException ex) {
+            abuseGuard.requireTurnstileForNextMessage(conversationId);
+            log.info("support_chat.turnstile.failed: conversationId={}", conversationId);
+            throw ex;
         }
+    }
+
+    private Optional<SupportMessageEntity> findPreviousCustomerMessage(UUID conversationId) {
+        return messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
+                conversationId, SupportMessageSenderType.CUSTOMER);
     }
 
     private OwnerMessageDeliveryResult sendToOwner(
