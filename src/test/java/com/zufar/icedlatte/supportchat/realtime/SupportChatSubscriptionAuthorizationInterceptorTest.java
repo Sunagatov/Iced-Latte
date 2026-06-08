@@ -92,6 +92,17 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         verifyNoInteractions(eligibilityService, conversationRepository);
     }
 
+    @Test
+    @DisplayName("Rejects malformed subscriptions inside support chat destination namespace")
+    void preSend_malformedSupportChatSubscription_rejectsSubscription() {
+        Message<?> message =
+                subscriptionMessage("/topic/support-chat/conversations/not-a-uuid", new PrincipalUser(USER_ID));
+
+        assertThatThrownBy(() -> enabledInterceptor().preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+        verifyNoInteractions(eligibilityService, conversationRepository);
+    }
+
     private SupportChatSubscriptionAuthorizationInterceptor enabledInterceptor() {
         return new SupportChatSubscriptionAuthorizationInterceptor(
                 enabledProperties(), eligibilityService, conversationRepository);

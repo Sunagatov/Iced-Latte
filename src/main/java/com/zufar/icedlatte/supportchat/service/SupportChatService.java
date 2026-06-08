@@ -211,6 +211,7 @@ public class SupportChatService {
         messageRepository
                 .findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
                         conversationId, SupportMessageSenderType.CUSTOMER)
+                .filter(previous -> previous.getDeliveryStatus() != SupportMessageDeliveryStatus.FAILED)
                 .filter(previous -> previous.getNormalizedBody().equals(duplicateCandidate))
                 .ifPresent(_ -> {
                     throw new DuplicateSupportChatMessageException();

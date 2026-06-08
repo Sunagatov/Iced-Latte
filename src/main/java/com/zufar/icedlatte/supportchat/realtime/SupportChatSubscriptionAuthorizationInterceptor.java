@@ -40,8 +40,12 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     }
 
     private void authorizeSubscription(StompHeaderAccessor accessor) {
-        Optional<UUID> conversationId = conversationId(accessor.getDestination());
+        String destination = accessor.getDestination();
+        Optional<UUID> conversationId = conversationId(destination);
         if (conversationId.isEmpty()) {
+            if (isSupportChatDestination(destination)) {
+                throw new AccessDeniedException("Access denied.");
+            }
             return;
         }
 
@@ -73,6 +77,11 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
         } catch (IllegalArgumentException _) {
             throw new AccessDeniedException("Access denied.");
         }
+    }
+
+    private static boolean isSupportChatDestination(@Nullable String destination) {
+        return destination != null
+                && destination.startsWith(SupportChatWebSocketDestinations.SUPPORT_CHAT_TOPIC_PREFIX);
     }
 
     private static Optional<UUID> userId(@Nullable Principal principal) {

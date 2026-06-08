@@ -290,6 +290,29 @@ class SupportChatServiceTest {
     }
 
     @Test
+    @DisplayName("Repeated identical customer message is allowed after previous delivery failed")
+    void sendCustomerMessage_repeatedIdenticalBodyAfterFailedDelivery_allowsRetry() {
+        SupportMessageEntity previous = savedCustomerMessage("Hello");
+        previous.setNormalizedBody("hello");
+        previous.setDeliveryStatus(SupportMessageDeliveryStatus.FAILED);
+        SupportMessageEntity saved = savedCustomerMessage("Hello");
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
+        when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
+                .thenReturn(Optional.empty());
+        when(messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
+                        CONVERSATION_ID, SupportMessageSenderType.CUSTOMER))
+                .thenReturn(Optional.of(previous));
+        when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
+        when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
+
+        var result = enabledService().sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, " hello ", null);
+
+        assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.SENT);
+    }
+
+    @Test
     @DisplayName("Rate-limited message is rejected before persistence")
     void sendCustomerMessage_rateLimited_throwsTooManyRequests() {
         when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
