@@ -173,6 +173,8 @@ class TelegramOwnerMessageSenderTest {
                 new Telegram(
                         "bot-token",
                         "-1001234567890",
+                        555L,
+                        "webhook-secret",
                         forumTopicsEnabled,
                         Duration.ofSeconds(3),
                         Duration.ofSeconds(5)),

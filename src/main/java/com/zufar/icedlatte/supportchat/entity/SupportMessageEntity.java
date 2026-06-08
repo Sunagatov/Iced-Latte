@@ -52,6 +52,12 @@ public class SupportMessageEntity {
     @Column(name = "visible_to_customer", nullable = false)
     private boolean visibleToCustomer = true;
 
+    @Column(name = "telegram_update_id")
+    private Long telegramUpdateId;
+
+    @Column(name = "telegram_message_id")
+    private Long telegramMessageId;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

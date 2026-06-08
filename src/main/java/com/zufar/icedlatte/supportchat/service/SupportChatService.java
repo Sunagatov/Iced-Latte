@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.supportchat.service;
 
+import java.time.OffsetDateTime;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
@@ -19,17 +31,8 @@ import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.util.Locale;
-import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -131,6 +134,38 @@ public class SupportChatService {
                 saved.getId(),
                 deliveryResult.delivered());
         return saved;
+    }
+
+    @Transactional
+    public Optional<SupportMessageEntity> saveOwnerReply(
+            SupportConversationEntity conversation, String body, long telegramUpdateId, long telegramMessageId) {
+        if (messageRepository.existsByTelegramUpdateId(telegramUpdateId)) {
+            log.info(
+                    "support_chat.owner_reply.duplicate_ignored: conversationId={}, telegramUpdateId={}",
+                    conversation.getId(),
+                    telegramUpdateId);
+            return Optional.empty();
+        }
+
+        String messageBody = normalizeBody(body);
+        validateMessage(messageBody);
+
+        SupportMessageEntity message = new SupportMessageEntity();
+        message.setConversationId(conversation.getId());
+        message.setSenderType(SupportMessageSenderType.OWNER);
+        message.setBody(messageBody);
+        message.setNormalizedBody(toDuplicateKey(messageBody));
+        message.setDeliveryStatus(SupportMessageDeliveryStatus.SENT);
+        message.setTelegramUpdateId(telegramUpdateId);
+        message.setTelegramMessageId(telegramMessageId);
+        SupportMessageEntity saved = messageRepository.save(message);
+        conversationRepository.touchLastMessageAt(conversation.getId());
+        log.info(
+                "support_chat.owner_reply.accepted: conversationId={}, messageId={}, telegramUpdateId={}",
+                conversation.getId(),
+                saved.getId(),
+                telegramUpdateId);
+        return Optional.of(saved);
     }
 
     private void ensureAvailable(CurrentUserSnapshot user) {

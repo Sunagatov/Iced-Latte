@@ -34,6 +34,8 @@ CREATE TABLE public.support_messages
     sender_type         VARCHAR(32)              NOT NULL,
     sender_user_id      UUID,
     client_message_id   UUID,
+    telegram_update_id  BIGINT,
+    telegram_message_id BIGINT,
     body                VARCHAR(4000)            NOT NULL,
     normalized_body     VARCHAR(4000)            NOT NULL,
     delivery_status     VARCHAR(32)              NOT NULL,
@@ -60,3 +62,11 @@ CREATE INDEX idx_support_messages_conversation_created_at
 CREATE UNIQUE INDEX uq_support_messages_client_message_id
     ON public.support_messages (conversation_id, client_message_id)
     WHERE client_message_id IS NOT NULL;
+
+CREATE UNIQUE INDEX uq_support_messages_telegram_update
+    ON public.support_messages (telegram_update_id)
+    WHERE telegram_update_id IS NOT NULL;
+
+CREATE UNIQUE INDEX uq_support_messages_telegram_message
+    ON public.support_messages (telegram_message_id)
+    WHERE telegram_message_id IS NOT NULL;

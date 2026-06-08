@@ -42,6 +42,14 @@ public record SupportChatProperties(
                 throw new IllegalStateException(
                         "support-chat.telegram.chat-id is required when owner-message-mode=TELEGRAM");
             }
+            if (telegram.ownerUserId() < 1) {
+                throw new IllegalStateException(
+                        "support-chat.telegram.owner-user-id is required when owner-message-mode=TELEGRAM");
+            }
+            if (telegram.webhookSecret().isBlank()) {
+                throw new IllegalStateException(
+                        "support-chat.telegram.webhook-secret is required when owner-message-mode=TELEGRAM");
+            }
         }
     }
 
@@ -52,11 +60,19 @@ public record SupportChatProperties(
     }
 
     public record Telegram(
-            String botToken, String chatId, boolean forumTopicsEnabled, Duration connectTimeout, Duration readTimeout) {
+            String botToken,
+            String chatId,
+            Long ownerUserId,
+            String webhookSecret,
+            boolean forumTopicsEnabled,
+            Duration connectTimeout,
+            Duration readTimeout) {
 
         public Telegram {
             botToken = botToken == null ? "" : botToken;
             chatId = chatId == null ? "" : chatId;
+            ownerUserId = ownerUserId == null ? 0L : ownerUserId;
+            webhookSecret = webhookSecret == null ? "" : webhookSecret;
             connectTimeout = connectTimeout == null ? Duration.ofSeconds(3) : connectTimeout;
             readTimeout = readTimeout == null ? Duration.ofSeconds(5) : readTimeout;
             if (connectTimeout.isZero() || connectTimeout.isNegative()) {
@@ -68,7 +84,7 @@ public record SupportChatProperties(
         }
 
         private static Telegram disabled() {
-            return new Telegram("", "", true, Duration.ofSeconds(3), Duration.ofSeconds(5));
+            return new Telegram("", "", 0L, "", true, Duration.ofSeconds(3), Duration.ofSeconds(5));
         }
     }
 

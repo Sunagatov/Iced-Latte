@@ -514,6 +514,8 @@ support-chat:
   telegram:
     bot-token: ${SUPPORT_CHAT_TELEGRAM_BOT_TOKEN:}
     chat-id: ${SUPPORT_CHAT_TELEGRAM_CHAT_ID:}
+    owner-user-id: ${SUPPORT_CHAT_TELEGRAM_OWNER_USER_ID:0}
+    webhook-secret: ${SUPPORT_CHAT_TELEGRAM_WEBHOOK_SECRET:}
     forum-topics-enabled: ${SUPPORT_CHAT_TELEGRAM_FORUM_TOPICS_ENABLED:true}
     connect-timeout: ${SUPPORT_CHAT_TELEGRAM_CONNECT_TIMEOUT:3s}
     read-timeout: ${SUPPORT_CHAT_TELEGRAM_READ_TIMEOUT:5s}

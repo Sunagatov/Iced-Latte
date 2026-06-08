@@ -18,6 +18,8 @@ public interface SupportMessageRepository extends JpaRepository<SupportMessageEn
 
     Optional<SupportMessageEntity> findByConversationIdAndClientMessageId(UUID conversationId, UUID clientMessageId);
 
+    boolean existsByTelegramUpdateId(Long telegramUpdateId);
+
     Optional<SupportMessageEntity> findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
             UUID conversationId, SupportMessageSenderType senderType);
 }

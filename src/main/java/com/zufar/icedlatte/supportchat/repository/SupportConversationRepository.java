@@ -14,6 +14,10 @@ public interface SupportConversationRepository extends JpaRepository<SupportConv
 
     Optional<SupportConversationEntity> findByUserId(UUID userId);
 
+    Optional<SupportConversationEntity> findByTelegramMessageThreadId(Long telegramMessageThreadId);
+
+    Optional<SupportConversationEntity> findByTelegramFallbackMessageId(Long telegramFallbackMessageId);
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = """
                     INSERT INTO public.support_conversations (id, user_id, created_at, updated_at)

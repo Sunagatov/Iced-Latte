@@ -173,6 +173,41 @@ class SupportChatServiceTest {
     }
 
     @Test
+    @DisplayName("Owner reply is persisted as visible sent message with Telegram correlation")
+    void saveOwnerReply_valid_persistsVisibleOwnerMessage() {
+        SupportConversationEntity conversation = conversation();
+        SupportMessageEntity saved = savedOwnerMessage("Owner answer");
+        when(messageRepository.existsByTelegramUpdateId(9001L)).thenReturn(false);
+        when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+
+        var result = enabledService().saveOwnerReply(conversation, "  Owner answer  ", 9001L, 7001L);
+
+        assertThat(result).contains(saved);
+        ArgumentCaptor<SupportMessageEntity> messageCaptor = ArgumentCaptor.forClass(SupportMessageEntity.class);
+        verify(messageRepository).save(messageCaptor.capture());
+        assertThat(messageCaptor.getValue().getConversationId()).isEqualTo(CONVERSATION_ID);
+        assertThat(messageCaptor.getValue().getSenderType()).isEqualTo(SupportMessageSenderType.OWNER);
+        assertThat(messageCaptor.getValue().getBody()).isEqualTo("Owner answer");
+        assertThat(messageCaptor.getValue().getNormalizedBody()).isEqualTo("owner answer");
+        assertThat(messageCaptor.getValue().getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.SENT);
+        assertThat(messageCaptor.getValue().getTelegramUpdateId()).isEqualTo(9001L);
+        assertThat(messageCaptor.getValue().getTelegramMessageId()).isEqualTo(7001L);
+        verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
+    }
+
+    @Test
+    @DisplayName("Duplicate Telegram owner reply is ignored without persistence")
+    void saveOwnerReply_duplicateTelegramUpdate_ignoresMessage() {
+        when(messageRepository.existsByTelegramUpdateId(9001L)).thenReturn(true);
+
+        var result = enabledService().saveOwnerReply(conversation(), "Owner answer", 9001L, 7001L);
+
+        assertThat(result).isEmpty();
+        verify(messageRepository, never()).save(any());
+        verify(conversationRepository, never()).touchLastMessageAt(any());
+    }
+
+    @Test
     @DisplayName("Disabled support chat rejects message before persistence")
     void sendCustomerMessage_disabled_throwsNotFound() {
         assertThatThrownBy(() ->
@@ -348,7 +383,7 @@ class SupportChatServiceTest {
                 4000,
                 90,
                 OwnerMessageMode.FAKE,
-                new Telegram("", "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
+                new Telegram("", "", 0L, "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
                 new Turnstile(turnstileEnabled),
                 new RateLimits(
                         new Bucket(20, Duration.ofMinutes(1)),
@@ -376,6 +411,19 @@ class SupportChatServiceTest {
         message.setBody(body);
         message.setNormalizedBody(body.toLowerCase());
         message.setDeliveryStatus(SupportMessageDeliveryStatus.PENDING);
+        message.setVisibleToCustomer(true);
+        message.setCreatedAt(OffsetDateTime.now());
+        return message;
+    }
+
+    private static SupportMessageEntity savedOwnerMessage(String body) {
+        SupportMessageEntity message = new SupportMessageEntity();
+        message.setId(UUID.randomUUID());
+        message.setConversationId(CONVERSATION_ID);
+        message.setSenderType(SupportMessageSenderType.OWNER);
+        message.setBody(body);
+        message.setNormalizedBody(body.toLowerCase());
+        message.setDeliveryStatus(SupportMessageDeliveryStatus.SENT);
         message.setVisibleToCustomer(true);
         message.setCreatedAt(OffsetDateTime.now());
         return message;

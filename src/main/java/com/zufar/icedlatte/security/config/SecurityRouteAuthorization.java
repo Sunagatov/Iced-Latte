@@ -37,7 +37,6 @@ public class SecurityRouteAuthorization {
         ApiPaths.USERS_PATTERN,
         ApiPaths.FAVORITES_PATTERN,
         ApiPaths.ORDERS_PATTERN,
-        ApiPaths.SUPPORT_CHAT_PATTERN,
         SHIPPING_URL_PATTERN
     };
 
@@ -62,6 +61,7 @@ public class SecurityRouteAuthorization {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
 
+        authorizeSupportChatRoutes(auth);
         authorizeAuthenticatedRoutes(auth);
         authorizePaymentRoutes(auth);
         authorizeProductReviewRoutes(auth);
@@ -73,6 +73,14 @@ public class SecurityRouteAuthorization {
     private void authorizeAuthenticatedRoutes(
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
         auth.requestMatchers(AUTHENTICATED_URL_PATTERNS).authenticated();
+    }
+
+    private void authorizeSupportChatRoutes(
+            AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+        auth.requestMatchers(HttpMethod.POST, ApiPaths.SUPPORT_CHAT_TELEGRAM_WEBHOOK)
+                .permitAll()
+                .requestMatchers(ApiPaths.SUPPORT_CHAT_PATTERN)
+                .authenticated();
     }
 
     private void authorizePaymentRoutes(
