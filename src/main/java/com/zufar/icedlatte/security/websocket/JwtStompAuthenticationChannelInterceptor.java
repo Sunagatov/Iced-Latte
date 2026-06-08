@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.security.websocket;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.Ordered;
@@ -38,10 +41,29 @@ public class JwtStompAuthenticationChannelInterceptor implements ChannelIntercep
     }
 
     private void authenticate(StompHeaderAccessor accessor) {
-        String authorizationHeader = accessor.getFirstNativeHeader(jwtProperties.header());
-        if (authorizationHeader == null) {
+        Optional<String> authorizationHeader = authorizationHeader(accessor);
+        if (authorizationHeader.isEmpty()) {
             throw new AuthenticationCredentialsNotFoundException("Authentication required.");
         }
-        accessor.setUser(jwtAuthenticationProvider.get(authorizationHeader));
+        accessor.setUser(jwtAuthenticationProvider.get(authorizationHeader.get()));
+    }
+
+    private Optional<String> authorizationHeader(StompHeaderAccessor accessor) {
+        String nativeAuthorizationHeader = accessor.getFirstNativeHeader(jwtProperties.header());
+        if (nativeAuthorizationHeader != null) {
+            return Optional.of(nativeAuthorizationHeader);
+        }
+
+        return accessTokenAttribute(accessor).map(token -> "Bearer " + token);
+    }
+
+    private static Optional<String> accessTokenAttribute(StompHeaderAccessor accessor) {
+        Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+        if (sessionAttributes == null) {
+            return Optional.empty();
+        }
+
+        Object token = sessionAttributes.get(WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE);
+        return token instanceof String value && !value.isBlank() ? Optional.of(value) : Optional.empty();
     }
 }
