@@ -8,6 +8,8 @@ CREATE TABLE public.support_conversations
     created_at                 TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at                 TIMESTAMP WITH TIME ZONE NOT NULL,
     last_message_at            TIMESTAMP WITH TIME ZONE,
+    telegram_message_thread_id BIGINT,
+    telegram_fallback_message_id BIGINT,
 
     CONSTRAINT uq_support_conversations_user_id UNIQUE (user_id),
     CONSTRAINT fk_support_conversations_user
@@ -15,6 +17,14 @@ CREATE TABLE public.support_conversations
             REFERENCES public.user_details (id)
             ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX uq_support_conversations_telegram_thread
+    ON public.support_conversations (telegram_message_thread_id)
+    WHERE telegram_message_thread_id IS NOT NULL;
+
+CREATE INDEX idx_support_conversations_telegram_fallback_message
+    ON public.support_conversations (telegram_fallback_message_id)
+    WHERE telegram_fallback_message_id IS NOT NULL;
 
 -- changeset zufar:create-support-chat-messages
 CREATE TABLE public.support_messages

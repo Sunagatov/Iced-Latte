@@ -37,6 +37,12 @@ public class SupportConversationEntity {
     @Column(name = "last_message_at")
     private OffsetDateTime lastMessageAt;
 
+    @Column(name = "telegram_message_thread_id")
+    private Long telegramMessageThreadId;
+
+    @Column(name = "telegram_fallback_message_id")
+    private Long telegramFallbackMessageId;
+
     @PrePersist
     void prePersist() {
         OffsetDateTime now = OffsetDateTime.now();

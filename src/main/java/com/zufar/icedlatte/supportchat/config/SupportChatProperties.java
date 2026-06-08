@@ -10,6 +10,7 @@ public record SupportChatProperties(
         int messageMaxLength,
         int retentionDays,
         OwnerMessageMode ownerMessageMode,
+        Telegram telegram,
         Turnstile turnstile,
         RateLimits rateLimits) {
 
@@ -17,6 +18,7 @@ public record SupportChatProperties(
         messageMaxLength = messageMaxLength == 0 ? 4000 : messageMaxLength;
         retentionDays = retentionDays == 0 ? 90 : retentionDays;
         ownerMessageMode = ownerMessageMode == null ? OwnerMessageMode.DISABLED : ownerMessageMode;
+        telegram = telegram == null ? Telegram.disabled() : telegram;
         turnstile = turnstile == null ? new Turnstile(false) : turnstile;
         rateLimits = rateLimits == null
                 ? new RateLimits(
@@ -31,11 +33,43 @@ public record SupportChatProperties(
         if (retentionDays < 1) {
             throw new IllegalStateException("support-chat.retention-days must be positive");
         }
+        if (ownerMessageMode == OwnerMessageMode.TELEGRAM) {
+            if (telegram.botToken().isBlank()) {
+                throw new IllegalStateException(
+                        "support-chat.telegram.bot-token is required when owner-message-mode=TELEGRAM");
+            }
+            if (telegram.chatId().isBlank()) {
+                throw new IllegalStateException(
+                        "support-chat.telegram.chat-id is required when owner-message-mode=TELEGRAM");
+            }
+        }
     }
 
     public enum OwnerMessageMode {
         DISABLED,
-        FAKE
+        FAKE,
+        TELEGRAM
+    }
+
+    public record Telegram(
+            String botToken, String chatId, boolean forumTopicsEnabled, Duration connectTimeout, Duration readTimeout) {
+
+        public Telegram {
+            botToken = botToken == null ? "" : botToken;
+            chatId = chatId == null ? "" : chatId;
+            connectTimeout = connectTimeout == null ? Duration.ofSeconds(3) : connectTimeout;
+            readTimeout = readTimeout == null ? Duration.ofSeconds(5) : readTimeout;
+            if (connectTimeout.isZero() || connectTimeout.isNegative()) {
+                throw new IllegalStateException("support-chat.telegram.connect-timeout must be positive");
+            }
+            if (readTimeout.isZero() || readTimeout.isNegative()) {
+                throw new IllegalStateException("support-chat.telegram.read-timeout must be positive");
+            }
+        }
+
+        private static Telegram disabled() {
+            return new Telegram("", "", true, Duration.ofSeconds(3), Duration.ofSeconds(5));
+        }
     }
 
     public record Turnstile(boolean firstMessageEnabled) {}

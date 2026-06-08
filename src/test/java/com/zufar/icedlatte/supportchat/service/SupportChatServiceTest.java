@@ -28,6 +28,7 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
@@ -347,6 +348,7 @@ class SupportChatServiceTest {
                 4000,
                 90,
                 OwnerMessageMode.FAKE,
+                new Telegram("", "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
                 new Turnstile(turnstileEnabled),
                 new RateLimits(
                         new Bucket(20, Duration.ofMinutes(1)),
