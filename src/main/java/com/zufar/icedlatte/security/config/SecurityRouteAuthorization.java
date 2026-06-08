@@ -37,6 +37,7 @@ public class SecurityRouteAuthorization {
         ApiPaths.USERS_PATTERN,
         ApiPaths.FAVORITES_PATTERN,
         ApiPaths.ORDERS_PATTERN,
+        ApiPaths.SUPPORT_CHAT_PATTERN,
         SHIPPING_URL_PATTERN
     };
 

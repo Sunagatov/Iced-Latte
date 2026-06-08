@@ -53,4 +53,12 @@ public class ProblemType {
     // User
     public static final String USER_NOT_FOUND = "user-not-found";
     public static final String INVALID_AVATAR_TYPE = "invalid-avatar-type";
+
+    // Support chat
+    public static final String SUPPORT_CHAT_DISABLED = "support-chat-disabled";
+    public static final String SUPPORT_CHAT_EMAIL_VERIFICATION_REQUIRED = "support-chat-email-verification-required";
+    public static final String SUPPORT_CHAT_CONVERSATION_NOT_FOUND = "support-chat-conversation-not-found";
+    public static final String SUPPORT_CHAT_INVALID_MESSAGE = "support-chat-invalid-message";
+    public static final String SUPPORT_CHAT_DUPLICATE_MESSAGE = "support-chat-duplicate-message";
+    public static final String SUPPORT_CHAT_RATE_LIMITED = "support-chat-rate-limited";
 }

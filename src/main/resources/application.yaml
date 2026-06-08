@@ -506,6 +506,26 @@ springdoc:
   pre-loading-enabled: false
   default-produces-media-type: application/json
 
+support-chat:
+  enabled: false
+  message-max-length: 4000
+  retention-days: 90
+  owner-message-mode: disabled
+  turnstile:
+    first-message-enabled: false
+  rate-limits:
+    per-minute:
+      max-requests: 20
+      window-duration: 1m
+    per-hour:
+      max-requests: 100
+      window-duration: 1h
+    per-day:
+      max-requests: 300
+      window-duration: 24h
+    per-conversation-burst:
+      max-requests: 10
+      window-duration: 10s
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ⑧ OBSERVABILITY (Sentry + Actuator/Metrics + Tracing)

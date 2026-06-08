@@ -890,6 +890,27 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <!-- Generate from Support Chat OpenAPI Spec -->
+                    <execution>
+                        <id>generate-from-support-chat-openapi-spec</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <output>${openapi-output-dir}</output>
+                            <inputSpec>${project.basedir}/src/main/resources/api-specs/support-chat-openapi.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>${openapi-package}.supportchat.api</apiPackage>
+                            <modelPackage>${openapi-package-with-dto}</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <interfaceOnly>true</interfaceOnly>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

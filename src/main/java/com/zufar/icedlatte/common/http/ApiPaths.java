@@ -38,4 +38,7 @@ public class ApiPaths {
 
     public static final String PAYMENT = "/api/v1/payment";
     public static final String PAYMENT_PATTERN = PAYMENT + "/**";
+
+    public static final String SUPPORT_CHAT = "/api/v1/support-chat";
+    public static final String SUPPORT_CHAT_PATTERN = SUPPORT_CHAT + "/**";
 }

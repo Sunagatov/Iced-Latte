@@ -1,0 +1,347 @@
+openapi: "3.0.3"
+
+info:
+  title: "Iced Latte Support Chat API"
+  description: "Authenticated customer support chat REST API for status, conversation bootstrap, history, and message submission."
+  version: "1.0.0"
+  contact:
+    name: "Iced Latte Support"
+    email: "zufar.sunagatov@gmail.com"
+    url: "https://github.com/Sunagatov/Iced-Latte"
+  license:
+    name: "Apache-2.0"
+    url: "https://github.com/Sunagatov/Iced-Latte/blob/main/LICENSE"
+
+servers:
+  - url: "http://localhost:8083"
+    description: "Local development server"
+  - url: "https://iced-latte.uk/backend"
+    description: "Production server"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: "Support Chat"
+    description: "Operations for authenticated customer support chat."
+
+paths:
+  /api/v1/support-chat/status:
+    get:
+      tags:
+        - "Support Chat"
+      summary: "Get support chat availability for the current user"
+      operationId: "getSupportChatStatus"
+      responses:
+        "200":
+          description: "Support chat status."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportChatStatusDto"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/support-chat/conversation:
+    get:
+      tags:
+        - "Support Chat"
+      summary: "Get or create the current user's permanent support conversation"
+      operationId: "getCurrentSupportChatConversation"
+      responses:
+        "200":
+          description: "Current support conversation."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportChatConversationDto"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Email verification is required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Support chat is disabled or unavailable."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/support-chat/conversations/{conversationId}/messages:
+    get:
+      tags:
+        - "Support Chat"
+      summary: "Get visible support chat message history"
+      operationId: "getSupportChatMessages"
+      parameters:
+        - name: "conversationId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "page"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 0
+            minimum: 0
+        - name: "size"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            default: 20
+            minimum: 1
+            maximum: 50
+      responses:
+        "200":
+          description: "Support chat message history."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportChatMessagePageDto"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Email verification is required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Conversation not found or support chat unavailable."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - "Support Chat"
+      summary: "Send a customer support chat message"
+      operationId: "sendSupportChatMessage"
+      parameters:
+        - name: "conversationId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+            format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupportChatMessageRequest"
+      responses:
+        "200":
+          description: "Message accepted."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportChatMessageDto"
+        "400":
+          description: "Invalid message request."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Email verification is required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Conversation not found or support chat unavailable."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: "Repeated message rejected."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: "Too many support chat messages."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT token for authenticated requests"
+
+  schemas:
+    SupportChatStatusDto:
+      type: "object"
+      properties:
+        enabled:
+          type: "boolean"
+        eligible:
+          type: "boolean"
+        reason:
+          type: "string"
+          nullable: true
+          enum:
+            - "EMAIL_VERIFICATION_REQUIRED"
+      required:
+        - enabled
+        - eligible
+
+    SupportChatConversationDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+        lastMessageAt:
+          type: "string"
+          format: "date-time"
+          nullable: true
+      required:
+        - id
+        - createdAt
+        - updatedAt
+
+    CreateSupportChatMessageRequest:
+      type: "object"
+      properties:
+        clientMessageId:
+          type: "string"
+          format: "uuid"
+        body:
+          type: "string"
+          minLength: 1
+          maxLength: 4000
+        turnstileToken:
+          type: "string"
+          nullable: true
+          maxLength: 4096
+      required:
+        - clientMessageId
+        - body
+
+    SupportChatMessageDto:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        conversationId:
+          type: "string"
+          format: "uuid"
+        clientMessageId:
+          type: "string"
+          format: "uuid"
+          nullable: true
+        senderType:
+          type: "string"
+          enum:
+            - "CUSTOMER"
+            - "OWNER"
+            - "SYSTEM"
+        body:
+          type: "string"
+        deliveryStatus:
+          type: "string"
+          enum:
+            - "PENDING"
+            - "SENT"
+            - "FAILED"
+        createdAt:
+          type: "string"
+          format: "date-time"
+      required:
+        - id
+        - conversationId
+        - senderType
+        - body
+        - deliveryStatus
+        - createdAt
+
+    SupportChatMessagePageDto:
+      type: "object"
+      properties:
+        messages:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SupportChatMessageDto"
+        page:
+          type: "integer"
+        size:
+          type: "integer"
+        totalElements:
+          type: "integer"
+          format: "int64"
+        totalPages:
+          type: "integer"
+      required:
+        - messages
+        - page
+        - size
+        - totalElements
+        - totalPages
+
+    ErrorResponse:
+      $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"
