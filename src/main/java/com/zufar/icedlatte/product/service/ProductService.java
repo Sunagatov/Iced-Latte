@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zufar.icedlatte.common.config.PaginationConfig;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.pagination.PageRequestFactory;
+//this module is missing from the project. 
 import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
 import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
