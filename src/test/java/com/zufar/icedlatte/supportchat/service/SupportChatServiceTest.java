@@ -19,6 +19,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
@@ -77,6 +79,14 @@ class SupportChatServiceTest {
 
     @Mock
     private RateLimiter rateLimiter;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUpTransactions() {
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    }
 
     @Test
     @DisplayName("Status reports disabled feature as unavailable")
@@ -141,6 +151,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.empty());
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(messageRepository.updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.SENT, false))
+                .thenReturn(1);
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         var result = enabledService()
@@ -154,6 +166,10 @@ class SupportChatServiceTest {
         assertThat(messageCaptor.getValue().getNormalizedBody()).isEqualTo("hello support");
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
         verify(ownerMessageSender).send(any(OwnerMessage.class));
+        var order = inOrder(transactionManager, ownerMessageSender, messageRepository);
+        order.verify(transactionManager).commit(any());
+        order.verify(ownerMessageSender).send(any(OwnerMessage.class));
+        order.verify(messageRepository).updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.SENT, false);
     }
 
     @Test
@@ -169,6 +185,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.empty());
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(messageRepository.updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.FAILED, true))
+                .thenReturn(1);
         when(ownerMessageSender.send(any(OwnerMessage.class)))
                 .thenThrow(new IllegalStateException("owner unavailable"));
 
@@ -177,7 +195,9 @@ class SupportChatServiceTest {
                 .isInstanceOf(SupportChatOwnerDeliveryFailedException.class);
 
         assertThat(saved.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
+        assertThat(saved.isOperatorInspectionRequired()).isTrue();
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
+        verify(messageRepository).updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.FAILED, true);
     }
 
     @Test
@@ -310,6 +330,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.of(previous));
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(messageRepository.updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.SENT, false))
+                .thenReturn(1);
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         var result = enabledService()
@@ -373,6 +395,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.empty());
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(messageRepository.updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.SENT, false))
+                .thenReturn(1);
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         turnstileEnabledService()
@@ -397,6 +421,8 @@ class SupportChatServiceTest {
                 .thenReturn(Optional.of(previous));
         when(rateLimiter.tryConsume(any(), anyInt(), any())).thenReturn(allowedRateLimit());
         when(messageRepository.save(any(SupportMessageEntity.class))).thenReturn(saved);
+        when(messageRepository.updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.SENT, false))
+                .thenReturn(1);
         when(ownerMessageSender.send(any(OwnerMessage.class))).thenReturn(OwnerMessageDeliveryResult.deliveredResult());
 
         turnstileEnabledService()
@@ -435,7 +461,8 @@ class SupportChatServiceTest {
                 messagePublisher,
                 turnstileVerifier,
                 new SupportChatAbuseGuard(supportChatProperties),
-                rateLimiter);
+                rateLimiter,
+                transactionManager);
     }
 
     private SupportChatService disabledService() {
@@ -449,7 +476,8 @@ class SupportChatServiceTest {
                 messagePublisher,
                 turnstileVerifier,
                 new SupportChatAbuseGuard(supportChatProperties),
-                rateLimiter);
+                rateLimiter,
+                transactionManager);
     }
 
     private SupportChatService turnstileEnabledService() {
@@ -463,7 +491,8 @@ class SupportChatServiceTest {
                 messagePublisher,
                 turnstileVerifier,
                 new SupportChatAbuseGuard(supportChatProperties),
-                rateLimiter);
+                rateLimiter,
+                transactionManager);
     }
 
     private static SupportChatProperties properties(boolean enabled) {

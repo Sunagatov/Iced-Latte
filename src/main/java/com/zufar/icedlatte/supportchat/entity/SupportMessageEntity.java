@@ -49,6 +49,9 @@ public class SupportMessageEntity {
     @Column(name = "delivery_status", nullable = false, length = 32)
     private SupportMessageDeliveryStatus deliveryStatus = SupportMessageDeliveryStatus.PENDING;
 
+    @Column(name = "operator_inspection_required", nullable = false)
+    private boolean operatorInspectionRequired = false;
+
     @Column(name = "visible_to_customer", nullable = false)
     private boolean visibleToCustomer = true;
 

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.supportchat.service;
 
 import java.time.OffsetDateTime;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,7 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
@@ -53,6 +56,7 @@ public class SupportChatService {
     private final SupportChatAbuseGuard abuseGuard;
 
     private final RateLimiter rateLimiter;
+    private final PlatformTransactionManager transactionManager;
 
     public SupportChatService(
             SupportChatProperties properties,
@@ -63,7 +67,8 @@ public class SupportChatService {
             SupportChatMessagePublisher messagePublisher,
             TurnstileVerifier turnstileVerifier,
             SupportChatAbuseGuard abuseGuard,
-            @Qualifier("openRateLimiter") RateLimiter rateLimiter) {
+            @Qualifier("openRateLimiter") RateLimiter rateLimiter,
+            PlatformTransactionManager transactionManager) {
         this.properties = properties;
         this.eligibilityService = eligibilityService;
         this.conversationRepository = conversationRepository;
@@ -73,6 +78,7 @@ public class SupportChatService {
         this.turnstileVerifier = turnstileVerifier;
         this.abuseGuard = abuseGuard;
         this.rateLimiter = rateLimiter;
+        this.transactionManager = transactionManager;
     }
 
     @Transactional(readOnly = true)
@@ -107,8 +113,37 @@ public class SupportChatService {
                 conversationId, createdAfter, pageable);
     }
 
-    @Transactional(noRollbackFor = SupportChatOwnerDeliveryFailedException.class)
     public SupportMessageEntity sendCustomerMessage(
+            CurrentUserSnapshot user,
+            UUID conversationId,
+            UUID clientMessageId,
+            String body,
+            String turnstileToken,
+            String clientIp) {
+        PendingCustomerMessage pendingMessage = transactionTemplate(false)
+                .execute(_ ->
+                        prepareCustomerMessage(user, conversationId, clientMessageId, body, turnstileToken, clientIp));
+        Objects.requireNonNull(pendingMessage, "pendingMessage");
+
+        if (pendingMessage.alreadyAccepted()) {
+            return pendingMessage.message();
+        }
+
+        var deliveryResult = sendToOwner(pendingMessage.conversation(), pendingMessage.message(), user);
+        SupportMessageEntity updatedMessage =
+                markCustomerDeliveryStatus(pendingMessage.message(), deliveryResult.delivered());
+        log.info(
+                "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}",
+                pendingMessage.conversation().getId(),
+                updatedMessage.getId(),
+                deliveryResult.delivered());
+        if (!deliveryResult.delivered()) {
+            throw new SupportChatOwnerDeliveryFailedException();
+        }
+        return updatedMessage;
+    }
+
+    private PendingCustomerMessage prepareCustomerMessage(
             CurrentUserSnapshot user,
             UUID conversationId,
             UUID clientMessageId,
@@ -125,7 +160,7 @@ public class SupportChatService {
             if (existing.get().getDeliveryStatus() == SupportMessageDeliveryStatus.FAILED) {
                 throw new SupportChatOwnerDeliveryFailedException();
             }
-            return existing.get();
+            return new PendingCustomerMessage(conversation, existing.get(), true);
         }
 
         SupportMessageEntity previousCustomerMessage =
@@ -146,19 +181,21 @@ public class SupportChatService {
 
         conversationRepository.touchLastMessageAt(conversation.getId());
 
-        var deliveryResult = sendToOwner(conversation, saved, user);
+        return new PendingCustomerMessage(conversation, saved, false);
+    }
+
+    private SupportMessageEntity markCustomerDeliveryStatus(SupportMessageEntity message, boolean delivered) {
         SupportMessageDeliveryStatus deliveryStatus =
-                deliveryResult.delivered() ? SupportMessageDeliveryStatus.SENT : SupportMessageDeliveryStatus.FAILED;
-        saved.setDeliveryStatus(deliveryStatus);
-        log.info(
-                "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}",
-                conversation.getId(),
-                saved.getId(),
-                deliveryResult.delivered());
-        if (!deliveryResult.delivered()) {
-            throw new SupportChatOwnerDeliveryFailedException();
-        }
-        return saved;
+                delivered ? SupportMessageDeliveryStatus.SENT : SupportMessageDeliveryStatus.FAILED;
+        transactionTemplate(false).executeWithoutResult(_ -> {
+            int updatedRows = messageRepository.updateDeliveryStatus(message.getId(), deliveryStatus, !delivered);
+            if (updatedRows != 1) {
+                throw new IllegalStateException("Support chat message delivery status was not updated");
+            }
+        });
+        message.setDeliveryStatus(deliveryStatus);
+        message.setOperatorInspectionRequired(!delivered);
+        return message;
     }
 
     @Transactional
@@ -315,4 +352,13 @@ public class SupportChatService {
     }
 
     public record SupportChatStatus(boolean enabled, boolean eligible, String reason) {}
+
+    private TransactionTemplate transactionTemplate(boolean readOnly) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setReadOnly(readOnly);
+        return transactionTemplate;
+    }
+
+    private record PendingCustomerMessage(
+            SupportConversationEntity conversation, SupportMessageEntity message, boolean alreadyAccepted) {}
 }

@@ -36,6 +36,7 @@ class TelegramWebhookService {
 
         TelegramWebhookUpdate.TelegramWebhookMessage message = update == null ? null : update.message();
         if (!isSupportedOwnerReply(update, message)) {
+            logUnsupportedOwnerReply(update, message);
             return TelegramWebhookResult.IGNORED;
         }
 
@@ -83,6 +84,45 @@ class TelegramWebhookService {
             return false;
         }
         return !Boolean.TRUE.equals(message.from().bot());
+    }
+
+    private void logUnsupportedOwnerReply(
+            TelegramWebhookUpdate update, TelegramWebhookUpdate.TelegramWebhookMessage message) {
+        log.warn(
+                "support_chat.telegram.webhook.unsupported_update: telegramUpdateId={}, telegramMessageId={}, reason={}",
+                update == null ? null : update.updateId(),
+                message == null ? null : message.messageId(),
+                unsupportedOwnerReplyReason(update, message));
+    }
+
+    private String unsupportedOwnerReplyReason(
+            TelegramWebhookUpdate update, TelegramWebhookUpdate.TelegramWebhookMessage message) {
+        if (update == null || update.updateId() == null) {
+            return "missing_update_id";
+        }
+        if (message == null || message.messageId() == null) {
+            return "missing_message";
+        }
+        if (message.text() == null || message.text().isBlank()) {
+            return "non_text_message";
+        }
+        if (message.chat() == null) {
+            return "missing_chat";
+        }
+        if (!Objects.equals(
+                properties.telegram().chatId(), String.valueOf(message.chat().id()))) {
+            return "unexpected_chat";
+        }
+        if (message.from() == null) {
+            return "missing_sender";
+        }
+        if (!Objects.equals(properties.telegram().ownerUserId(), message.from().id())) {
+            return "unexpected_sender";
+        }
+        if (Boolean.TRUE.equals(message.from().bot())) {
+            return "bot_sender";
+        }
+        return "unsupported_update";
     }
 
     private Optional<SupportConversationEntity> findConversation(TelegramWebhookUpdate.TelegramWebhookMessage message) {
