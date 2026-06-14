@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.supportchat.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -53,6 +54,25 @@ class SupportChatPropertiesTest {
                         Duration.ofSeconds(3),
                         Duration.ofSeconds(5))))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Rate limit configuration defaults every missing bucket")
+    void rateLimits_partialConfiguration_defaultsMissingBuckets() {
+        SupportChatProperties properties = new SupportChatProperties(
+                true,
+                4000,
+                90,
+                OwnerMessageMode.FAKE,
+                null,
+                new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
+                new RateLimits(null, null, null, null, new Bucket(30, Duration.ofMinutes(1))));
+
+        assertThat(properties.rateLimits().perMinute()).isNotNull();
+        assertThat(properties.rateLimits().perHour()).isNotNull();
+        assertThat(properties.rateLimits().perDay()).isNotNull();
+        assertThat(properties.rateLimits().perConversationBurst()).isNotNull();
+        assertThat(properties.rateLimits().perIp().maxRequests()).isEqualTo(30);
     }
 
     private static void createProperties(Telegram telegram) {

@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
@@ -37,7 +36,6 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
     }
 
     @Override
-    @Transactional
     public OwnerMessageDeliveryResult send(OwnerMessage message) {
         return conversationRepository
                 .findById(message.conversationId())
@@ -67,6 +65,7 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
                 OwnerMessageDeliveryResult topicDelivery =
                         sendToExistingTopic(topic.get().messageThreadId(), text);
                 if (topicDelivery.delivered()) {
+                    conversationRepository.save(conversation);
                     return topicDelivery;
                 }
                 return sendFallback(conversation, text);
@@ -88,6 +87,7 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
             return OwnerMessageDeliveryResult.failedResult();
         }
         conversation.setTelegramFallbackMessageId(sent.get().messageId());
+        conversationRepository.save(conversation);
         return OwnerMessageDeliveryResult.deliveredResult();
     }
 }

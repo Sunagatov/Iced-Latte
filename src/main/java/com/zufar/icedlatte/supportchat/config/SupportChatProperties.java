@@ -112,6 +112,11 @@ public record SupportChatProperties(
             Bucket perMinute, Bucket perHour, Bucket perDay, Bucket perConversationBurst, Bucket perIp) {
 
         public RateLimits {
+            perMinute = perMinute == null ? new Bucket(20, Duration.ofMinutes(1)) : perMinute;
+            perHour = perHour == null ? new Bucket(100, Duration.ofHours(1)) : perHour;
+            perDay = perDay == null ? new Bucket(300, Duration.ofDays(1)) : perDay;
+            perConversationBurst =
+                    perConversationBurst == null ? new Bucket(10, Duration.ofSeconds(10)) : perConversationBurst;
             perIp = perIp == null ? new Bucket(60, Duration.ofMinutes(1)) : perIp;
         }
     }

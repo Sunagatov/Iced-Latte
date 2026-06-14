@@ -51,6 +51,7 @@ class TelegramOwnerMessageSenderTest {
                 .contains("Email: customer@example.com")
                 .contains("Reply in this topic or reply to this bot message.")
                 .doesNotContain("User ID:");
+        verify(conversationRepository, never()).save(any());
     }
 
     @Test
@@ -69,6 +70,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(789L);
         assertThat(telegramBotClient.sendMessageCalls).isEqualTo(2);
         assertThat(telegramBotClient.lastThreadId).isNull();
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
@@ -83,6 +85,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(result.delivered()).isTrue();
         assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(456L);
         assertThat(telegramBotClient.lastThreadId).isEqualTo(456L);
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
@@ -99,6 +102,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isNull();
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(789L);
         assertThat(telegramBotClient.lastThreadId).isNull();
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
@@ -114,6 +118,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(result.delivered()).isTrue();
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(101L);
         assertThat(telegramBotClient.lastThreadId).isNull();
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
@@ -130,6 +135,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(200L);
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(790L);
         assertThat(telegramBotClient.sendMessageCalls).isEqualTo(2);
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
@@ -145,6 +151,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(result.delivered()).isFalse();
         assertThat(conversation.getTelegramMessageThreadId()).isNull();
         assertThat(conversation.getTelegramFallbackMessageId()).isNull();
+        verify(conversationRepository, never()).save(any());
     }
 
     @Test
@@ -158,6 +165,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(result.delivered()).isTrue();
         assertThat(telegramBotClient.createForumTopicCalls).isZero();
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(100L);
+        verify(conversationRepository).save(conversation);
     }
 
     @Test
