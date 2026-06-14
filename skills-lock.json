@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "api-and-interface-design": {
+      "source": "local-global-core",
+      "sourceType": "manual-copy",
+      "computedHash": "293db2903b41316a5109a1e0ce3e1740eeafae31735bc1f9143dafbfd1187363"
+    },
     "bash-defensive-patterns": {
       "source": "wshobson/agents",
       "sourceType": "autoskills-registry",
       "computedHash": "1f566c2d9c3b50a784b05d08f6b08ebfeb31f038e4d4173f2d488484edb058a6"
+    },
+    "debugging-and-error-recovery": {
+      "source": "local-global-core",
+      "sourceType": "manual-copy",
+      "computedHash": "2539c0078466755c192123c34758aa432da5d29529340037113eeaecb6647b0e"
     },
     "java-coding-standards": {
       "source": "affaan-m/everything-claude-code",
@@ -20,6 +30,11 @@
       "source": "github/awesome-copilot",
       "sourceType": "autoskills-registry",
       "computedHash": "0947c4f2c304d6897abc063e3ad53dc5a0ba4525d12fa5019a39b8ec5e31d8d5"
+    },
+    "test-driven-development": {
+      "source": "local-global-core",
+      "sourceType": "manual-copy",
+      "computedHash": "6c60e193d77a6c52eb3d9a7ca774f1801b9f798ec34f075720e0425a8094f50e"
     }
   }
 }

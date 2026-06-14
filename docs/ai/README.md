@@ -15,3 +15,10 @@ infra wiring. If a task is about those surfaces, switch to the local Vault
 checkout and read its `AGENTS.md`.
 
 Keep this folder small. Do not turn it into a duplicate backend encyclopedia.
+
+## Local Skills Policy
+
+Keep backend-local skills small and boundary-aware.
+
+- Prefer repo architecture docs, tests, and source over broad generic bundles.
+- Add local skills only when they improve Spring, contract, debugging, or verification workflows for this repo.
