@@ -31,7 +31,6 @@ public class UserRegistrationService {
     private final SessionTokenService sessionTokenService;
     private final TurnstileVerifier turnstileVerifier;
 
-    @Transactional(readOnly = true)
     public void ensureRegistrationAllowed(final UserRegistrationRequest userRegistrationRequest) {
         turnstileVerifier.verify(userRegistrationRequest.getTurnstileToken());
         ensureEmailAvailable(userRegistrationRequest);
