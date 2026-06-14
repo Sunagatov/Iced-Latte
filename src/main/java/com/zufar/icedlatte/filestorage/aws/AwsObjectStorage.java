@@ -63,20 +63,12 @@ public class AwsObjectStorage implements ObjectStorage {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(inputStream, file.getSize()));
         } catch (S3Exception ex) {
-            log.error(
-                    "aws.s3.upload.error: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    fileName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.upload.error: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, fileName, ex.getClass().getSimpleName(), ex);
             throw new FileUploadException(fileName, ex);
         } catch (SdkClientException ex) {
-            log.error(
-                    "aws.s3.upload.unreachable: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    fileName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.upload.unreachable: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, fileName, ex.getClass().getSimpleName(), ex);
             throw new FileUploadException(fileName, ex);
         } catch (IOException ex) {
             throw new FileReadException(fileName, ex);
@@ -110,20 +102,12 @@ public class AwsObjectStorage implements ObjectStorage {
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
         } catch (S3Exception ex) {
-            log.error(
-                    "aws.s3.delete.error: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    fileName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.delete.error: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, fileName, ex.getClass().getSimpleName(), ex);
             throw ex;
         } catch (SdkClientException ex) {
-            log.error(
-                    "aws.s3.delete.unreachable: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    fileName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.delete.unreachable: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, fileName, ex.getClass().getSimpleName(), ex);
             throw ex;
         }
     }
@@ -146,12 +130,8 @@ public class AwsObjectStorage implements ObjectStorage {
                     .toString();
             return Optional.of(url);
         } catch (SdkClientException ex) {
-            log.error(
-                    "aws.s3.presign.error: bucket={}, key={}, cause={}",
-                    fileMetadataDto.bucketName(),
-                    fileMetadataDto.fileName(),
-                    ex.getMessage(),
-                    ex);
+            String logMessage = "aws.s3.presign.error: bucket={}, key={}, cause={}";
+            log.error(logMessage, fileMetadataDto.bucketName(), fileMetadataDto.fileName(), ex.getMessage(), ex);
             return Optional.empty();
         }
     }
@@ -181,18 +161,12 @@ public class AwsObjectStorage implements ObjectStorage {
                     .map(software.amazon.awssdk.services.s3.model.S3Object::key)
                     .toList();
         } catch (S3Exception ex) {
-            log.error(
-                    "aws.s3.list.error: bucket={}, exceptionClass={}",
-                    bucketName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.list.error: bucket={}, exceptionClass={}";
+            log.error(logMessage, bucketName, ex.getClass().getSimpleName(), ex);
             throw new FileListException(bucketName, ex);
         } catch (SdkClientException ex) {
-            log.error(
-                    "aws.s3.list.unreachable: bucket={}, exceptionClass={}",
-                    bucketName,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.list.unreachable: bucket={}, exceptionClass={}";
+            log.error(logMessage, bucketName, ex.getClass().getSimpleName(), ex);
             throw new FileListException(bucketName, ex);
         }
     }
@@ -222,20 +196,12 @@ public class AwsObjectStorage implements ObjectStorage {
                     PutObjectRequest.builder().bucket(bucketName).key(key).build();
             s3Client.putObject(putObjectRequest, RequestBody.fromFile(filePath));
         } catch (S3Exception ex) {
-            log.error(
-                    "aws.s3.upload.file_error: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    key,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.upload.file_error: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, key, ex.getClass().getSimpleName(), ex);
             throw new FileUploadException(key, ex);
         } catch (SdkClientException ex) {
-            log.error(
-                    "aws.s3.upload.file_unreachable: bucket={}, key={}, exceptionClass={}",
-                    bucketName,
-                    key,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "aws.s3.upload.file_unreachable: bucket={}, key={}, exceptionClass={}";
+            log.error(logMessage, bucketName, key, ex.getClass().getSimpleName(), ex);
             throw new FileUploadException(key, ex);
         }
     }

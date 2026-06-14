@@ -93,18 +93,14 @@ public class OAuthFlowService {
             String handoffCode = oAuthTokenHandoffStore.store(tokens);
             return URI.create(oAuthRedirectService.callbackUrlWithHandoffCode(callbackUrl, handoffCode));
         } catch (BadRequestException | UnauthorizedException e) {
-            log.error(
-                    "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
-                    provider.id(),
-                    e.getClass().getSimpleName(),
-                    e);
+            String logMessage =
+                    "auth.oauth.callback.failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE";
+            log.error(logMessage, provider.id(), e.getClass().getSimpleName(), e);
             return oAuthRedirectService.frontendErrorRedirect(callbackUrl);
         } catch (RuntimeException e) {
-            log.error(
-                    "auth.oauth.callback.unexpected_failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE",
-                    provider.id(),
-                    e.getClass().getSimpleName(),
-                    e);
+            String logMessage =
+                    "auth.oauth.callback.unexpected_failed: provider={}, exceptionClass={}, reasonCode=CALLBACK_FAILURE";
+            log.error(logMessage, provider.id(), e.getClass().getSimpleName(), e);
             return oAuthRedirectService.frontendErrorRedirect(callbackUrl);
         }
     }

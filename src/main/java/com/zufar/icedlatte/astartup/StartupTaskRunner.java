@@ -25,7 +25,8 @@ final class StartupTaskRunner {
                     () -> {
                         if (!taskFinished.get()) {
                             taskTimedOut.set(true);
-                            log.error("startup.task.timeout: task={}, timeout={}", taskName, timeout);
+                            String logMessage = "startup.task.timeout: task={}, timeout={}";
+                            log.error(logMessage, taskName, timeout);
                             taskThread.interrupt();
                             timeoutScheduler.shutdownNow();
                         }
@@ -42,11 +43,8 @@ final class StartupTaskRunner {
                     log.info("startup.task.finish: task={}", taskName);
                 }
             } catch (Exception e) {
-                log.error(
-                        "startup.task.error: task={}, exceptionClass={}",
-                        taskName,
-                        e.getClass().getSimpleName(),
-                        e);
+                String logMessage = "startup.task.error: task={}, exceptionClass={}";
+                log.error(logMessage, taskName, e.getClass().getSimpleName(), e);
             } finally {
                 taskFinished.set(true);
                 timeoutFuture.cancel(false);

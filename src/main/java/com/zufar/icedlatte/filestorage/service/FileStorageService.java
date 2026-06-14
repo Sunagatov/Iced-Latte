@@ -148,8 +148,9 @@ public class FileStorageService implements FileStorageApi {
             objectStorage.delete(uploadedMetadata);
         } catch (RuntimeException cleanupFailure) {
             failure.addSuppressed(cleanupFailure);
+            String logMessage = "file.upload.cleanup_failed: objectId={}, bucket={}, key={}";
             log.warn(
-                    "file.upload.cleanup_failed: objectId={}, bucket={}, key={}",
+                    logMessage,
                     uploadedMetadata.relatedObjectId(),
                     uploadedMetadata.bucketName(),
                     uploadedMetadata.fileName(),

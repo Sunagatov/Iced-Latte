@@ -139,11 +139,9 @@ public class SupportChatService {
         var deliveryResult = sendToOwner(conversation, message, user);
         boolean delivered = deliveryResult.delivered();
         SupportMessageEntity updatedMessage = markCustomerDeliveryStatus(message, delivered);
-        log.info(
-                "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}",
-                conversation.getId(),
-                updatedMessage.getId(),
-                delivered);
+        String logMessage =
+                "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}";
+        log.info(logMessage, conversation.getId(), updatedMessage.getId(), delivered);
         if (!delivered) {
             throw new SupportChatOwnerDeliveryFailedException();
         }

@@ -49,8 +49,9 @@ public class AWSConfig {
                             .build())
                     .build();
         } catch (SdkClientException ace) {
+            String logMessage = "aws.s3.client.init_error: region={}, endpointOverrideConfigured={}, exceptionClass={}";
             log.error(
-                    "aws.s3.client.init_error: region={}, endpointOverrideConfigured={}, exceptionClass={}",
+                    logMessage,
                     region,
                     StringUtils.hasText(endpointUrl),
                     ace.getClass().getSimpleName(),

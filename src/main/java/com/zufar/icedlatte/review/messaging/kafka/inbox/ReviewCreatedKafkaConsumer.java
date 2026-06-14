@@ -42,8 +42,9 @@ public class ReviewCreatedKafkaConsumer {
         try {
             event = objectMapper.readValue(record.value(), ReviewCreatedKafkaEvent.class);
         } catch (JsonProcessingException e) {
+            String logMessage = "event.inbox.malformed: topic={}, partition={}, offset={}, exceptionClass={}";
             log.warn(
-                    "event.inbox.malformed: topic={}, partition={}, offset={}, exceptionClass={}",
+                    logMessage,
                     record.topic(),
                     record.partition(),
                     record.offset(),
@@ -53,8 +54,10 @@ public class ReviewCreatedKafkaConsumer {
         }
         if (!REVIEW_CREATED_EVENT_TYPE.equals(event.eventType())
                 || event.eventVersion() != REVIEW_CREATED_EVENT_VERSION) {
+            String logMessage =
+                    "event.inbox.unsupported: eventId={}, eventType={}, eventVersion={}, topic={}, partition={}, offset={}";
             log.warn(
-                    "event.inbox.unsupported: eventId={}, eventType={}, eventVersion={}, topic={}, partition={}, offset={}",
+                    logMessage,
                     event.eventId(),
                     event.eventType(),
                     event.eventVersion(),
@@ -77,19 +80,11 @@ public class ReviewCreatedKafkaConsumer {
         acknowledgment.acknowledge();
 
         if (inserted) {
-            log.info(
-                    "event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}",
-                    event.eventId(),
-                    record.topic(),
-                    record.partition(),
-                    record.offset());
+            String logMessage = "event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}";
+            log.info(logMessage, event.eventId(), record.topic(), record.partition(), record.offset());
         } else {
-            log.info(
-                    "event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}",
-                    event.eventId(),
-                    record.topic(),
-                    record.partition(),
-                    record.offset());
+            String logMessage = "event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}";
+            log.info(logMessage, event.eventId(), record.topic(), record.partition(), record.offset());
         }
     }
 

@@ -39,18 +39,14 @@ public class NoOpObjectStorage implements ObjectStorage {
 
     @Override
     public void delete(FileMetadataDto fileMetadataDto) {
-        log.debug(
-                "file.delete.skipped: reason=aws_not_configured, bucket={}, key={}",
-                fileMetadataDto.bucketName(),
-                fileMetadataDto.fileName());
+        String logMessage = "file.delete.skipped: reason=aws_not_configured, bucket={}, key={}";
+        log.debug(logMessage, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
     }
 
     @Override
     public Optional<String> getUrl(FileMetadataDto fileMetadataDto) {
-        log.debug(
-                "file.url.skipped: reason=aws_not_configured, bucket={}, key={}",
-                fileMetadataDto.bucketName(),
-                fileMetadataDto.fileName());
+        String logMessage = "file.url.skipped: reason=aws_not_configured, bucket={}, key={}";
+        log.debug(logMessage, fileMetadataDto.bucketName(), fileMetadataDto.fileName());
         return Optional.empty();
     }
 

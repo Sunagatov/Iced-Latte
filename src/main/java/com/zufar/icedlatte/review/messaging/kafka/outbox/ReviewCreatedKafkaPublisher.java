@@ -65,8 +65,9 @@ public class ReviewCreatedKafkaPublisher {
                     outbox.workerId(),
                     result.getRecordMetadata().partition(),
                     result.getRecordMetadata().offset());
+            String logMessage = "event.outbox.publish.succeeded: eventId={}, topic={}, partition={}, offset={}";
             log.info(
-                    "event.outbox.publish.succeeded: eventId={}, topic={}, partition={}, offset={}",
+                    logMessage,
                     event.eventId(),
                     event.topic(),
                     result.getRecordMetadata().partition(),

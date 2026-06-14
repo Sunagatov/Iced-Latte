@@ -29,11 +29,8 @@ public class PaymentConfirmationService {
     public void confirmPaid(UUID orderId, Session stripeSession, PaymentConfirmationSource source) {
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
-            log.info(
-                    "payment.paid.skipped: orderId={}, status={}, source={}",
-                    orderId,
-                    payment != null ? payment.getStatus() : "missing",
-                    source.eventType());
+            String logMessage = "payment.paid.skipped: orderId={}, status={}, source={}";
+            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing", source.eventType());
             return;
         }
 
@@ -45,8 +42,10 @@ public class PaymentConfirmationService {
                 || paymentIntent == null
                 || !stripeAmount.equals(payment.getAmountMinor())
                 || !stripeCurrency.equalsIgnoreCase(payment.getCurrency())) {
+            String logMessage =
+                    "payment.reconciliation_failed: orderId={}, expected={}_{}, stripe={}_{}, paymentIntentPresent={}, source={}";
             log.error(
-                    "payment.reconciliation_failed: orderId={}, expected={}_{}, stripe={}_{}, paymentIntentPresent={}, source={}",
+                    logMessage,
                     orderId,
                     payment.getAmountMinor(),
                     payment.getCurrency(),
@@ -73,11 +72,8 @@ public class PaymentConfirmationService {
         paymentRepository.save(payment);
         orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
         cartCheckoutApi.deleteCartForUser(payment.getUserId());
-        log.info(
-                "payment.confirmed: orderId={}, paymentIntentId={}, source={}",
-                orderId,
-                paymentIntent,
-                source.eventType());
+        String logMessage = "payment.confirmed: orderId={}, paymentIntentId={}, source={}";
+        log.info(logMessage, orderId, paymentIntent, source.eventType());
     }
 
     private void markReconciliationFailed(Payment payment, PaymentConfirmationSource source) {

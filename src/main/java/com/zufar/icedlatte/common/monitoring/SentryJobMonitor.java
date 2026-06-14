@@ -92,11 +92,8 @@ public class SentryJobMonitor {
             checkIn.setDuration(duration);
             return Sentry.captureCheckIn(checkIn);
         } catch (RuntimeException e) {
-            log.debug(
-                    "sentry.monitor.check_in_failed: monitorSlug={}, status={}, exceptionClass={}",
-                    monitorSlug,
-                    status.apiName(),
-                    e.getClass().getSimpleName());
+            String logMessage = "sentry.monitor.check_in_failed: monitorSlug={}, status={}, exceptionClass={}";
+            log.debug(logMessage, monitorSlug, status.apiName(), e.getClass().getSimpleName());
             return SentryId.EMPTY_ID;
         }
     }

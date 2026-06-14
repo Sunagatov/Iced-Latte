@@ -1,8 +1,15 @@
 package com.zufar.icedlatte.review.service.ai.summary;
 
-import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,13 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.time.Duration;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -123,8 +126,14 @@ public class ProductReviewSummaryDebouncer {
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (Exception e) {
             int retryCount = retryCounts.merge(productId, 1, Integer::sum);
-            String logMessage = "product.ai_summary.failed: productId={}, retryCount={}, maxRetryAttempts={}, exceptionClass={}";
-            log.warn(logMessage, productId, retryCount, maxRetryAttempts, e.getClass().getSimpleName());
+            String logMessage =
+                    "product.ai_summary.failed: productId={}, retryCount={}, maxRetryAttempts={}, exceptionClass={}";
+            log.warn(
+                    logMessage,
+                    productId,
+                    retryCount,
+                    maxRetryAttempts,
+                    e.getClass().getSimpleName());
             if (retryCount > maxRetryAttempts) {
                 retryCounts.remove(productId);
                 log.warn("product.ai_summary.retry_exhausted: productId={}", productId);

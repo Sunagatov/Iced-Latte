@@ -22,9 +22,8 @@ public class SecurityEventListener {
 
     @EventListener
     public void onAuthenticationSuccess(AuthenticationSuccessEvent event) {
-        log.debug(
-                "auth.success: authType={}",
-                event.getAuthentication().getClass().getSimpleName());
+        String logMessage = "auth.success: authType={}";
+        log.debug(logMessage, event.getAuthentication().getClass().getSimpleName());
     }
 
     @EventListener
@@ -41,9 +40,11 @@ public class SecurityEventListener {
         String principal = resolvePrincipal(event);
 
         if (isExpectedAnonymousDeny(principal, path)) {
-            log.debug("auth.denied: method={}, path={}, principal={}", method, path, principal);
+            String logMessage = "auth.denied: method={}, path={}, principal={}";
+            log.debug(logMessage, method, path, principal);
         } else {
-            log.warn("auth.denied: method={}, path={}, principal={}", method, path, principal);
+            String logMessage = "auth.denied: method={}, path={}, principal={}";
+            log.warn(logMessage, method, path, principal);
         }
     }
 

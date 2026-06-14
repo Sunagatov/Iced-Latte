@@ -12,11 +12,8 @@ class FileMetadataSelectionPolicy {
     static FileMetadataDto selectPreferred(FileMetadataDto first, FileMetadataDto second) {
         FileMetadataDto preferred = compare(first, second) <= 0 ? first : second;
         FileMetadataDto skipped = preferred == first ? second : first;
-        log.warn(
-                "storage.metadata.duplicate_related_object: objectId={}, selected={}, skipped={}",
-                preferred.relatedObjectId(),
-                preferred.fileName(),
-                skipped.fileName());
+        String logMessage = "storage.metadata.duplicate_related_object: objectId={}, selected={}, skipped={}";
+        log.warn(logMessage, preferred.relatedObjectId(), preferred.fileName(), skipped.fileName());
         return preferred;
     }
 

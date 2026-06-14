@@ -70,10 +70,8 @@ public class StripeWebhookBusinessProcessor {
             UUID orderId = extractOrderId(stripeSession);
             Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
             if (payment == null || payment.getStatus().isTerminal()) {
-                log.info(
-                        "payment.awaiting_async.skipped: orderId={}, status={}",
-                        orderId,
-                        payment != null ? payment.getStatus() : "missing");
+                String logMessage = "payment.awaiting_async.skipped: orderId={}, status={}";
+                log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
                 return;
             }
             payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
@@ -95,10 +93,8 @@ public class StripeWebhookBusinessProcessor {
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
-            log.info(
-                    "payment.expired.skipped: orderId={}, status={}",
-                    orderId,
-                    payment != null ? payment.getStatus() : "missing");
+            String logMessage = "payment.expired.skipped: orderId={}, status={}";
+            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
             return;
         }
 
@@ -115,10 +111,8 @@ public class StripeWebhookBusinessProcessor {
 
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
-            log.info(
-                    "payment.async_failed.skipped: orderId={}, status={}",
-                    orderId,
-                    payment != null ? payment.getStatus() : "missing");
+            String logMessage = "payment.async_failed.skipped: orderId={}, status={}";
+            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
             return;
         }
 
@@ -174,10 +168,8 @@ public class StripeWebhookBusinessProcessor {
                 .filter(Session.class::isInstance)
                 .map(Session.class::cast)
                 .orElseThrow(() -> {
-                    log.warn(
-                            "payment.webhook.session_missing: eventType={}, eventId={}",
-                            event.getType(),
-                            event.getId());
+                    String logMessage = "payment.webhook.session_missing: eventType={}, eventId={}";
+                    log.warn(logMessage, event.getType(), event.getId());
                     return new IllegalStateException("Stripe webhook event session data is missing.");
                 });
     }

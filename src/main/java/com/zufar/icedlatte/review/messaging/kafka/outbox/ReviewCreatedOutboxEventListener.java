@@ -37,10 +37,7 @@ class ReviewCreatedOutboxEventListener {
         int maxAttempts = properties.outbox().maxAttempts();
 
         outboxEventRepository.insertReviewCreatedEvent(kafkaEvent, topic, partitionKey, payload, "{}", maxAttempts);
-        log.info(
-                "review.outbox.created: eventId={}, topic={}, partitionKey={}",
-                kafkaEvent.eventId(),
-                topic,
-                partitionKey);
+        String logMessage = "review.outbox.created: eventId={}, topic={}, partitionKey={}";
+        log.info(logMessage, kafkaEvent.eventId(), topic, partitionKey);
     }
 }

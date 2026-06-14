@@ -207,8 +207,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
         if (firstBlock) {
             warnedKeys.put(rateLimitKey, Boolean.TRUE);
+            String logMessage =
+                    "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}";
             log.warn(
-                    "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}, limit={}, remaining={}",
+                    logMessage,
                     category.getValue(),
                     identityType,
                     clientIp,
@@ -218,8 +220,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                     result.limit(),
                     Math.max(0, result.remaining()));
         } else {
+            String logMessage =
+                    "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}";
             log.debug(
-                    "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={}, retry_after_seconds={}",
+                    logMessage,
                     category.getValue(),
                     identityType,
                     clientIp,

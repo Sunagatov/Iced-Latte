@@ -51,10 +51,8 @@ public class FavoritesEndpoint implements FavoriteProductsApi {
     public ResponseEntity<ListOfFavoriteProductsDto> getListOfFavoriteProducts() {
         var userId = currentUserProvider.getUserId();
         var response = favoriteService.getEnrichedFavoriteList(userId);
-        log.debug(
-                "favourites.retrieved: count={}, userId={}",
-                response.getProducts().size(),
-                userId);
+        String logMessage = "favourites.retrieved: count={}, userId={}";
+        log.debug(logMessage, response.getProducts().size(), userId);
         return ResponseEntity.ok(response);
     }
 

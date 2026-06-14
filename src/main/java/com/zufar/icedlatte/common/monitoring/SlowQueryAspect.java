@@ -33,8 +33,10 @@ public class SlowQueryAspect {
                                 || methodName.startsWith("update")
                         ? "write"
                         : "read";
+                String logMessage =
+                        "db.slow_query: repository={}, method={}, operation_type={}, duration_ms={}, threshold_ms={}";
                 log.warn(
-                        "db.slow_query: repository={}, method={}, operation_type={}, duration_ms={}, threshold_ms={}",
+                        logMessage,
                         pjp.getSignature().getDeclaringType().getSimpleName(),
                         methodName,
                         operationType,

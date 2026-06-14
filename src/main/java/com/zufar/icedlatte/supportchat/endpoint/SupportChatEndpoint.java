@@ -75,12 +75,7 @@ public class SupportChatEndpoint implements SupportChatApi {
         CurrentUserSnapshot user = currentUserProvider.get();
         String clientIp = clientIpExtractor.extract(httpRequest);
         var message = supportChatService.sendCustomerMessage(
-                user,
-                conversationId,
-                clientMessageId,
-                request.getBody(),
-                turnstileToken,
-                clientIp);
+                user, conversationId, clientMessageId, request.getBody(), turnstileToken, clientIp);
         return ResponseEntity.ok(converter.toMessageDto(message));
     }
 }

@@ -49,7 +49,8 @@ public class StompSupportChatMessagePublisher implements SupportChatMessagePubli
         try {
             messagingTemplate.convertAndSend(destination, payload);
         } catch (RuntimeException ex) {
-            String logMessage = "support_chat.websocket.owner_reply.publish_failed: conversationId={}, messageId={}, exceptionClass={}";
+            String logMessage =
+                    "support_chat.websocket.owner_reply.publish_failed: conversationId={}, messageId={}, exceptionClass={}";
             log.warn(
                     logMessage,
                     conversation.getId(),

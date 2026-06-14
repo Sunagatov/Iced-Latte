@@ -48,8 +48,8 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
         } catch (ReviewModerationException e) {
             throw e;
         } catch (Exception e) {
-            log.warn(
-                    "ai.moderation.unavailable: exceptionClass={}", e.getClass().getSimpleName());
+            String logMessage = "ai.moderation.unavailable: exceptionClass={}";
+            log.warn(logMessage, e.getClass().getSimpleName());
         }
     }
 
@@ -62,10 +62,8 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
             return reviewAiService.aggregateSummary(combined);
         } catch (Exception e) {
-            log.warn(
-                    "ai.summary.unavailable: productId={}, exceptionClass={}",
-                    productId,
-                    e.getClass().getSimpleName());
+            String logMessage = "ai.summary.unavailable: productId={}, exceptionClass={}";
+            log.warn(logMessage, productId, e.getClass().getSimpleName());
             throw new ReviewSummaryException(productId, e);
         }
     }

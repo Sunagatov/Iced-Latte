@@ -88,8 +88,9 @@ public class SignInExceptionHandler {
                 };
 
         if (!(ex instanceof AbsentBearerHeaderException && ApiPaths.AUTH_REFRESH.equals(request.getRequestURI()))) {
+            String logMessage = "{}: status={}, method={}, path={}";
             log.debug(
-                    "{}: status={}, method={}, path={}",
+                    logMessage,
                     mapping.logTag(),
                     mapping.status().value(),
                     request.getMethod(),
@@ -105,8 +106,9 @@ public class SignInExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleSpringSecurityCredentialExceptions(
             final Exception exception, HttpServletRequest request) {
+        String logMessage = "auth.sign_in.failed: reason_code={}, status=401, method={}, path={}";
         log.debug(
-                "auth.sign_in.failed: reason_code={}, status=401, method={}, path={}",
+                logMessage,
                 exception.getClass().getSimpleName(),
                 request.getMethod(),
                 RequestPathUtils.sanitize(request.getRequestURI()));

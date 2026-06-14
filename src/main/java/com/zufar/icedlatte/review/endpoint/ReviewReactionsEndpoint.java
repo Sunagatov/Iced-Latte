@@ -38,10 +38,8 @@ public class ReviewReactionsEndpoint implements ReviewReactionsApi {
             @Valid @RequestBody ProductReviewLikeDto request) {
         UUID userId = currentUserProvider.getUserId();
         var productReview = productReviewService.updateLike(productId, productReviewId, userId, request.getIsLike());
-        log.info(
-                "review.rated: reviewId={}, vote={}",
-                productReviewId,
-                Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
+        String logMessage = "review.rated: reviewId={}, vote={}";
+        log.info(logMessage, productReviewId, Boolean.TRUE.equals(request.getIsLike()) ? "liked" : "disliked");
         return ResponseEntity.ok(productReview);
     }
 }

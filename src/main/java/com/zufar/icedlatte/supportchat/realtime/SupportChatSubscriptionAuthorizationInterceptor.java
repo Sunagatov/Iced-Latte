@@ -105,7 +105,9 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     private static Optional<UUID> userId(@Nullable Principal principal) {
         return switch (principal) {
             case Identifiable identifiable -> Optional.of(identifiable.getId());
-            case Authentication authentication when authentication.getPrincipal() instanceof Identifiable identifiable -> Optional.of(identifiable.getId());
+            case Authentication authentication
+            when authentication.getPrincipal() instanceof Identifiable identifiable ->
+                Optional.of(identifiable.getId());
             case null, default -> Optional.empty();
         };
     }

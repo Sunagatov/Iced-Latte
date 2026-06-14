@@ -58,21 +58,16 @@ public class ApplicationMigration implements ApplicationRunner {
             long t0 = System.nanoTime();
             bucketIndexMaintenanceApi.storeDirectory(productBucket(), directoryPath());
             long durationMs = Duration.ofNanos(System.nanoTime() - t0).toMillis();
-            log.info(
-                    "migration.upload.finish: bucket={}, path={}, durationMs={}",
-                    productBucket(),
-                    directoryPath(),
-                    durationMs);
+            String logMessage = "migration.upload.finish: bucket={}, path={}, durationMs={}";
+            log.info(logMessage, productBucket(), directoryPath(), durationMs);
         } catch (FileUploadException e) {
             log.warn("migration.upload.error: exceptionClass={}", e.getClass().getSimpleName(), e);
         } catch (FileReadException e) {
-            log.warn(
-                    "migration.upload.read_error: exceptionClass={}",
-                    e.getClass().getSimpleName(),
-                    e);
+            String logMessage = "migration.upload.read_error: exceptionClass={}";
+            log.warn(logMessage, e.getClass().getSimpleName(), e);
         } catch (java.io.IOException e) {
-            log.warn(
-                    "migration.upload.io_error: exceptionClass={}", e.getClass().getSimpleName(), e);
+            String logMessage = "migration.upload.io_error: exceptionClass={}";
+            log.warn(logMessage, e.getClass().getSimpleName(), e);
         }
     }
 
@@ -81,15 +76,11 @@ public class ApplicationMigration implements ApplicationRunner {
             bucketIndexMaintenanceApi.refreshBucketIndex(productBucket());
             log.info("migration.metadata.refreshed: bucket={}", productBucket());
         } catch (software.amazon.awssdk.core.exception.SdkException e) {
-            log.warn(
-                    "migration.metadata.refresh_error: exceptionClass={}",
-                    e.getClass().getSimpleName(),
-                    e);
+            String logMessage = "migration.metadata.refresh_error: exceptionClass={}";
+            log.warn(logMessage, e.getClass().getSimpleName(), e);
         } catch (DataAccessException e) {
-            log.warn(
-                    "migration.metadata.persist_error: exceptionClass={}",
-                    e.getClass().getSimpleName(),
-                    e);
+            String logMessage = "migration.metadata.persist_error: exceptionClass={}";
+            log.warn(logMessage, e.getClass().getSimpleName(), e);
         }
     }
 

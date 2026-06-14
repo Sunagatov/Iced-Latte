@@ -123,16 +123,12 @@ public class AuthSessionService {
     private void handleReplayAttempt(AuthSessionEntity session) {
         if (isActiveSession(session)) {
             markCompromised(session);
-            log.warn(
-                    "auth.session.replay_detected: sessionId={}, userId={}",
-                    maskSessionId(session.getId()),
-                    session.getUserId());
+            String logMessage = "auth.session.replay_detected: sessionId={}, userId={}";
+            log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
             revokeAllForCompromisedUser(session.getUserId());
         } else {
-            log.warn(
-                    "auth.session.replay_repeated: sessionId={}, userId={}",
-                    maskSessionId(session.getId()),
-                    session.getUserId());
+            String logMessage = "auth.session.replay_repeated: sessionId={}, userId={}";
+            log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been rotated");
     }
@@ -140,10 +136,8 @@ public class AuthSessionService {
     private void handleRevokedOrCompromisedSession(AuthSessionEntity session) {
         if (!session.isCompromised()) {
             markCompromised(session);
-            log.warn(
-                    "auth.session.reuse_detected: sessionId={}, userId={}",
-                    maskSessionId(session.getId()),
-                    session.getUserId());
+            String logMessage = "auth.session.reuse_detected: sessionId={}, userId={}";
+            log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
             revokeAllForCompromisedUser(session.getUserId());
         }
         throw new JwtTokenBlacklistedException("Refresh token has been revoked");

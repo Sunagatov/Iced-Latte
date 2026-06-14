@@ -51,10 +51,8 @@ public class GlobalExceptionHandler {
                 .map(ProblemDetailFactory.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
-        log.debug(
-                "exception.validation: errorCount={}, fields={}, status=400",
-                exception.getBindingResult().getErrorCount(),
-                fieldNames);
+        String logMessage = "exception.validation: errorCount={}, fields={}, status=400";
+        log.debug(logMessage, exception.getBindingResult().getErrorCount(), fieldNames);
         return problemDetailFactory.build(
                 ProblemType.VALIDATION_FAILED,
                 "Validation failed",
@@ -74,10 +72,8 @@ public class GlobalExceptionHandler {
                 .map(ProblemDetailFactory.FieldError::field)
                 .distinct()
                 .collect(java.util.stream.Collectors.joining(","));
-        log.debug(
-                "exception.constraint_violation: errorCount={}, fields={}, status=400",
-                exception.getConstraintViolations().size(),
-                fieldNames);
+        String logMessage = "exception.constraint_violation: errorCount={}, fields={}, status=400";
+        log.debug(logMessage, exception.getConstraintViolations().size(), fieldNames);
         return problemDetailFactory.build(
                 ProblemType.VALIDATION_FAILED,
                 "Validation failed",
@@ -106,9 +102,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
     public ProblemDetail handleMaxUploadSizeExceededException(final MaxUploadSizeExceededException exception) {
-        log.debug(
-                "exception.multipart.max_size_exceeded: exceptionClass={}, status=413",
-                exception.getClass().getSimpleName());
+        String logMessage = "exception.multipart.max_size_exceeded: exceptionClass={}, status=413";
+        log.debug(logMessage, exception.getClass().getSimpleName());
         return problemDetailFactory.build(
                 ProblemType.FILE_TOO_LARGE,
                 "File too large",
@@ -119,9 +114,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MultipartException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleMultipartException(final MultipartException exception) {
-        log.debug(
-                "exception.multipart.invalid_request: exceptionClass={}, status=400",
-                exception.getClass().getSimpleName());
+        String logMessage = "exception.multipart.invalid_request: exceptionClass={}, status=400";
+        log.debug(logMessage, exception.getClass().getSimpleName());
         return problemDetailFactory.build(
                 "malformed-multipart", "Malformed request", HttpStatus.BAD_REQUEST, "Malformed multipart request.");
     }
@@ -175,9 +169,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleDataIntegrityViolationException(final DataIntegrityViolationException exception) {
-        log.debug(
-                "exception.data_integrity: exceptionClass={}, status=400",
-                exception.getClass().getSimpleName());
+        String logMessage = "exception.data_integrity: exceptionClass={}, status=400";
+        log.debug(logMessage, exception.getClass().getSimpleName());
         return problemDetailFactory.build(
                 "data-conflict", "Data conflict", HttpStatus.BAD_REQUEST, DATA_INTEGRITY_MESSAGE);
     }
@@ -191,8 +184,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<ProblemDetail> handleHttpMediaTypeNotAcceptableException(
             final HttpMediaTypeNotAcceptableException exception) {
-        log.debug(
-                "exception.not_acceptable: status=406, message={}", RequestPathUtils.sanitize(exception.getMessage()));
+        String logMessage = "exception.not_acceptable: status=406, message={}";
+        log.debug(logMessage, RequestPathUtils.sanitize(exception.getMessage()));
         ProblemDetail pd = problemDetailFactory.build(
                 "about:blank",
                 "Not Acceptable",
@@ -204,9 +197,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
             final HttpRequestMethodNotSupportedException exception) {
-        log.debug(
-                "exception.method_not_supported: method={}, status=405",
-                RequestPathUtils.sanitize(exception.getMethod()));
+        String logMessage = "exception.method_not_supported: method={}, status=405";
+        log.debug(logMessage, RequestPathUtils.sanitize(exception.getMethod()));
         ProblemDetail pd = problemDetailFactory.build(
                 "about:blank",
                 "Method Not Allowed",
@@ -219,10 +211,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleResponseStatusException(final ResponseStatusException exception) {
         HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
         String detail = exception.getReason() != null ? exception.getReason() : status.getReasonPhrase();
-        log.debug(
-                "exception.response_status: exceptionClass={}, status={}",
-                exception.getClass().getSimpleName(),
-                status.value());
+        String logMessage = "exception.response_status: exceptionClass={}, status={}";
+        log.debug(logMessage, exception.getClass().getSimpleName(), status.value());
         ProblemDetail pd = problemDetailFactory.build("about:blank", status.getReasonPhrase(), status, detail);
         return ResponseEntity.status(status).body(pd);
     }
@@ -239,16 +229,11 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = problemDetailFactory.build(typeSlug, title, status, errorMessage);
 
         if (status.is5xxServerError()) {
-            log.error(
-                    "exception.unhandled: exceptionClass={}, status={}",
-                    exception.getClass().getName(),
-                    status.value(),
-                    exception);
+            String logMessage = "exception.unhandled: exceptionClass={}, status={}";
+            log.error(logMessage, exception.getClass().getName(), status.value(), exception);
         } else {
-            log.debug(
-                    "exception.annotated: exceptionClass={}, status={}",
-                    exception.getClass().getSimpleName(),
-                    status.value());
+            String logMessage = "exception.annotated: exceptionClass={}, status={}";
+            log.debug(logMessage, exception.getClass().getSimpleName(), status.value());
         }
 
         return ResponseEntity.status(status).body(pd);

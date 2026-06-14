@@ -50,9 +50,8 @@ public class PaymentExceptionHandler {
                         if (e.getCause() instanceof AuthenticationException) {
                             log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);
                         } else {
-                            log.warn(
-                                    "payment.session.failed: exceptionClass={}, status=502",
-                                    e.getClass().getSimpleName());
+                            String logMessage = "payment.session.failed: exceptionClass={}, status=502";
+                            log.warn(logMessage, e.getClass().getSimpleName());
                         }
                         yield new ErrorMapping(
                                 "exception.payment.session_failed",

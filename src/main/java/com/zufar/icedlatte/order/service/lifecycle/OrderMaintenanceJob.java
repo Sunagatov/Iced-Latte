@@ -85,10 +85,8 @@ public class OrderMaintenanceJob {
         List<Order> stuck =
                 orderRepository.findAll(spec, PageRequest.of(0, batchSize)).getContent();
         for (Order order : stuck) {
-            log.warn(
-                    "order.refund.stuck: orderId={}, stripePaymentIntentId={}",
-                    order.getId(),
-                    order.getStripePaymentIntentId());
+            String logMessage = "order.refund.stuck: orderId={}, stripePaymentIntentId={}";
+            log.warn(logMessage, order.getId(), order.getStripePaymentIntentId());
         }
         if (!stuck.isEmpty()) {
             log.warn("order.refund.stuck.total: count={}", stuck.size());

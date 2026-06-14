@@ -70,9 +70,9 @@ public class RefreshTokenService {
         if (userDetails instanceof Identifiable user && session.getUserId().equals(user.getId())) {
             return;
         }
-        log.warn(
-                "auth.token.refresh_session_owner_mismatch: sessionId={}",
-                AuthSessionService.maskSessionId(session.getId()));
+        String logMessage = "auth.token.refresh_session_owner_mismatch: sessionId={}";
+        log.warn(logMessage, AuthSessionService.maskSessionId(session.getId()));
+
         authSessionService.revokeAllForCompromisedUserBySessionId(session.getId());
         throw new JwtTokenBlacklistedException("Refresh token session owner mismatch");
     }

@@ -2,7 +2,8 @@ package com.zufar.icedlatte.supportchat.service;
 
 import org.jspecify.annotations.Nullable;
 
-public record SupportChatEligibility(boolean eligible, @Nullable String reason) {
+public record SupportChatEligibility(
+        boolean eligible, @Nullable String reason) {
 
     public static final String REASON_ACCESS_RESTRICTED = "ACCESS_RESTRICTED";
     public static final String REASON_EMAIL_VERIFICATION_REQUIRED = "EMAIL_VERIFICATION_REQUIRED";

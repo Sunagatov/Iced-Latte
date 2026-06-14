@@ -55,10 +55,8 @@ public class FileDeletionOutboxWorker {
                     new FileMetadataDto(payload.relatedObjectId(), payload.bucketName(), payload.fileName()));
             boolean markedDeleted = outboxRepository.markDeleted(event.id(), properties.workerId());
             if (!markedDeleted) {
-                log.warn(
-                        "file.deletion_outbox.delete_mark_missed: eventId={}, workerId={}",
-                        event.eventId(),
-                        properties.workerId());
+                String logMessage = "file.deletion_outbox.delete_mark_missed: eventId={}, workerId={}";
+                log.warn(logMessage, event.eventId(), properties.workerId());
                 return;
             }
             log.info("file.deletion_outbox.deleted: eventId={}, fileName={}", event.eventId(), payload.fileName());
@@ -66,10 +64,8 @@ public class FileDeletionOutboxWorker {
             boolean markedFailed = outboxRepository.markFailed(
                     event.id(), properties.workerId(), event.attemptCount(), event.maxAttempts(), ex);
             if (!markedFailed) {
-                log.warn(
-                        "file.deletion_outbox.failure_mark_missed: eventId={}, workerId={}",
-                        event.eventId(),
-                        properties.workerId());
+                String logMessage = "file.deletion_outbox.failure_mark_missed: eventId={}, workerId={}";
+                log.warn(logMessage, event.eventId(), properties.workerId());
             }
             log.warn("file.deletion_outbox.failed: eventId={}", event.eventId(), ex);
         }

@@ -70,14 +70,11 @@ public class LoginAttemptService {
         int attemptRows = loginAttemptRepository.setUserLockedStatusAndExpiration(userEmail, expirationDatetime);
         int userRows = userAccessControlApi.lockAccount(userEmail);
         if (attemptRows == 0 || userRows == 0) {
-            log.error(
-                    "auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated",
-                    attemptRows,
-                    userRows);
+            String logMessage = "auth.account.lock_failed: loginAttemptRows={}, userRows={}, message=no rows updated";
+            log.error(logMessage, attemptRows, userRows);
         } else {
-            log.warn(
-                    "auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}",
-                    properties.lockoutDurationMinutes());
+            String logMessage = "auth.account.locked: reasonCode=MAX_LOGIN_ATTEMPTS, durationMinutes={}";
+            log.warn(logMessage, properties.lockoutDurationMinutes());
         }
     }
 

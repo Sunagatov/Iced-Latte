@@ -46,11 +46,8 @@ public class ProductImageReceiver {
             });
         } catch (RuntimeException ex) {
             meterRegistry.counter("product.image.fallback", "mode", "single").increment();
-            log.error(
-                    "product.image.error: productId={}, exceptionClass={}",
-                    productId,
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "product.image.error: productId={}, exceptionClass={}";
+            log.error(logMessage, productId, ex.getClass().getSimpleName(), ex);
             return placeholderImageUrl;
         }
     }
@@ -82,11 +79,8 @@ public class ProductImageReceiver {
             fileUrls = fileUrlResolverApi.findFileUrls(productIds);
         } catch (RuntimeException ex) {
             meterRegistry.counter("product.image.fallback", "mode", "batch").increment();
-            log.error(
-                    "product.images.error: count={}, exceptionClass={}",
-                    productIds.size(),
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "product.images.error: count={}, exceptionClass={}";
+            log.error(logMessage, productIds.size(), ex.getClass().getSimpleName(), ex);
             fileUrls = Map.of();
         }
         final Map<UUID, String> resolved = fileUrls;

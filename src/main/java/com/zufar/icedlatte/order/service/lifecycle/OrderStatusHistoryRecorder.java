@@ -31,10 +31,7 @@ public class OrderStatusHistoryRecorder {
                 .build();
 
         repository.save(history);
-        log.debug(
-                "order.status.history.recorded: orderId={}, {} → {}",
-                event.orderId(),
-                event.oldStatus(),
-                event.newStatus());
+        String logMessage = "order.status.history.recorded: orderId={}, {} → {}";
+        log.debug(logMessage, event.orderId(), event.oldStatus(), event.newStatus());
     }
 }

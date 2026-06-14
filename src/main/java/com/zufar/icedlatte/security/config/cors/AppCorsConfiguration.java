@@ -23,8 +23,9 @@ public class AppCorsConfiguration {
 
         CorsConfiguration configuration = buildCorsConfiguration();
 
+        String logMessage = "cors.config.initialized: origins={}, methods={}, allowCredentials={}";
         log.debug(
-                "cors.config.initialized: origins={}, methods={}, allowCredentials={}",
+                logMessage,
                 corsProperties.allowedOrigins(),
                 corsProperties.allowedMethods(),
                 corsProperties.allowCredentials());

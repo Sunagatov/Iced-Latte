@@ -68,10 +68,8 @@ public class JwtTokenBlacklist {
         try {
             return temporaryStore.contains(namespacedKey(token));
         } catch (RuntimeException ex) {
-            log.error(
-                    "jwt.blacklist.store_error: exceptionClass={}",
-                    ex.getClass().getSimpleName(),
-                    ex);
+            String logMessage = "jwt.blacklist.store_error: exceptionClass={}";
+            log.error(logMessage, ex.getClass().getSimpleName(), ex);
             return true;
         }
     }

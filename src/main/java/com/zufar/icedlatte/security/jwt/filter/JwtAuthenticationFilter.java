@@ -91,8 +91,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         JwtAuthenticationFailure failure = failureMapper.map(exception);
 
         if (failure.statusCode() >= 500) {
+            String logMessage =
+                    "auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}";
             log.error(
-                    "auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
+                    logMessage,
                     failure.reasonCode(),
                     method,
                     path,
@@ -101,14 +103,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     requestId,
                     exception);
         } else {
-            log.warn(
-                    "auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}",
-                    failure.reasonCode(),
-                    method,
-                    path,
-                    clientIp,
-                    failure.statusCode(),
-                    requestId);
+            String logMessage =
+                    "auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}";
+            log.warn(logMessage, failure.reasonCode(), method, path, clientIp, failure.statusCode(), requestId);
             log.debug("auth.failed.details", exception);
         }
 
