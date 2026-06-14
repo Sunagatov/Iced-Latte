@@ -87,9 +87,7 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
         if (sent.isEmpty()) {
             return OwnerMessageDeliveryResult.failedResult();
         }
-        if (conversation.getTelegramFallbackMessageId() == null) {
-            conversation.setTelegramFallbackMessageId(sent.get().messageId());
-        }
+        conversation.setTelegramFallbackMessageId(sent.get().messageId());
         return OwnerMessageDeliveryResult.deliveredResult();
     }
 }

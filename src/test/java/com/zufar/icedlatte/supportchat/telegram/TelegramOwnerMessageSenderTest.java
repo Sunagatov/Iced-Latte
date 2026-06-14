@@ -102,6 +102,21 @@ class TelegramOwnerMessageSenderTest {
     }
 
     @Test
+    @DisplayName("Latest fallback message replaces previous fallback correlation")
+    void send_existingFallback_sendsFallbackMessageAndStoresLatestCorrelation() {
+        SupportConversationEntity conversation = conversation();
+        conversation.setTelegramFallbackMessageId(100L);
+        telegramBotClient.nextMessage = new TelegramMessageRef(101L);
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+
+        var result = sender(false).send(OWNER_MESSAGE);
+
+        assertThat(result.delivered()).isTrue();
+        assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(101L);
+        assertThat(telegramBotClient.lastThreadId).isNull();
+    }
+
+    @Test
     @DisplayName("Fallback message is sent when new topic delivery fails")
     void send_newTopicDeliveryFails_sendsFallbackMessage() {
         SupportConversationEntity conversation = conversation();
