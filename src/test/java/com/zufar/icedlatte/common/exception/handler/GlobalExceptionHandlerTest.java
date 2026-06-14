@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.UUID;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
@@ -33,14 +31,13 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import com.zufar.icedlatte.product.exception.ProductNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler unit tests")
@@ -103,7 +100,7 @@ class GlobalExceptionHandlerTest {
         @Test
         @DisplayName("returns annotated status for domain exceptions")
         void returnsAnnotatedStatusForDomainExceptions() {
-            ProductNotFoundException ex = new ProductNotFoundException(UUID.randomUUID());
+            AnnotatedNotFoundException ex = new AnnotatedNotFoundException("missing");
             ProblemDetail expected = stub(404);
             when(problemDetailFactory.build(
                             eq("about:blank"), eq("Not Found"), eq(HttpStatus.NOT_FOUND), any(String.class)))
@@ -127,6 +124,14 @@ class GlobalExceptionHandlerTest {
 
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
             assertThat(result.getBody()).isEqualTo(expected);
+        }
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    private static class AnnotatedNotFoundException extends RuntimeException {
+
+        AnnotatedNotFoundException(String message) {
+            super(message);
         }
     }
 

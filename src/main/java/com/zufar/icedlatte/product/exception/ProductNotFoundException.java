@@ -4,14 +4,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 import lombok.Getter;
 
 @Getter
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class ProductNotFoundException extends RuntimeException {
+public final class ProductNotFoundException extends RuntimeException {
 
     private final List<UUID> productIds;
 

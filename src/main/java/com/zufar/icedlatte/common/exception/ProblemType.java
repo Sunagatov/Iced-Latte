@@ -46,6 +46,9 @@ public class ProblemType {
     public static final String PAYMENT_EVENT_FAILED = "payment-event-failed";
     public static final String PAYMENT_SESSION_FAILED = "payment-session-failed";
 
+    // Product
+    public static final String PRODUCT_NOT_FOUND = "product-not-found";
+
     // Review
     public static final String REVIEW_REJECTED = "review-rejected";
     public static final String REVIEW_SUMMARY_UNAVAILABLE = "review-summary-unavailable";
