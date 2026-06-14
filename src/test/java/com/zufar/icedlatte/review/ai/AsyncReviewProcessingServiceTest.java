@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -45,7 +44,6 @@ class AsyncReviewProcessingServiceTest {
     void doesNothingElseWhenModerationPasses() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, productId);
         ProductReview review = ProductReview.builder()
                 .id(reviewId)
                 .productId(productId)
@@ -53,7 +51,7 @@ class AsyncReviewProcessingServiceTest {
                 .build();
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        service.process(event);
+        service.processByReviewId(reviewId);
 
         verify(reviewRepository).findById(reviewId);
         verify(moderationService).moderate("Great coffee");
@@ -65,7 +63,6 @@ class AsyncReviewProcessingServiceTest {
     void deletesRejectedReviewsAndRefreshesProductAggregatesWhenReviewStillExists() {
         UUID reviewId = UUID.randomUUID();
         UUID productId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, productId);
         ProductReview review = ProductReview.builder()
                 .id(reviewId)
                 .productId(productId)
@@ -74,7 +71,7 @@ class AsyncReviewProcessingServiceTest {
         doThrow(new ReviewModerationException("spam")).when(moderationService).moderate("spam");
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
-        service.process(event);
+        service.processByReviewId(reviewId);
 
         verify(reviewRepository).deleteById(reviewId);
         verify(productReviewProductGateway).refreshReviewAggregates(productId);
@@ -85,10 +82,9 @@ class AsyncReviewProcessingServiceTest {
     @DisplayName("ignores processing when the review has already disappeared")
     void ignoresProcessingWhenReviewHasAlreadyDisappeared() {
         UUID reviewId = UUID.randomUUID();
-        ReviewCreatedEvent event = new ReviewCreatedEvent(reviewId, UUID.randomUUID());
         when(reviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        service.process(event);
+        service.processByReviewId(reviewId);
 
         verify(reviewRepository).findById(reviewId);
         verifyNoInteractions(moderationService);

@@ -20,6 +20,6 @@ public class ReviewCreatedApplicationEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onReviewCreated(ReviewCreatedEvent event) {
-        processingService.process(event);
+        processingService.processByReviewId(event.reviewId());
     }
 }

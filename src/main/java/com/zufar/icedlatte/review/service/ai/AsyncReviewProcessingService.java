@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
-import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
@@ -26,11 +25,6 @@ public class AsyncReviewProcessingService {
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewProductApi productReviewProductApi;
     private final ProductReviewSummaryDebouncer summaryDebouncer;
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void process(ReviewCreatedEvent event) {
-        processByReviewId(event.reviewId());
-    }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ProcessingResult processByReviewId(UUID reviewId) {

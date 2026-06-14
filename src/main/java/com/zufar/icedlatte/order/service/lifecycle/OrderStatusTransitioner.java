@@ -48,7 +48,6 @@ public class OrderStatusTransitioner {
     private final ApplicationEventPublisher eventPublisher;
     private final OrderDtoConverter orderDtoConverter;
 
-    @Transactional
     public Order transition(UUID orderId, OrderEvent event, UUID actorId) {
         return transition(orderId, event, actorId, null);
     }
@@ -76,13 +75,8 @@ public class OrderStatusTransitioner {
         order.setStatus(newStatus);
         Order saved = orderRepository.save(order);
 
-        log.info(
-                "order.status.transitioned: orderId={}, from={}, to={}, event={}, actor={}",
-                orderId,
-                oldStatus,
-                newStatus,
-                event,
-                actorId);
+        String logMessage = "order.status.transitioned: orderId={}, from={}, to={}, event={}, actor={}";
+        log.info(logMessage, orderId, oldStatus, newStatus, event, actorId);
 
         eventPublisher.publishEvent(
                 new OrderStatusChangedEvent(orderId, oldStatus, newStatus, actorId, reason, OffsetDateTime.now()));
@@ -99,10 +93,8 @@ public class OrderStatusTransitioner {
         boolean wasPaid = order.getStatus() == OrderStatus.PAID;
         Order cancelled = transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
         if (wasPaid) {
-            log.warn(
-                    "order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}",
-                    orderId,
-                    order.getStripePaymentIntentId());
+            String logMessage = "order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}";
+            log.warn(logMessage, orderId, order.getStripePaymentIntentId());
         }
         return orderDtoConverter.toResponseDto(cancelled);
     }
@@ -116,10 +108,8 @@ public class OrderStatusTransitioner {
         Order refundRequested = transition(orderId, OrderEvent.REQUEST_REFUND, userId, reason);
         refundRequested.setRefundReason(reason);
         orderRepository.save(refundRequested);
-        log.info(
-                "order.refund.requested: orderId={}, stripePaymentIntentId={}",
-                orderId,
-                refundRequested.getStripePaymentIntentId());
+        String logMessage = "order.refund.requested: orderId={}, stripePaymentIntentId={}";
+        log.info(logMessage, orderId, refundRequested.getStripePaymentIntentId());
         return orderDtoConverter.toResponseDto(refundRequested);
     }
 
