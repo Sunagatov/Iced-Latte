@@ -18,4 +18,8 @@ public record SupportChatEligibility(boolean eligible, @Nullable String reason) 
     public static SupportChatEligibility accessRestricted() {
         return new SupportChatEligibility(false, REASON_ACCESS_RESTRICTED);
     }
+
+    public boolean isAccessRestricted() {
+        return REASON_ACCESS_RESTRICTED.equals(reason);
+    }
 }

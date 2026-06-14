@@ -42,7 +42,6 @@ import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatu
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.SENT;
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.CUSTOMER;
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.OWNER;
-import static com.zufar.icedlatte.supportchat.service.SupportChatEligibility.REASON_ACCESS_RESTRICTED;
 
 @Slf4j
 @Service
@@ -244,7 +243,7 @@ public class SupportChatService {
         }
         SupportChatEligibility eligibility = eligibilityService.eligibilityFor(user.id());
         if (!eligibility.eligible()) {
-            if (REASON_ACCESS_RESTRICTED.equals(eligibility.reason())) {
+            if (eligibility.isAccessRestricted()) {
                 throw new SupportChatAccessRestrictedException();
             }
             throw new SupportChatEmailVerificationRequiredException();
