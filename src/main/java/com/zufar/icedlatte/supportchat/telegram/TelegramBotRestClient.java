@@ -1,19 +1,17 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -55,11 +53,15 @@ class TelegramBotRestClient implements TelegramBotClient {
                 log.warn("support_chat.telegram.create_forum_topic.failed");
                 return Optional.empty();
             }
-            return Optional.of(new TelegramForumTopic(response.result().messageThreadId()));
+
+            long messageThreadId = response.result().messageThreadId();
+            TelegramForumTopic telegramForumTopic = new TelegramForumTopic(messageThreadId);
+
+            return Optional.of(telegramForumTopic);
+
         } catch (RuntimeException ex) {
-            log.warn(
-                    "support_chat.telegram.create_forum_topic.error: exceptionClass={}",
-                    ex.getClass().getSimpleName());
+            String logMessage = "support_chat.telegram.create_forum_topic.error: exceptionClass={}";
+            log.warn(logMessage, ex.getClass().getSimpleName());
             return Optional.empty();
         }
     }
@@ -76,16 +78,20 @@ class TelegramBotRestClient implements TelegramBotClient {
 
         try {
             TelegramSendMessageResponse response =
-                    restClient.post().uri("/sendMessage").body(body).retrieve().body(TelegramSendMessageResponse.class);
+                    restClient
+                            .post()
+                            .uri("/sendMessage")
+                            .body(body)
+                            .retrieve()
+                            .body(TelegramSendMessageResponse.class);
             if (response == null || !response.ok() || response.result() == null) {
                 log.warn("support_chat.telegram.send_message.failed");
                 return Optional.empty();
             }
             return Optional.of(new TelegramMessageRef(response.result().messageId()));
         } catch (RuntimeException ex) {
-            log.warn(
-                    "support_chat.telegram.send_message.error: exceptionClass={}",
-                    ex.getClass().getSimpleName());
+            String logMessage = "support_chat.telegram.send_message.error: exceptionClass={}";
+            log.warn(logMessage, ex.getClass().getSimpleName());
             return Optional.empty();
         }
     }

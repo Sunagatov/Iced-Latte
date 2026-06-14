@@ -1,22 +1,23 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
-import java.util.Optional;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "support-chat.owner-message-mode", havingValue = "TELEGRAM")
+@RequiredArgsConstructor
 class TelegramOwnerMessageSender implements OwnerMessageSender {
 
     private final SupportChatProperties properties;
@@ -24,26 +25,15 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
     private final TelegramBotClient telegramBotClient;
     private final TelegramOwnerMessageFormatter formatter;
 
-    TelegramOwnerMessageSender(
-            SupportChatProperties properties,
-            SupportConversationRepository conversationRepository,
-            TelegramBotClient telegramBotClient,
-            TelegramOwnerMessageFormatter formatter) {
-        this.properties = properties;
-        this.conversationRepository = conversationRepository;
-        this.telegramBotClient = telegramBotClient;
-        this.formatter = formatter;
-    }
-
     @Override
     public OwnerMessageDeliveryResult send(OwnerMessage message) {
+        UUID conversationId = message.conversationId();
         return conversationRepository
-                .findById(message.conversationId())
+                .findById(conversationId)
                 .map(conversation -> send(message, conversation))
                 .orElseGet(() -> {
-                    log.warn(
-                            "support_chat.telegram.conversation_not_found: conversationId={}",
-                            message.conversationId());
+                    String logMessage = "support_chat.telegram.conversation_not_found: conversationId={}";
+                    log.warn(logMessage, conversationId);
                     return OwnerMessageDeliveryResult.failedResult();
                 });
     }
@@ -53,29 +43,32 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
         Long threadId = conversation.getTelegramMessageThreadId();
         if (threadId != null) {
             OwnerMessageDeliveryResult topicDelivery = sendToExistingTopic(threadId, text);
-            if (topicDelivery.delivered()) {
+            boolean delivered = topicDelivery.delivered();
+            if (delivered) {
                 return topicDelivery;
             }
             return sendFallback(conversation, text);
         }
         if (properties.telegram().forumTopicsEnabled()) {
-            Optional<TelegramForumTopic> topic = telegramBotClient.createForumTopic(formatter.topicName(message));
+            String topicName = formatter.topicName(message);
+            Optional<TelegramForumTopic> topic = telegramBotClient.createForumTopic(topicName);
             if (topic.isPresent()) {
-                conversation.setTelegramMessageThreadId(topic.get().messageThreadId());
-                OwnerMessageDeliveryResult topicDelivery =
-                        sendToExistingTopic(topic.get().messageThreadId(), text);
-                if (topicDelivery.delivered()) {
-                    conversationRepository.save(conversation);
-                    return topicDelivery;
+                long telegramMessageThreadId = topic.get().messageThreadId();
+                conversation.setTelegramMessageThreadId(telegramMessageThreadId);
+                OwnerMessageDeliveryResult topicDelivery = sendToExistingTopic(telegramMessageThreadId, text);
+                if (!topicDelivery.delivered()) {
+                    return sendFallback(conversation, text);
                 }
-                return sendFallback(conversation, text);
+                conversationRepository.save(conversation);
+                return topicDelivery;
             }
         }
         return sendFallback(conversation, text);
     }
 
     private OwnerMessageDeliveryResult sendToExistingTopic(Long threadId, String text) {
-        if (telegramBotClient.sendMessage(threadId, text).isPresent()) {
+        Optional<TelegramMessageRef> sent = telegramBotClient.sendMessage(threadId, text);
+        if (sent.isPresent()) {
             return OwnerMessageDeliveryResult.deliveredResult();
         }
         return OwnerMessageDeliveryResult.failedResult();

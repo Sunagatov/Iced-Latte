@@ -22,6 +22,10 @@ import com.zufar.icedlatte.supportchat.service.SupportChatEligibilityService;
 
 import lombok.RequiredArgsConstructor;
 
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_PREFIX;
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_SUFFIX;
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.SUPPORT_CHAT_TOPIC_PREFIX;
+
 @Component
 @RequiredArgsConstructor
 public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelInterceptor {
@@ -46,16 +50,17 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     private void authorizeSubscription(StompHeaderAccessor accessor) {
         String destination = accessor.getDestination();
         Optional<UUID> conversationId = conversationId(destination);
+        AccessDeniedException accessDeniedException = new AccessDeniedException("Access denied.");
         if (conversationId.isEmpty()) {
             if (isSupportChatDestination(destination)) {
-                throw new AccessDeniedException("Access denied.");
+                throw accessDeniedException;
             }
             return;
         }
 
-        UUID userId = userId(accessor.getUser()).orElseThrow(() -> new AccessDeniedException("Access denied."));
+        UUID userId = userId(accessor.getUser()).orElseThrow(() -> accessDeniedException);
         if (!properties.enabled() || !eligibilityService.eligibilityFor(userId).eligible()) {
-            throw new AccessDeniedException("Access denied.");
+            throw accessDeniedException;
         }
 
         boolean ownsConversation = conversationRepository
@@ -63,10 +68,10 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
                 .filter(conversation -> conversation.getUserId().equals(userId))
                 .isPresent();
         if (!ownsConversation) {
-            throw new AccessDeniedException("Access denied.");
+            throw accessDeniedException;
         }
         if (!sessionRegistry.register(userId, sessionId(accessor))) {
-            throw new AccessDeniedException("Access denied.");
+            throw accessDeniedException;
         }
     }
 
@@ -79,13 +84,13 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
 
     private static Optional<UUID> conversationId(@Nullable String destination) {
         if (destination == null
-                || !destination.startsWith(SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_PREFIX)
-                || !destination.endsWith(SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_SUFFIX)) {
+                || !destination.startsWith(CONVERSATION_MESSAGES_PREFIX)
+                || !destination.endsWith(CONVERSATION_MESSAGES_SUFFIX)) {
             return Optional.empty();
         }
 
-        int prefixLength = SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_PREFIX.length();
-        int suffixStart = destination.length() - SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_SUFFIX.length();
+        int prefixLength = CONVERSATION_MESSAGES_PREFIX.length();
+        int suffixStart = destination.length() - CONVERSATION_MESSAGES_SUFFIX.length();
         try {
             return Optional.of(UUID.fromString(destination.substring(prefixLength, suffixStart)));
         } catch (IllegalArgumentException _) {
@@ -94,8 +99,7 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     }
 
     private static boolean isSupportChatDestination(@Nullable String destination) {
-        return destination != null
-                && destination.startsWith(SupportChatWebSocketDestinations.SUPPORT_CHAT_TOPIC_PREFIX);
+        return destination != null && destination.startsWith(SUPPORT_CHAT_TOPIC_PREFIX);
     }
 
     private static Optional<UUID> userId(@Nullable Principal principal) {

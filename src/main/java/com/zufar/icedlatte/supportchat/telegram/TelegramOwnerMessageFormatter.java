@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 
+import java.util.UUID;
+
 @Component
 class TelegramOwnerMessageFormatter {
 
@@ -14,6 +16,10 @@ class TelegramOwnerMessageFormatter {
     }
 
     String format(OwnerMessage message) {
+        UUID conversationId = message.conversationId();
+        String customerName = customerName(message);
+        String customerEmail = message.customerEmail();
+        UUID messageId = message.messageId();
         String header = """
                 Support chat message
                 Conversation: %s
@@ -22,8 +28,7 @@ class TelegramOwnerMessageFormatter {
                 Message ID: %s
                 Reply in this topic or reply to this bot message.
 
-                """.formatted(
-                        message.conversationId(), customerName(message), message.customerEmail(), message.messageId());
+                """.formatted(conversationId, customerName, customerEmail, messageId);
         return header + truncateBody(message.body(), TELEGRAM_TEXT_LIMIT - header.length());
     }
 

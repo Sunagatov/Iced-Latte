@@ -2,6 +2,7 @@ package com.zufar.icedlatte.supportchat.endpoint;
 
 import java.util.UUID;
 
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -31,10 +32,8 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping(SupportChatEndpoint.SUPPORT_CHAT_URL)
+@RequestMapping(ApiPaths.SUPPORT_CHAT)
 public class SupportChatEndpoint implements SupportChatApi {
-
-    public static final String SUPPORT_CHAT_URL = ApiPaths.SUPPORT_CHAT;
 
     private final CurrentUserProvider currentUserProvider;
     private final SupportChatService supportChatService;
@@ -60,8 +59,10 @@ public class SupportChatEndpoint implements SupportChatApi {
     @GetMapping("/conversations/{conversationId}/messages")
     public ResponseEntity<SupportChatMessagePageDto> getSupportChatMessages(
             @PathVariable UUID conversationId, Integer page, Integer size) {
-        var messages = supportChatService.getHistory(
-                currentUserProvider.get(), conversationId, page == null ? 0 : page, size == null ? 20 : size);
+        CurrentUserSnapshot user = currentUserProvider.get();
+        size = size == null ? 20 : size;
+        page = page == null ? 0 : page;
+        var messages = supportChatService.getHistory(user, conversationId,  page, size);
         return ResponseEntity.ok(converter.toMessagePageDto(messages));
     }
 
@@ -69,12 +70,15 @@ public class SupportChatEndpoint implements SupportChatApi {
     @PostMapping("/conversations/{conversationId}/messages")
     public ResponseEntity<SupportChatMessageDto> sendSupportChatMessage(
             @PathVariable UUID conversationId, @Valid @RequestBody CreateSupportChatMessageRequest request) {
+        String turnstileToken = request.getTurnstileToken().orElse(null);
+        UUID clientMessageId = request.getClientMessageId();
+        CurrentUserSnapshot user = currentUserProvider.get();
         var message = supportChatService.sendCustomerMessage(
-                currentUserProvider.get(),
+                user,
                 conversationId,
-                request.getClientMessageId(),
+                clientMessageId,
                 request.getBody(),
-                request.getTurnstileToken().orElse(null),
+                turnstileToken,
                 clientIpExtractor.extract(httpRequest));
         return ResponseEntity.ok(converter.toMessageDto(message));
     }

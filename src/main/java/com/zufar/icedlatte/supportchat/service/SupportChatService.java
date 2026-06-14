@@ -1,20 +1,5 @@
 package com.zufar.icedlatte.supportchat.service;
 
-import java.time.OffsetDateTime;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
@@ -23,7 +8,6 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
-import com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
@@ -37,8 +21,26 @@ import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
 import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.time.OffsetDateTime;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.FAILED;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.SENT;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.CUSTOMER;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.OWNER;
 
 @Slf4j
 @Service
@@ -54,7 +56,6 @@ public class SupportChatService {
     private final SupportChatMessagePublisher messagePublisher;
     private final TurnstileVerifier turnstileVerifier;
     private final SupportChatAbuseGuard abuseGuard;
-
     private final RateLimiter rateLimiter;
     private final PlatformTransactionManager transactionManager;
 
@@ -93,11 +94,12 @@ public class SupportChatService {
     @Transactional
     public SupportConversationEntity getOrCreateConversation(CurrentUserSnapshot user) {
         ensureAvailable(user);
-        return conversationRepository.findByUserId(user.id()).orElseGet(() -> {
-            conversationRepository.insertOpenConversationIfAbsent(UUID.randomUUID(), user.id());
+        UUID userId = user.id();
+        return conversationRepository.findByUserId(userId).orElseGet(() -> {
+            conversationRepository.insertOpenConversationIfAbsent(UUID.randomUUID(), userId);
             conversationRepository.flush();
             return conversationRepository
-                    .findByUserId(user.id())
+                    .findByUserId(userId)
                     .orElseThrow(() -> new IllegalStateException("Support conversation was not created"));
         });
     }
@@ -108,7 +110,8 @@ public class SupportChatService {
         ensureOwnsConversation(user.id(), conversationId);
         int safeSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
         OffsetDateTime createdAfter = OffsetDateTime.now().minusDays(properties.retentionDays());
-        PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Sort sortObject = Sort.by(Sort.Direction.ASC, "createdAt");
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, sortObject);
         return messageRepository.findByConversationIdAndVisibleToCustomerTrueAndCreatedAtAfter(
                 conversationId, createdAfter, pageable);
     }
@@ -120,24 +123,26 @@ public class SupportChatService {
             String body,
             String turnstileToken,
             String clientIp) {
-        PendingCustomerMessage pendingMessage = transactionTemplate(false)
+        PendingCustomerMessage pendingMessage = transactionTemplate()
                 .execute(_ ->
                         prepareCustomerMessage(user, conversationId, clientMessageId, body, turnstileToken, clientIp));
         Objects.requireNonNull(pendingMessage, "pendingMessage");
 
+        SupportMessageEntity message = pendingMessage.message();
         if (pendingMessage.alreadyAccepted()) {
-            return pendingMessage.message();
+            return message;
         }
 
-        var deliveryResult = sendToOwner(pendingMessage.conversation(), pendingMessage.message(), user);
-        SupportMessageEntity updatedMessage =
-                markCustomerDeliveryStatus(pendingMessage.message(), deliveryResult.delivered());
+        SupportConversationEntity conversation = pendingMessage.conversation();
+        var deliveryResult = sendToOwner(conversation, message, user);
+        boolean delivered = deliveryResult.delivered();
+        SupportMessageEntity updatedMessage = markCustomerDeliveryStatus(message, delivered);
         log.info(
                 "support_chat.customer_message.accepted: conversationId={}, messageId={}, ownerDelivered={}",
-                pendingMessage.conversation().getId(),
+                conversation.getId(),
                 updatedMessage.getId(),
-                deliveryResult.delivered());
-        if (!deliveryResult.delivered()) {
+                delivered);
+        if (!delivered) {
             throw new SupportChatOwnerDeliveryFailedException();
         }
         return updatedMessage;
@@ -151,13 +156,14 @@ public class SupportChatService {
             String turnstileToken,
             String clientIp) {
         ensureAvailable(user);
-        SupportConversationEntity conversation = ensureOwnsConversation(user.id(), conversationId);
+        UUID userId = user.id();
+        SupportConversationEntity conversation = ensureOwnsConversation(userId, conversationId);
         String messageBody = normalizeBody(body);
         validateMessage(messageBody);
 
         var existing = messageRepository.findByConversationIdAndClientMessageId(conversationId, clientMessageId);
         if (existing.isPresent()) {
-            if (existing.get().getDeliveryStatus() == SupportMessageDeliveryStatus.FAILED) {
+            if (existing.get().getDeliveryStatus() == FAILED) {
                 throw new SupportChatOwnerDeliveryFailedException();
             }
             return new PendingCustomerMessage(conversation, existing.get(), true);
@@ -166,13 +172,13 @@ public class SupportChatService {
         SupportMessageEntity previousCustomerMessage =
                 findPreviousCustomerMessage(conversationId).orElse(null);
         preventRepeatedMessage(conversationId, messageBody, previousCustomerMessage);
-        enforceRateLimits(user.id(), conversationId, clientIp);
+        enforceRateLimits(userId, conversationId, clientIp);
         verifyTurnstileIfRequired(conversationId, previousCustomerMessage, turnstileToken);
 
         SupportMessageEntity message = new SupportMessageEntity();
         message.setConversationId(conversation.getId());
-        message.setSenderType(SupportMessageSenderType.CUSTOMER);
-        message.setSenderUserId(user.id());
+        message.setSenderType(CUSTOMER);
+        message.setSenderUserId(userId);
         message.setClientMessageId(clientMessageId);
         message.setBody(messageBody);
         message.setNormalizedBody(toDuplicateKey(messageBody));
@@ -185,9 +191,8 @@ public class SupportChatService {
     }
 
     private SupportMessageEntity markCustomerDeliveryStatus(SupportMessageEntity message, boolean delivered) {
-        SupportMessageDeliveryStatus deliveryStatus =
-                delivered ? SupportMessageDeliveryStatus.SENT : SupportMessageDeliveryStatus.FAILED;
-        transactionTemplate(false).executeWithoutResult(_ -> {
+        SupportMessageDeliveryStatus deliveryStatus = delivered ? SENT : FAILED;
+        transactionTemplate().executeWithoutResult(_ -> {
             int updatedRows = messageRepository.updateDeliveryStatus(message.getId(), deliveryStatus, !delivered);
             if (updatedRows != 1) {
                 throw new IllegalStateException("Support chat message delivery status was not updated");
@@ -201,11 +206,10 @@ public class SupportChatService {
     @Transactional
     public Optional<SupportMessageEntity> saveOwnerReply(
             SupportConversationEntity conversation, String body, long telegramUpdateId, long telegramMessageId) {
+        UUID conversationId = conversation.getId();
         if (messageRepository.existsByTelegramUpdateId(telegramUpdateId)) {
-            log.info(
-                    "support_chat.owner_reply.duplicate_ignored: conversationId={}, telegramUpdateId={}",
-                    conversation.getId(),
-                    telegramUpdateId);
+            String logMessage = "support_chat.owner_reply.duplicate_ignored: conversationId={}, telegramUpdateId={}";
+            log.info(logMessage, conversationId, telegramUpdateId);
             return Optional.empty();
         }
 
@@ -213,24 +217,21 @@ public class SupportChatService {
         validateMessage(messageBody);
 
         SupportMessageEntity message = new SupportMessageEntity();
-        message.setConversationId(conversation.getId());
-        message.setSenderType(SupportMessageSenderType.OWNER);
+        message.setConversationId(conversationId);
+        message.setSenderType(OWNER);
         message.setBody(messageBody);
         message.setNormalizedBody(toDuplicateKey(messageBody));
-        message.setDeliveryStatus(SupportMessageDeliveryStatus.SENT);
+        message.setDeliveryStatus(SENT);
         message.setTelegramUpdateId(telegramUpdateId);
         message.setTelegramMessageId(telegramMessageId);
         SupportMessageEntity saved = messageRepository.save(message);
 
-        conversationRepository.touchLastMessageAt(conversation.getId());
+        conversationRepository.touchLastMessageAt(conversationId);
 
         messagePublisher.publishOwnerReply(conversation, saved);
 
-        log.info(
-                "support_chat.owner_reply.accepted: conversationId={}, messageId={}, telegramUpdateId={}",
-                conversation.getId(),
-                saved.getId(),
-                telegramUpdateId);
+        String logMessage = "support_chat.owner_reply.accepted: conversationId={}, messageId={}, telegramUpdateId={}";
+        log.info(logMessage, conversationId, saved.getId(), telegramUpdateId);
 
         return Optional.of(saved);
     }
@@ -264,7 +265,7 @@ public class SupportChatService {
     private void preventRepeatedMessage(
             UUID conversationId, String normalizedBody, SupportMessageEntity previousCustomerMessage) {
         if (previousCustomerMessage == null
-                || previousCustomerMessage.getDeliveryStatus() == SupportMessageDeliveryStatus.FAILED) {
+                || previousCustomerMessage.getDeliveryStatus() == FAILED) {
             return;
         }
 
@@ -295,10 +296,8 @@ public class SupportChatService {
         var result = rateLimiter.tryConsume(key, bucket.maxRequests(), bucket.windowDuration());
         if (!result.allowed()) {
             abuseGuard.requireTurnstileForNextMessage(conversationId);
-            log.info(
-                    "support_chat.customer_message.rate_limited: conversationId={}, keyType={}",
-                    conversationId,
-                    keyType);
+            String logMessage = "support_chat.customer_message.rate_limited: conversationId={}, keyType={}";
+            log.info(logMessage, conversationId, keyType);
             throw new SupportChatRateLimitExceededException();
         }
     }
@@ -319,23 +318,24 @@ public class SupportChatService {
     }
 
     private Optional<SupportMessageEntity> findPreviousCustomerMessage(UUID conversationId) {
-        return messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
-                conversationId, SupportMessageSenderType.CUSTOMER);
+        return messageRepository.findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(conversationId, CUSTOMER);
     }
 
     private OwnerMessageDeliveryResult sendToOwner(
             SupportConversationEntity conversation, SupportMessageEntity saved, CurrentUserSnapshot user) {
+        UUID id = conversation.getId();
+        UUID messageId = saved.getId();
         try {
-            OwnerMessage ownerMessage = new OwnerMessage(
-                    conversation.getId(), saved.getId(), user.displayName(), user.email(), saved.getBody());
+            String customerName = user.displayName();
+            String email = user.email();
+            String body = saved.getBody();
+            OwnerMessage ownerMessage = new OwnerMessage(id, messageId, customerName, email, body);
 
             return ownerMessageSender.send(ownerMessage);
         } catch (RuntimeException ex) {
-            log.warn(
-                    "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}",
-                    conversation.getId(),
-                    saved.getId(),
-                    ex.getClass().getSimpleName());
+            String logMessage = "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}";
+            String name = ex.getClass().getSimpleName();
+            log.warn(logMessage, id, messageId, name);
             return OwnerMessageDeliveryResult.failedResult();
         }
     }
@@ -353,9 +353,9 @@ public class SupportChatService {
 
     public record SupportChatStatus(boolean enabled, boolean eligible, String reason) {}
 
-    private TransactionTemplate transactionTemplate(boolean readOnly) {
+    private TransactionTemplate transactionTemplate() {
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplate.setReadOnly(readOnly);
+        transactionTemplate.setReadOnly(false);
         return transactionTemplate;
     }
 

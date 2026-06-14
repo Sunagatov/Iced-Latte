@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.supportchat.service;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,8 +44,9 @@ public class SupportChatAbuseGuard {
     }
 
     void requireTurnstileForNextMessage(UUID conversationId) {
-        challengeRequiredUntil.put(
-                conversationId, now().plus(properties.turnstile().abuseCooldownDuration()));
+        Duration abuseCooldownDuration = properties.turnstile().abuseCooldownDuration();
+        OffsetDateTime dateTime = now().plus(abuseCooldownDuration);
+        challengeRequiredUntil.put(conversationId, dateTime);
     }
 
     void clearTurnstileRequirement(UUID conversationId) {

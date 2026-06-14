@@ -1,20 +1,18 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
-import java.util.Objects;
-import java.util.Optional;
-
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.exception.SupportChatException;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -51,10 +49,8 @@ class TelegramWebhookService {
                     conversation.get(), message.text(), update.updateId(), message.messageId());
             return TelegramWebhookResult.PROCESSED;
         } catch (SupportChatException | DataIntegrityViolationException ex) {
-            log.warn(
-                    "support_chat.telegram.webhook.rejected: telegramUpdateId={}, exceptionClass={}",
-                    update.updateId(),
-                    ex.getClass().getSimpleName());
+            String logMessage = "support_chat.telegram.webhook.rejected: telegramUpdateId={}, exceptionClass={}";
+            log.warn(logMessage, update.updateId(), ex.getClass().getSimpleName());
             return TelegramWebhookResult.IGNORED;
         }
     }
@@ -72,27 +68,23 @@ class TelegramWebhookService {
         if (message.text() == null || message.text().isBlank()) {
             return false;
         }
+        SupportChatProperties.Telegram chatProperties = properties.telegram();
         if (message.chat() == null
-                || !Objects.equals(
-                        properties.telegram().chatId(),
-                        String.valueOf(message.chat().id()))) {
+                || !Objects.equals(chatProperties.chatId(), String.valueOf(message.chat().id()))) {
             return false;
         }
-        if (message.from() == null
-                || !Objects.equals(
-                        properties.telegram().ownerUserId(), message.from().id())) {
-            return false;
+        TelegramWebhookUpdate.TelegramWebhookUser from = message.from();
+        if (from != null && Objects.equals(chatProperties.ownerUserId(), from.id())) {
+            return !Boolean.TRUE.equals(from.bot());
         }
-        return !Boolean.TRUE.equals(message.from().bot());
+        return false;
     }
 
     private void logUnsupportedOwnerReply(
             TelegramWebhookUpdate update, TelegramWebhookUpdate.TelegramWebhookMessage message) {
-        log.warn(
-                "support_chat.telegram.webhook.unsupported_update: telegramUpdateId={}, telegramMessageId={}, reason={}",
-                update == null ? null : update.updateId(),
-                message == null ? null : message.messageId(),
-                unsupportedOwnerReplyReason(update, message));
+        String logMessage = "support_chat.telegram.webhook.unsupported_update: telegramUpdateId={}, telegramMessageId={}, reason={}";
+        String replyReason = unsupportedOwnerReplyReason(update, message);
+        log.warn(logMessage, update == null ? null : update.updateId(), message == null ? null : message.messageId(), replyReason);
     }
 
     private String unsupportedOwnerReplyReason(
@@ -103,31 +95,35 @@ class TelegramWebhookService {
         if (message == null || message.messageId() == null) {
             return "missing_message";
         }
-        if (message.text() == null || message.text().isBlank()) {
+        String string = message.text();
+        if (string == null || string.isBlank()) {
             return "non_text_message";
         }
-        if (message.chat() == null) {
+        TelegramWebhookUpdate.TelegramWebhookChat chat = message.chat();
+        if (chat == null) {
             return "missing_chat";
         }
-        if (!Objects.equals(
-                properties.telegram().chatId(), String.valueOf(message.chat().id()))) {
+        SupportChatProperties.Telegram chatProperties = properties.telegram();
+        if (!Objects.equals(chatProperties.chatId(), String.valueOf(chat.id()))) {
             return "unexpected_chat";
         }
-        if (message.from() == null) {
+        TelegramWebhookUpdate.TelegramWebhookUser from = message.from();
+        if (from == null) {
             return "missing_sender";
         }
-        if (!Objects.equals(properties.telegram().ownerUserId(), message.from().id())) {
+        if (!Objects.equals(chatProperties.ownerUserId(), from.id())) {
             return "unexpected_sender";
         }
-        if (Boolean.TRUE.equals(message.from().bot())) {
+        if (Boolean.TRUE.equals(from.bot())) {
             return "bot_sender";
         }
         return "unsupported_update";
     }
 
     private Optional<SupportConversationEntity> findConversation(TelegramWebhookUpdate.TelegramWebhookMessage message) {
-        if (message.messageThreadId() != null) {
-            return conversationRepository.findByTelegramMessageThreadId(message.messageThreadId());
+        Long messageThreadId = message.messageThreadId();
+        if (messageThreadId != null) {
+            return conversationRepository.findByTelegramMessageThreadId(messageThreadId);
         }
         TelegramWebhookUpdate.TelegramWebhookMessage replyToMessage = message.replyToMessage();
         if (replyToMessage != null && replyToMessage.messageId() != null) {

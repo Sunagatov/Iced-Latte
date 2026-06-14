@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_COOKIE_NAME;
+
 @Component
 public class CookieTokenWebSocketHandshakeInterceptor implements HandshakeInterceptor {
 
@@ -23,8 +26,7 @@ public class CookieTokenWebSocketHandshakeInterceptor implements HandshakeInterc
             @NonNull ServerHttpResponse response,
             @NonNull WebSocketHandler wsHandler,
             @NonNull Map<String, Object> attributes) {
-        accessTokenCookie(request)
-                .ifPresent(token -> attributes.put(WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE, token));
+        accessTokenCookie(request).ifPresent(token -> attributes.put(ACCESS_TOKEN_ATTRIBUTE, token));
         return true;
     }
 
@@ -39,8 +41,7 @@ public class CookieTokenWebSocketHandshakeInterceptor implements HandshakeInterc
         return request.getHeaders().getOrEmpty(HttpHeaders.COOKIE).stream()
                 .flatMap(header -> java.util.Arrays.stream(header.split(COOKIE_PAIR_SEPARATOR)))
                 .map(String::trim)
-                .filter(cookie -> cookie.startsWith(
-                        WebSocketAuthenticationAttributes.ACCESS_TOKEN_COOKIE_NAME + COOKIE_NAME_VALUE_SEPARATOR))
+                .filter(cookie -> cookie.startsWith(ACCESS_TOKEN_COOKIE_NAME + COOKIE_NAME_VALUE_SEPARATOR))
                 .map(cookie -> cookie.substring(cookie.indexOf(COOKIE_NAME_VALUE_SEPARATOR) + 1))
                 .filter(token -> !token.isBlank())
                 .findFirst();

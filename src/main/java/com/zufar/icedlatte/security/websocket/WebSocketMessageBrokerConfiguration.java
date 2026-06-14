@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.websocket;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -14,6 +15,7 @@ import com.zufar.icedlatte.security.config.cors.CorsProperties;
 
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketMessageBrokerConfiguration implements WebSocketMessageBrokerConfigurer {
 
     private static final String[] BROKER_DESTINATION_PREFIXES = {"/topic", "/queue"};
@@ -21,15 +23,6 @@ public class WebSocketMessageBrokerConfiguration implements WebSocketMessageBrok
     private final CorsProperties corsProperties;
     private final ObjectProvider<ChannelInterceptor> channelInterceptors;
     private final CookieTokenWebSocketHandshakeInterceptor cookieTokenWebSocketHandshakeInterceptor;
-
-    public WebSocketMessageBrokerConfiguration(
-            CorsProperties corsProperties,
-            ObjectProvider<ChannelInterceptor> channelInterceptors,
-            CookieTokenWebSocketHandshakeInterceptor cookieTokenWebSocketHandshakeInterceptor) {
-        this.corsProperties = corsProperties;
-        this.channelInterceptors = channelInterceptors;
-        this.cookieTokenWebSocketHandshakeInterceptor = cookieTokenWebSocketHandshakeInterceptor;
-    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {

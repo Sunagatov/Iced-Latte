@@ -13,6 +13,8 @@ import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class StompSupportChatMessagePublisher implements SupportChatMessagePubli
     public void publishOwnerReply(SupportConversationEntity conversation, SupportMessageEntity message) {
         String destination = SupportChatWebSocketDestinations.conversationMessages(conversation.getId());
         SupportChatMessageDto payload = dtoConverter.toMessageDto(message);
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+        if (isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {

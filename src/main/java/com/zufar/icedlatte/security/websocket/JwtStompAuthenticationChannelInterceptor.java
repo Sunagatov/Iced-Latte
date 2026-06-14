@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.websocket;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.Ordered;
@@ -18,18 +19,15 @@ import org.springframework.stereotype.Component;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
+
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@RequiredArgsConstructor
 public class JwtStompAuthenticationChannelInterceptor implements ChannelInterceptor {
 
     private final JwtProperties jwtProperties;
     private final JwtAuthenticationProvider jwtAuthenticationProvider;
-
-    public JwtStompAuthenticationChannelInterceptor(
-            JwtProperties jwtProperties, JwtAuthenticationProvider jwtAuthenticationProvider) {
-        this.jwtProperties = jwtProperties;
-        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
-    }
 
     @Override
     public @Nullable Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
@@ -63,7 +61,7 @@ public class JwtStompAuthenticationChannelInterceptor implements ChannelIntercep
             return Optional.empty();
         }
 
-        Object token = sessionAttributes.get(WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE);
+        Object token = sessionAttributes.get(ACCESS_TOKEN_ATTRIBUTE);
         return token instanceof String value && !value.isBlank() ? Optional.of(value) : Optional.empty();
     }
 }
