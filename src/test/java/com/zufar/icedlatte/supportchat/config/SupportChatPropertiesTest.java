@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
+import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,22 @@ class SupportChatPropertiesTest {
         assertThat(properties.rateLimits().perDay()).isNotNull();
         assertThat(properties.rateLimits().perConversationBurst()).isNotNull();
         assertThat(properties.rateLimits().perIp().maxRequests()).isEqualTo(30);
+    }
+
+    @Test
+    @DisplayName("Allowed email configuration is normalized")
+    void allowedEmails_mixedCaseAndBlankValues_normalizesConfiguration() {
+        SupportChatProperties properties = new SupportChatProperties(
+                true,
+                4000,
+                90,
+                OwnerMessageMode.FAKE,
+                null,
+                new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
+                null,
+                Set.of(" Owner@Example.com ", "  "));
+
+        assertThat(properties.allowedEmails()).containsExactly("owner@example.com");
     }
 
     private static void createProperties(Telegram telegram) {

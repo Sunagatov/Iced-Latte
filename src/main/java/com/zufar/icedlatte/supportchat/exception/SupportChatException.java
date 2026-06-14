@@ -3,6 +3,7 @@ package com.zufar.icedlatte.supportchat.exception;
 public abstract sealed class SupportChatException extends RuntimeException
         permits DuplicateSupportChatMessageException,
                 InvalidSupportChatMessageException,
+                SupportChatAccessRestrictedException,
                 SupportChatConversationNotFoundException,
                 SupportChatDisabledException,
                 SupportChatEmailVerificationRequiredException,

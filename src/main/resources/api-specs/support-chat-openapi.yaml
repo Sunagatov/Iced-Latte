@@ -271,6 +271,7 @@ components:
           nullable: true
           enum:
             - "EMAIL_VERIFICATION_REQUIRED"
+            - "ACCESS_RESTRICTED"
       required:
         - enabled
         - eligible

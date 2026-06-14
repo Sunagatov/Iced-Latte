@@ -38,6 +38,7 @@ import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatAccessRestrictedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
@@ -135,6 +136,15 @@ class SupportChatServiceTest {
 
         assertThatThrownBy(() -> enabledService().getOrCreateConversation(USER))
                 .isInstanceOf(SupportChatEmailVerificationRequiredException.class);
+    }
+
+    @Test
+    @DisplayName("Restricted user cannot create a conversation")
+    void getOrCreateConversation_accessRestricted_throwsForbidden() {
+        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.accessRestricted());
+
+        assertThatThrownBy(() -> enabledService().getOrCreateConversation(USER))
+                .isInstanceOf(SupportChatAccessRestrictedException.class);
     }
 
     @Test

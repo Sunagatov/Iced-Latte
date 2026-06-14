@@ -56,6 +56,7 @@ public class ProblemType {
 
     // Support chat
     public static final String SUPPORT_CHAT_DISABLED = "support-chat-disabled";
+    public static final String SUPPORT_CHAT_ACCESS_RESTRICTED = "support-chat-access-restricted";
     public static final String SUPPORT_CHAT_EMAIL_VERIFICATION_REQUIRED = "support-chat-email-verification-required";
     public static final String SUPPORT_CHAT_CONVERSATION_NOT_FOUND = "support-chat-conversation-not-found";
     public static final String SUPPORT_CHAT_INVALID_MESSAGE = "support-chat-invalid-message";

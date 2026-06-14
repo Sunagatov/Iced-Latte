@@ -42,6 +42,13 @@ public class SupportChatExceptionHandler {
                                 "Email verification required",
                                 HttpStatus.FORBIDDEN,
                                 ex.getMessage());
+                    case SupportChatAccessRestrictedException _ ->
+                        new ErrorMapping(
+                                "exception.support_chat.access_restricted",
+                                ProblemType.SUPPORT_CHAT_ACCESS_RESTRICTED,
+                                "Support chat unavailable",
+                                HttpStatus.FORBIDDEN,
+                                ex.getMessage());
                     case SupportChatConversationNotFoundException _ ->
                         new ErrorMapping(
                                 "exception.support_chat.conversation_not_found",

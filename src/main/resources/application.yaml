@@ -508,6 +508,7 @@ springdoc:
 
 support-chat:
   enabled: ${SUPPORT_CHAT_ENABLED:false}
+  allowed-emails: ${SUPPORT_CHAT_ALLOWED_EMAILS:}
   message-max-length: 4000
   retention-days: 90
   retention-cleanup-enabled: ${SUPPORT_CHAT_RETENTION_CLEANUP_ENABLED:true}

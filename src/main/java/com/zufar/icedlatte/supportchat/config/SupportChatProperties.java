@@ -1,6 +1,9 @@
 package com.zufar.icedlatte.supportchat.config;
 
 import java.time.Duration;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -12,7 +15,19 @@ public record SupportChatProperties(
         OwnerMessageMode ownerMessageMode,
         Telegram telegram,
         Turnstile turnstile,
-        RateLimits rateLimits) {
+        RateLimits rateLimits,
+        Set<String> allowedEmails) {
+
+    public SupportChatProperties(
+            boolean enabled,
+            int messageMaxLength,
+            int retentionDays,
+            OwnerMessageMode ownerMessageMode,
+            Telegram telegram,
+            Turnstile turnstile,
+            RateLimits rateLimits) {
+        this(enabled, messageMaxLength, retentionDays, ownerMessageMode, telegram, turnstile, rateLimits, Set.of());
+    }
 
     public SupportChatProperties {
         messageMaxLength = messageMaxLength == 0 ? 4000 : messageMaxLength;
@@ -20,6 +35,7 @@ public record SupportChatProperties(
         ownerMessageMode = ownerMessageMode == null ? OwnerMessageMode.DISABLED : ownerMessageMode;
         telegram = telegram == null ? Telegram.disabled() : telegram;
         turnstile = turnstile == null ? Turnstile.defaults() : turnstile;
+        allowedEmails = normalizeAllowedEmails(allowedEmails);
         rateLimits = rateLimits == null
                 ? new RateLimits(
                         new Bucket(20, Duration.ofMinutes(1)),
@@ -52,6 +68,16 @@ public record SupportChatProperties(
                         "support-chat.telegram.webhook-secret is required when owner-message-mode=TELEGRAM");
             }
         }
+    }
+
+    private static Set<String> normalizeAllowedEmails(Set<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return Set.of();
+        }
+        return emails.stream()
+                .map(email -> email == null ? "" : email.trim().toLowerCase(Locale.ROOT))
+                .filter(email -> !email.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     public enum OwnerMessageMode {

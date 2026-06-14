@@ -10,6 +10,7 @@ import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatAccessRestrictedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
@@ -41,6 +42,7 @@ import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatu
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.SENT;
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.CUSTOMER;
 import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.OWNER;
+import static com.zufar.icedlatte.supportchat.service.SupportChatEligibility.REASON_ACCESS_RESTRICTED;
 
 @Slf4j
 @Service
@@ -242,6 +244,9 @@ public class SupportChatService {
         }
         SupportChatEligibility eligibility = eligibilityService.eligibilityFor(user.id());
         if (!eligibility.eligible()) {
+            if (REASON_ACCESS_RESTRICTED.equals(eligibility.reason())) {
+                throw new SupportChatAccessRestrictedException();
+            }
             throw new SupportChatEmailVerificationRequiredException();
         }
     }

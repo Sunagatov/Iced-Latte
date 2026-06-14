@@ -17,6 +17,7 @@ import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
+import com.zufar.icedlatte.supportchat.exception.SupportChatAccessRestrictedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
@@ -45,6 +46,15 @@ class SupportChatExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertProblemType(response, ProblemType.SUPPORT_CHAT_EMAIL_VERIFICATION_REQUIRED);
+    }
+
+    @Test
+    @DisplayName("Maps restricted support chat access to 403")
+    void accessRestricted_mapsToForbidden() {
+        var response = handler.handleSupportChatException(new SupportChatAccessRestrictedException());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertProblemType(response, ProblemType.SUPPORT_CHAT_ACCESS_RESTRICTED);
     }
 
     @Test
