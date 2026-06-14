@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
@@ -18,6 +19,11 @@ public class SupportChatAbuseGuard {
     private final SupportChatProperties properties;
     private final Clock clock;
     private final ConcurrentMap<UUID, OffsetDateTime> challengeRequiredUntil = new ConcurrentHashMap<>();
+
+    @Autowired
+    SupportChatAbuseGuard(SupportChatProperties properties) {
+        this(properties, Clock.systemUTC());
+    }
 
     SupportChatAbuseGuard(SupportChatProperties properties, Clock clock) {
         this.properties = properties;
