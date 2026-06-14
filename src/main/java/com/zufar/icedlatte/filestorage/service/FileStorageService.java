@@ -58,7 +58,6 @@ public class FileStorageService implements FileStorageApi {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void storeDirectory(String bucketName, String directoryPath) throws IOException {
         requireStorageEnabledForUpload(directoryPath);
         objectStorage.uploadDirectory(bucketName, directoryPath);

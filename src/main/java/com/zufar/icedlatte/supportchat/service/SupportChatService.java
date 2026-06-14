@@ -85,7 +85,6 @@ public class SupportChatService {
         this.transactionManager = transactionManager;
     }
 
-    @Transactional(readOnly = true)
     public SupportChatStatus status(CurrentUserSnapshot user) {
         if (!properties.enabled()) {
             return new SupportChatStatus(false, false, null);

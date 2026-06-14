@@ -43,7 +43,6 @@ public class UserProfileService implements UserAccessControlApi {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional(readOnly = true)
     public UserDto getProfile(UUID userId) {
         return toProfileDto(singleUserProvider.getUserEntityById(userId));
     }
@@ -101,12 +100,10 @@ public class UserProfileService implements UserAccessControlApi {
         return userRepository.setAccountNonLockedStatus(EmailNormalizer.normalize(email), true);
     }
 
-    @Transactional(readOnly = true)
     public Optional<String> findAvatarLink(UUID userId) {
         return fileUrlResolverApi.findFileUrl(userId);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteAvatar(UUID userId) {
         fileStorageWriterApi.deleteFile(userId);
     }

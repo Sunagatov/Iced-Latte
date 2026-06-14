@@ -105,7 +105,6 @@ public class OrderCreator implements OrderCheckoutApi {
         return orderDtoConverter.toSnapshot(order);
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     Order createPendingPaymentOrder(UUID userId, CheckoutOrderRequest request, CartSnapshot cart) {
         validateCheckoutAddressInput(request.deliveryAddressId(), request.address() != null);
 
