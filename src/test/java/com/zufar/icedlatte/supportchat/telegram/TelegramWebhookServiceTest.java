@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -231,6 +232,7 @@ class TelegramWebhookServiceTest {
                         new Bucket(100, Duration.ofHours(1)),
                         new Bucket(300, Duration.ofDays(1)),
                         new Bucket(10, Duration.ofSeconds(10)),
-                        new Bucket(60, Duration.ofMinutes(1))));
+                        new Bucket(60, Duration.ofMinutes(1))),
+                Set.of());
     }
 }

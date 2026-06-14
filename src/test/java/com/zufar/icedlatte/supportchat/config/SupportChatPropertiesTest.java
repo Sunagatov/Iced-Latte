@@ -67,7 +67,8 @@ class SupportChatPropertiesTest {
                 OwnerMessageMode.FAKE,
                 null,
                 new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
-                new RateLimits(null, null, null, null, new Bucket(30, Duration.ofMinutes(1))));
+                new RateLimits(null, null, null, null, new Bucket(30, Duration.ofMinutes(1))),
+                Set.of());
 
         assertThat(properties.rateLimits().perMinute()).isNotNull();
         assertThat(properties.rateLimits().perHour()).isNotNull();
@@ -105,6 +106,7 @@ class SupportChatPropertiesTest {
                         new Bucket(100, Duration.ofHours(1)),
                         new Bucket(300, Duration.ofDays(1)),
                         new Bucket(10, Duration.ofSeconds(10)),
-                        new Bucket(60, Duration.ofMinutes(1))));
+                        new Bucket(60, Duration.ofMinutes(1))),
+                Set.of());
     }
 }

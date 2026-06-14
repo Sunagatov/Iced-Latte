@@ -18,17 +18,6 @@ public record SupportChatProperties(
         RateLimits rateLimits,
         Set<String> allowedEmails) {
 
-    public SupportChatProperties(
-            boolean enabled,
-            int messageMaxLength,
-            int retentionDays,
-            OwnerMessageMode ownerMessageMode,
-            Telegram telegram,
-            Turnstile turnstile,
-            RateLimits rateLimits) {
-        this(enabled, messageMaxLength, retentionDays, ownerMessageMode, telegram, turnstile, rateLimits, Set.of());
-    }
-
     public SupportChatProperties {
         messageMaxLength = messageMaxLength == 0 ? 4000 : messageMaxLength;
         retentionDays = retentionDays == 0 ? 90 : retentionDays;
