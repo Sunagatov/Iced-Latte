@@ -406,6 +406,19 @@ components:
           nullable: true
         reply_to_message:
           $ref: "#/components/schemas/TelegramWebhookMessage"
+        forward_origin:
+          type: "object"
+          nullable: true
+          additionalProperties: true
+        forward_from:
+          $ref: "#/components/schemas/TelegramWebhookUser"
+        forward_sender_name:
+          type: "string"
+          nullable: true
+        forward_date:
+          type: "integer"
+          format: "int64"
+          nullable: true
 
     TelegramWebhookChat:
       type: "object"

@@ -56,6 +56,20 @@ class TelegramWebhookServiceTest {
     }
 
     @Test
+    @DisplayName("Owner reply to fallback bot message is persisted when unrelated thread id is present")
+    void handle_fallbackOwnerReplyWithUnmappedThread_persistsMessage() {
+        SupportConversationEntity conversation = conversation();
+        TelegramWebhookUpdate.TelegramWebhookMessage message = message(7002L, 999L, "Fallback answer", 100L);
+        when(conversationRepository.findByTelegramMessageThreadId(999L)).thenReturn(Optional.empty());
+        when(conversationRepository.findByTelegramFallbackMessageId(100L)).thenReturn(Optional.of(conversation));
+
+        var result = enabledService().handle("secret", update(9002L, message));
+
+        assertThat(result).isEqualTo(TelegramWebhookResult.PROCESSED);
+        verify(supportChatService).saveOwnerReply(conversation, "Fallback answer", 9002L, 7002L);
+    }
+
+    @Test
     @DisplayName("Invalid webhook secret is unauthorized")
     void handle_invalidSecret_rejectsRequest() {
         var result = enabledService().handle("wrong", update(9001L, topicMessage("Owner answer")));
@@ -102,6 +116,36 @@ class TelegramWebhookServiceTest {
     @DisplayName("Non-text message is ignored")
     void handle_nonText_ignoresUpdate() {
         var result = enabledService().handle("secret", update(9001L, topicMessage(null)));
+
+        assertThat(result).isEqualTo(TelegramWebhookResult.IGNORED);
+        verifyNoInteractions(conversationRepository, supportChatService);
+    }
+
+    @Test
+    @DisplayName("Forwarded text message is ignored")
+    void handle_forwardedText_ignoresUpdate() {
+        TelegramWebhookUpdate.TelegramWebhookMessage message = new TelegramWebhookUpdate.TelegramWebhookMessage(
+                7001L,
+                456L,
+                new TelegramWebhookUpdate.TelegramWebhookChat(-1001234567890L),
+                new TelegramWebhookUpdate.TelegramWebhookUser(555L, false),
+                "Forwarded answer",
+                null,
+                new Object(),
+                null,
+                null,
+                null);
+
+        var result = enabledService().handle("secret", update(9001L, message));
+
+        assertThat(result).isEqualTo(TelegramWebhookResult.IGNORED);
+        verifyNoInteractions(conversationRepository, supportChatService);
+    }
+
+    @Test
+    @DisplayName("Telegram command text is ignored")
+    void handle_commandText_ignoresUpdate() {
+        var result = enabledService().handle("secret", update(9001L, topicMessage("/status")));
 
         assertThat(result).isEqualTo(TelegramWebhookResult.IGNORED);
         verifyNoInteractions(conversationRepository, supportChatService);

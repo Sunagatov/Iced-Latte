@@ -135,7 +135,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(200L);
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(790L);
         assertThat(telegramBotClient.sendMessageCalls).isEqualTo(2);
-        verify(conversationRepository).save(conversation);
+        verify(conversationRepository, times(2)).save(conversation);
     }
 
     @Test
@@ -152,6 +152,23 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isNull();
         assertThat(conversation.getTelegramFallbackMessageId()).isNull();
         verify(conversationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Created topic correlation is stored when topic and fallback delivery fail")
+    void send_newTopicDeliveryAndFallbackFail_storesCreatedTopicCorrelation() {
+        SupportConversationEntity conversation = conversation();
+        telegramBotClient.nextTopic = new TelegramForumTopic(456L);
+        telegramBotClient.nextMessages.add(null);
+        telegramBotClient.nextMessage = null;
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+
+        var result = sender(true).send(OWNER_MESSAGE);
+
+        assertThat(result.delivered()).isFalse();
+        assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(456L);
+        assertThat(conversation.getTelegramFallbackMessageId()).isNull();
+        verify(conversationRepository).save(conversation);
     }
 
     @Test

@@ -55,11 +55,11 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
             if (topic.isPresent()) {
                 long telegramMessageThreadId = topic.get().messageThreadId();
                 conversation.setTelegramMessageThreadId(telegramMessageThreadId);
+                conversationRepository.save(conversation);
                 OwnerMessageDeliveryResult topicDelivery = sendToExistingTopic(telegramMessageThreadId, text);
                 if (!topicDelivery.delivered()) {
                     return sendFallback(conversation, text);
                 }
-                conversationRepository.save(conversation);
                 return topicDelivery;
             }
         }

@@ -68,6 +68,9 @@ class TelegramWebhookService {
         if (message.text() == null || message.text().isBlank()) {
             return false;
         }
+        if (hasForwardMetadata(message) || isCommand(message.text())) {
+            return false;
+        }
         SupportChatProperties.Telegram chatProperties = properties.telegram();
         if (message.chat() == null
                 || !Objects.equals(chatProperties.chatId(), String.valueOf(message.chat().id()))) {
@@ -99,6 +102,12 @@ class TelegramWebhookService {
         if (string == null || string.isBlank()) {
             return "non_text_message";
         }
+        if (hasForwardMetadata(message)) {
+            return "forwarded_message";
+        }
+        if (isCommand(string)) {
+            return "command_message";
+        }
         TelegramWebhookUpdate.TelegramWebhookChat chat = message.chat();
         if (chat == null) {
             return "missing_chat";
@@ -123,12 +132,27 @@ class TelegramWebhookService {
     private Optional<SupportConversationEntity> findConversation(TelegramWebhookUpdate.TelegramWebhookMessage message) {
         Long messageThreadId = message.messageThreadId();
         if (messageThreadId != null) {
-            return conversationRepository.findByTelegramMessageThreadId(messageThreadId);
+            Optional<SupportConversationEntity> conversation =
+                    conversationRepository.findByTelegramMessageThreadId(messageThreadId);
+            if (conversation.isPresent()) {
+                return conversation;
+            }
         }
         TelegramWebhookUpdate.TelegramWebhookMessage replyToMessage = message.replyToMessage();
         if (replyToMessage != null && replyToMessage.messageId() != null) {
             return conversationRepository.findByTelegramFallbackMessageId(replyToMessage.messageId());
         }
         return Optional.empty();
+    }
+
+    private static boolean hasForwardMetadata(TelegramWebhookUpdate.TelegramWebhookMessage message) {
+        return message.forwardOrigin() != null
+                || message.forwardFrom() != null
+                || message.forwardSenderName() != null
+                || message.forwardDate() != null;
+    }
+
+    private static boolean isCommand(String text) {
+        return text.stripLeading().startsWith("/");
     }
 }
