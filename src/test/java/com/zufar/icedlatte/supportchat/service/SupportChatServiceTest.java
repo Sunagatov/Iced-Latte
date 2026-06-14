@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -471,7 +472,7 @@ class SupportChatServiceTest {
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties),
+                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
                 rateLimiter,
                 transactionManager);
     }
@@ -486,7 +487,7 @@ class SupportChatServiceTest {
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties),
+                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
                 rateLimiter,
                 transactionManager);
     }
@@ -501,7 +502,7 @@ class SupportChatServiceTest {
                 ownerMessageSender,
                 messagePublisher,
                 turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties),
+                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
                 rateLimiter,
                 transactionManager);
     }

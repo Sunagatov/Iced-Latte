@@ -19,10 +19,6 @@ public class SupportChatAbuseGuard {
     private final Clock clock;
     private final ConcurrentMap<UUID, OffsetDateTime> challengeRequiredUntil = new ConcurrentHashMap<>();
 
-    SupportChatAbuseGuard(SupportChatProperties properties) {
-        this(properties, Clock.systemUTC());
-    }
-
     SupportChatAbuseGuard(SupportChatProperties properties, Clock clock) {
         this.properties = properties;
         this.clock = clock;
