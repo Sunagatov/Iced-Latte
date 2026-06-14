@@ -1,18 +1,20 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.exception.SupportChatException;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-
-import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -73,7 +75,8 @@ class TelegramWebhookService {
         }
         SupportChatProperties.Telegram chatProperties = properties.telegram();
         if (message.chat() == null
-                || !Objects.equals(chatProperties.chatId(), String.valueOf(message.chat().id()))) {
+                || !Objects.equals(
+                        chatProperties.chatId(), String.valueOf(message.chat().id()))) {
             return false;
         }
         TelegramWebhookUpdate.TelegramWebhookUser from = message.from();
@@ -85,9 +88,14 @@ class TelegramWebhookService {
 
     private void logUnsupportedOwnerReply(
             TelegramWebhookUpdate update, TelegramWebhookUpdate.TelegramWebhookMessage message) {
-        String logMessage = "support_chat.telegram.webhook.unsupported_update: telegramUpdateId={}, telegramMessageId={}, reason={}";
+        String logMessage =
+                "support_chat.telegram.webhook.unsupported_update: telegramUpdateId={}, telegramMessageId={}, reason={}";
         String replyReason = unsupportedOwnerReplyReason(update, message);
-        log.warn(logMessage, update == null ? null : update.updateId(), message == null ? null : message.messageId(), replyReason);
+        log.warn(
+                logMessage,
+                update == null ? null : update.updateId(),
+                message == null ? null : message.messageId(),
+                replyReason);
     }
 
     private String unsupportedOwnerReplyReason(

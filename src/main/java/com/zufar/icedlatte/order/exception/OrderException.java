@@ -6,6 +6,7 @@ package com.zufar.icedlatte.order.exception;
 public abstract sealed class OrderException extends RuntimeException
         permits OrderNotFoundException,
                 OrderAccessDeniedException,
+                OrderDeliveryAddressNotFoundException,
                 InvalidOrderStateTransitionException,
                 OrderCancellationWindowExpiredException {
 

@@ -10,8 +10,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.review.exception.ReviewAccessDeniedException;
+import com.zufar.icedlatte.review.exception.ReviewConflictException;
 import com.zufar.icedlatte.review.exception.ReviewException;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
+import com.zufar.icedlatte.review.exception.ReviewNotFoundException;
+import com.zufar.icedlatte.review.exception.ReviewProductNotFoundException;
 import com.zufar.icedlatte.review.exception.ReviewSummaryException;
 
 import lombok.RequiredArgsConstructor;
@@ -28,12 +32,40 @@ public class ReviewExceptionHandler {
     @ExceptionHandler(ReviewException.class)
     public ResponseEntity<ProblemDetail> handleReviewException(final ReviewException ex) {
         return switch (ex) {
+            case ReviewAccessDeniedException _ ->
+                problem(
+                        "exception.review.access_denied",
+                        ProblemType.REVIEW_ACCESS_DENIED,
+                        "Access denied",
+                        HttpStatus.FORBIDDEN,
+                        "Access denied.");
+            case ReviewConflictException _ ->
+                problem(
+                        "exception.review.conflict",
+                        ProblemType.REVIEW_CONFLICT,
+                        "Review conflict",
+                        HttpStatus.CONFLICT,
+                        ex.getMessage());
             case ReviewModerationException _ ->
                 problem(
                         "exception.review.rejected",
                         ProblemType.REVIEW_REJECTED,
                         "Review rejected",
                         HttpStatus.UNPROCESSABLE_CONTENT,
+                        ex.getMessage());
+            case ReviewNotFoundException _ ->
+                problem(
+                        "exception.review.not_found",
+                        ProblemType.REVIEW_NOT_FOUND,
+                        "Review not found",
+                        HttpStatus.NOT_FOUND,
+                        ex.getMessage());
+            case ReviewProductNotFoundException _ ->
+                problem(
+                        "exception.review.product_not_found",
+                        ProblemType.PRODUCT_NOT_FOUND,
+                        "Product not found",
+                        HttpStatus.NOT_FOUND,
                         ex.getMessage());
             case ReviewSummaryException _ ->
                 problem(

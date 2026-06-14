@@ -68,6 +68,13 @@ public class OrderExceptionHandler {
                                 "Access denied",
                                 HttpStatus.FORBIDDEN,
                                 "Access denied.");
+                    case OrderDeliveryAddressNotFoundException _ ->
+                        new ErrorMapping(
+                                "exception.order.delivery_address_not_found",
+                                ProblemType.ORDER_DELIVERY_ADDRESS_NOT_FOUND,
+                                "Delivery address not found",
+                                HttpStatus.NOT_FOUND,
+                                "Delivery address not found.");
                     case InvalidOrderStateTransitionException _ ->
                         new ErrorMapping(
                                 "exception.order.invalid_transition",

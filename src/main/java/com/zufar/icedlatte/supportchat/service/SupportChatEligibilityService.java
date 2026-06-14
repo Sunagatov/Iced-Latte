@@ -27,10 +27,7 @@ public class SupportChatEligibilityService {
     }
 
     private SupportChatEligibility eligibilityFor(UserAuthenticationSnapshot user) {
-        if (!user.enabled()
-                || !user.accountNonExpired()
-                || !user.accountNonLocked()
-                || !user.credentialsNonExpired()) {
+        if (!user.enabled() || !user.accountNonExpired() || !user.accountNonLocked() || !user.credentialsNonExpired()) {
             return SupportChatEligibility.emailVerificationRequired();
         }
         Set<String> allowedEmails = properties.allowedEmails();

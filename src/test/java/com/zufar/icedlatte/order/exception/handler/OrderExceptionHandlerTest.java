@@ -15,10 +15,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.order.exception.OrderDeliveryAddressNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("OrderExceptionHandler unit tests")
@@ -29,6 +32,24 @@ class OrderExceptionHandlerTest {
 
     @InjectMocks
     private OrderExceptionHandler handler;
+
+    @Test
+    @DisplayName("Returns NOT_FOUND for missing delivery address")
+    void handleOrderException_returnsNotFoundForMissingDeliveryAddress() {
+        OrderDeliveryAddressNotFoundException exception = new OrderDeliveryAddressNotFoundException();
+        ProblemDetail expected = ProblemDetail.forStatus(404);
+        when(problemDetailFactory.build(
+                        ProblemType.ORDER_DELIVERY_ADDRESS_NOT_FOUND,
+                        "Delivery address not found",
+                        HttpStatus.NOT_FOUND,
+                        "Delivery address not found."))
+                .thenReturn(expected);
+
+        ResponseEntity<ProblemDetail> result = handler.handleOrderException(exception);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(result.getBody()).isEqualTo(expected);
+    }
 
     @Test
     @DisplayName("Returns BAD_REQUEST with supported statuses in message")

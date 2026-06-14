@@ -29,6 +29,8 @@ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.exception.ReviewAccessDeniedException;
+import com.zufar.icedlatte.review.exception.ReviewConflictException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
@@ -230,8 +232,8 @@ class ProductReviewManagerTest {
         }
 
         @Test
-        @DisplayName("Translates duplicate review persistence race to BadRequestException")
-        void create_duplicateReviewRace_throwsBadRequestException() {
+        @DisplayName("Translates duplicate review persistence race to ReviewConflictException")
+        void create_duplicateReviewRace_throwsReviewConflictException() {
             UUID userId = UUID.randomUUID();
             UUID productId = UUID.randomUUID();
             ProductReviewRequest request = new ProductReviewRequest();
@@ -243,7 +245,7 @@ class ProductReviewManagerTest {
                     .thenThrow(new DataIntegrityViolationException("duplicate"));
 
             assertThatThrownBy(() -> service.create(productId, userId, request))
-                    .isInstanceOf(BadRequestException.class)
+                    .isInstanceOf(ReviewConflictException.class)
                     .hasMessageContaining("Creation of the product's review");
         }
     }
@@ -269,18 +271,18 @@ class ProductReviewManagerTest {
         }
 
         @Test
-        @DisplayName("Propagates BadRequestException when deletion not allowed")
-        void delete_notOwner_throwsBadRequestException() {
+        @DisplayName("Propagates ReviewAccessDeniedException when deletion not allowed")
+        void delete_notOwner_throwsReviewAccessDeniedException() {
             UUID productId = UUID.randomUUID();
             UUID reviewId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
 
-            doThrow(new BadRequestException("Deletion denied"))
+            doThrow(new ReviewAccessDeniedException())
                     .when(productReviewValidator)
                     .validateProductReviewDeletionAllowed(reviewId, userId);
 
             assertThatThrownBy(() -> service.delete(productId, reviewId, userId))
-                    .isInstanceOf(BadRequestException.class);
+                    .isInstanceOf(ReviewAccessDeniedException.class);
         }
     }
 
@@ -289,8 +291,8 @@ class ProductReviewManagerTest {
     class UpdateLike {
 
         @Test
-        @DisplayName("Translates duplicate vote persistence race to BadRequestException")
-        void updateLike_duplicateVoteRace_throwsBadRequestException() {
+        @DisplayName("Translates duplicate vote persistence race to ReviewConflictException")
+        void updateLike_duplicateVoteRace_throwsReviewConflictException() {
             UUID productId = UUID.randomUUID();
             UUID reviewId = UUID.randomUUID();
             UUID userId = UUID.randomUUID();
@@ -300,7 +302,7 @@ class ProductReviewManagerTest {
                     .thenThrow(new DataIntegrityViolationException("duplicate"));
 
             assertThatThrownBy(() -> service.updateLike(productId, reviewId, userId, true))
-                    .isInstanceOf(BadRequestException.class)
+                    .isInstanceOf(ReviewConflictException.class)
                     .hasMessageContaining("changed concurrently");
         }
 

@@ -2,7 +2,6 @@ package com.zufar.icedlatte.supportchat.endpoint;
 
 import java.util.UUID;
 
-import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -24,6 +23,7 @@ import com.zufar.icedlatte.openapi.dto.SupportChatMessagePageDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatStatusDto;
 import com.zufar.icedlatte.openapi.supportchat.api.SupportChatApi;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
+import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import com.zufar.icedlatte.supportchat.converter.SupportChatDtoConverter;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
 
@@ -62,7 +62,7 @@ public class SupportChatEndpoint implements SupportChatApi {
         CurrentUserSnapshot user = currentUserProvider.get();
         size = size == null ? 20 : size;
         page = page == null ? 0 : page;
-        var messages = supportChatService.getHistory(user, conversationId,  page, size);
+        var messages = supportChatService.getHistory(user, conversationId, page, size);
         return ResponseEntity.ok(converter.toMessagePageDto(messages));
     }
 
@@ -73,13 +73,14 @@ public class SupportChatEndpoint implements SupportChatApi {
         String turnstileToken = request.getTurnstileToken().orElse(null);
         UUID clientMessageId = request.getClientMessageId();
         CurrentUserSnapshot user = currentUserProvider.get();
+        String clientIp = clientIpExtractor.extract(httpRequest);
         var message = supportChatService.sendCustomerMessage(
                 user,
                 conversationId,
                 clientMessageId,
                 request.getBody(),
                 turnstileToken,
-                clientIpExtractor.extract(httpRequest));
+                clientIp);
         return ResponseEntity.ok(converter.toMessageDto(message));
     }
 }

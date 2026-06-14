@@ -2,7 +2,12 @@ package com.zufar.icedlatte.review.exception;
 
 /** Sealed base for all review-related exceptions. */
 public abstract sealed class ReviewException extends RuntimeException
-        permits ReviewModerationException, ReviewSummaryException {
+        permits ReviewAccessDeniedException,
+                ReviewConflictException,
+                ReviewModerationException,
+                ReviewNotFoundException,
+                ReviewProductNotFoundException,
+                ReviewSummaryException {
 
     protected ReviewException(String message) {
         super(message);

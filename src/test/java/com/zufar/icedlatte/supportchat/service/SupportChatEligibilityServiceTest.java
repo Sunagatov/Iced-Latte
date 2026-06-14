@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.supportchat.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -18,8 +19,6 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
-
-import static org.mockito.Mockito.mock;
 
 @DisplayName("SupportChatEligibilityService unit tests")
 class SupportChatEligibilityServiceTest {
@@ -46,7 +45,8 @@ class SupportChatEligibilityServiceTest {
         when(userAuthenticationApi.findUserAuthenticationById(USER_ID))
                 .thenReturn(Optional.of(user("Owner@Example.com")));
 
-        SupportChatEligibility eligibility = service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
+        SupportChatEligibility eligibility =
+                service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
 
         assertThat(eligibility.eligible()).isTrue();
         assertThat(eligibility.reason()).isNull();
@@ -58,7 +58,8 @@ class SupportChatEligibilityServiceTest {
         when(userAuthenticationApi.findUserAuthenticationById(USER_ID))
                 .thenReturn(Optional.of(user("customer@example.com")));
 
-        SupportChatEligibility eligibility = service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
+        SupportChatEligibility eligibility =
+                service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
 
         assertThat(eligibility.eligible()).isFalse();
         assertThat(eligibility.reason()).isEqualTo("ACCESS_RESTRICTED");
@@ -69,16 +70,10 @@ class SupportChatEligibilityServiceTest {
     void eligibilityFor_unverifiedUser_requiresEmailVerification() {
         when(userAuthenticationApi.findUserAuthenticationById(USER_ID))
                 .thenReturn(Optional.of(new UserAuthenticationSnapshot(
-                        USER_ID,
-                        "owner@example.com",
-                        "encoded",
-                        List.of(),
-                        true,
-                        true,
-                        true,
-                        false)));
+                        USER_ID, "owner@example.com", "encoded", List.of(), true, true, true, false)));
 
-        SupportChatEligibility eligibility = service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
+        SupportChatEligibility eligibility =
+                service(Set.of("owner@example.com")).eligibilityFor(USER_ID);
 
         assertThat(eligibility.eligible()).isFalse();
         assertThat(eligibility.reason()).isEqualTo("EMAIL_VERIFICATION_REQUIRED");

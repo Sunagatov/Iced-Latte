@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
@@ -23,6 +22,8 @@ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
 import com.zufar.icedlatte.review.dto.ReviewCreatedEvent;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.entity.ProductReviewLike;
+import com.zufar.icedlatte.review.exception.ReviewConflictException;
+import com.zufar.icedlatte.review.exception.ReviewNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
@@ -74,7 +75,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         try {
             reviewRepository.saveAndFlush(productReview);
         } catch (DataIntegrityViolationException e) {
-            throw new BadRequestException(
+            throw new ReviewConflictException(
                     String.format(
                             "Creation of the product's review for the user with userId = '%s' and the product with productId = '%s' is denied. Delete the previous product's review first.",
                             userId, productId),
@@ -133,7 +134,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                     try {
                         productReviewLikeRepository.saveAndFlush(newReviewLike);
                     } catch (DataIntegrityViolationException e) {
-                        throw new BadRequestException(
+                        throw new ReviewConflictException(
                                 "Product review vote could not be recorded because it was changed concurrently.", e);
                     }
                 });
@@ -143,8 +144,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
 
         ProductReview productReview = reviewRepository
                 .findById(productReviewId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
+                .orElseThrow(() -> new ReviewNotFoundException(productReviewId));
         return productReviewDtoConverter.toProductReviewDto(
                 productReview, userLookupApi.getUserById(productReview.getUserId()));
     }

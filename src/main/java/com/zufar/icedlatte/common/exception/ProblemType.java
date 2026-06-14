@@ -23,6 +23,7 @@ public class ProblemType {
     // Orders
     public static final String ORDER_NOT_FOUND = "order-not-found";
     public static final String ORDER_ACCESS_DENIED = "order-access-denied";
+    public static final String ORDER_DELIVERY_ADDRESS_NOT_FOUND = "order-delivery-address-not-found";
     public static final String ORDER_STATE_INVALID = "order-state-invalid";
     public static final String ORDER_CANCELLATION_EXPIRED = "order-cancellation-expired";
     public static final String INVALID_PARAMETER = "invalid-parameter";
@@ -50,10 +51,14 @@ public class ProblemType {
     public static final String PRODUCT_NOT_FOUND = "product-not-found";
 
     // Review
+    public static final String REVIEW_ACCESS_DENIED = "review-access-denied";
+    public static final String REVIEW_CONFLICT = "review-conflict";
+    public static final String REVIEW_NOT_FOUND = "review-not-found";
     public static final String REVIEW_REJECTED = "review-rejected";
     public static final String REVIEW_SUMMARY_UNAVAILABLE = "review-summary-unavailable";
 
     // User
+    public static final String DELIVERY_ADDRESS_NOT_FOUND = "delivery-address-not-found";
     public static final String USER_NOT_FOUND = "user-not-found";
     public static final String INVALID_AVATAR_TYPE = "invalid-avatar-type";
 

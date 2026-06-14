@@ -30,6 +30,7 @@ import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.entity.OrderAddress;
 import com.zufar.icedlatte.order.entity.OrderItem;
+import com.zufar.icedlatte.order.exception.OrderDeliveryAddressNotFoundException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.user.api.UserAddressApi;
@@ -156,7 +157,7 @@ public class OrderCreator implements OrderCheckoutApi {
             try {
                 return snapshotAddress(userAddressApi.getDeliveryAddress(userId, deliveryAddressId));
             } catch (NotFoundException ex) {
-                throw new BadRequestException("Delivery address not found: " + deliveryAddressId);
+                throw new OrderDeliveryAddressNotFoundException();
             }
         }
         if (inlineAddress == null) {

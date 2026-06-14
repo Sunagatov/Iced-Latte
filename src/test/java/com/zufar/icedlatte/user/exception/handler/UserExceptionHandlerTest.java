@@ -17,6 +17,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 import com.zufar.icedlatte.user.exception.UserNotFoundException;
@@ -30,6 +31,24 @@ class UserExceptionHandlerTest {
 
     @InjectMocks
     private UserExceptionHandler userExceptionHandler;
+
+    @Test
+    @DisplayName("Should return NOT_FOUND for DeliveryAddressNotFoundException")
+    void shouldReturnNotFoundWhenDeliveryAddressNotFoundExceptionIsThrown() {
+        DeliveryAddressNotFoundException exception = new DeliveryAddressNotFoundException();
+        ProblemDetail expected = ProblemDetail.forStatus(404);
+        when(problemDetailFactory.build(
+                        "delivery-address-not-found",
+                        "Delivery address not found",
+                        HttpStatus.NOT_FOUND,
+                        "Delivery address not found."))
+                .thenReturn(expected);
+
+        ResponseEntity<ProblemDetail> result = userExceptionHandler.handleUserException(exception);
+
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(result.getBody()).isEqualTo(expected);
+    }
 
     @Test
     @DisplayName("Should return NOT_FOUND for UserNotFoundException")

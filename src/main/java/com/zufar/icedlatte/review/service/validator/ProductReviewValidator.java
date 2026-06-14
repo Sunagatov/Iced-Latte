@@ -6,8 +6,11 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
-import com.zufar.icedlatte.common.exception.NotFoundException;
 import com.zufar.icedlatte.product.api.ProductReviewProductApi;
+import com.zufar.icedlatte.review.exception.ReviewAccessDeniedException;
+import com.zufar.icedlatte.review.exception.ReviewConflictException;
+import com.zufar.icedlatte.review.exception.ReviewNotFoundException;
+import com.zufar.icedlatte.review.exception.ReviewProductNotFoundException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -42,16 +45,14 @@ public class ProductReviewValidator {
 
     public void validateProductExists(final UUID productId) {
         if (!productReviewProductApi.exists(productId)) {
-            throw new NotFoundException(String.format(
-                    "Product with productId = '%s' was not found. Product's review operations (update, delete, provide) are not possible.",
-                    productId));
+            throw new ReviewProductNotFoundException(productId);
         }
     }
 
     public void validateReviewExistsForUser(final UUID userId, final UUID productId) {
         var productReview = productReviewRepository.findByUserIdAndProductId(userId, productId);
         if (productReview.isPresent()) {
-            throw new BadRequestException(String.format(
+            throw new ReviewConflictException(String.format(
                     "Creation of the product's review for the user with userId = '%s' and the product with productId = '%s' is denied. Delete the previous product's review '%s' first.",
                     userId, productId, productReview.get().getId()));
         }
@@ -60,24 +61,18 @@ public class ProductReviewValidator {
     public void validateProductReviewDeletionAllowed(final UUID productReviewId, final UUID currentUserId) {
         var review = productReviewRepository
                 .findById(productReviewId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("Product's review with productReviewId = '%s' was not found", productReviewId)));
+                .orElseThrow(() -> new ReviewNotFoundException(productReviewId));
         if (!currentUserId.equals(review.getUserId())) {
-            throw new BadRequestException(String.format(
-                    "Deletion of the product's review with productReviewId = '%s' is denied for the user with userId = '%s'",
-                    productReviewId, currentUserId));
+            throw new ReviewAccessDeniedException();
         }
     }
 
     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
         if (!productReviewProductApi.exists(productId)) {
-            throw new NotFoundException(String.format(
-                    "Product with productId = '%s' was not found. Product's review operations (update, delete, provide) are not possible.",
-                    productId));
+            throw new ReviewProductNotFoundException(productId);
         }
         if (!productReviewRepository.existsByIdAndProductId(productReviewId, productId)) {
-            throw new NotFoundException(
-                    String.format("Product's review with productReviewId = '%s' was not found", productReviewId));
+            throw new ReviewNotFoundException(productReviewId);
         }
     }
 }

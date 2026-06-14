@@ -1,5 +1,25 @@
 package com.zufar.icedlatte.supportchat.service;
 
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.FAILED;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.SENT;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.CUSTOMER;
+import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.OWNER;
+
+import java.time.OffsetDateTime;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
@@ -22,26 +42,8 @@ import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
 import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import java.time.OffsetDateTime;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.FAILED;
-import static com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus.SENT;
-import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.CUSTOMER;
-import static com.zufar.icedlatte.supportchat.entity.SupportMessageSenderType.OWNER;
 
 @Slf4j
 @Service
@@ -225,6 +227,7 @@ public class SupportChatService {
         message.setDeliveryStatus(SENT);
         message.setTelegramUpdateId(telegramUpdateId);
         message.setTelegramMessageId(telegramMessageId);
+
         SupportMessageEntity saved = messageRepository.save(message);
 
         conversationRepository.touchLastMessageAt(conversationId);
@@ -268,8 +271,7 @@ public class SupportChatService {
 
     private void preventRepeatedMessage(
             UUID conversationId, String normalizedBody, SupportMessageEntity previousCustomerMessage) {
-        if (previousCustomerMessage == null
-                || previousCustomerMessage.getDeliveryStatus() == FAILED) {
+        if (previousCustomerMessage == null || previousCustomerMessage.getDeliveryStatus() == FAILED) {
             return;
         }
 
@@ -337,7 +339,8 @@ public class SupportChatService {
 
             return ownerMessageSender.send(ownerMessage);
         } catch (RuntimeException ex) {
-            String logMessage = "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}";
+            String logMessage =
+                    "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}";
             String name = ex.getClass().getSimpleName();
             log.warn(logMessage, id, messageId, name);
             return OwnerMessageDeliveryResult.failedResult();

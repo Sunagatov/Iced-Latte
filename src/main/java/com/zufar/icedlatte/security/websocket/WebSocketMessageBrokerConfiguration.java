@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.websocket;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -12,6 +11,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.security.config.cors.CorsProperties;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSocketMessageBroker

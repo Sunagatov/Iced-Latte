@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.user.exception.DeliveryAddressNotFoundException;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 import com.zufar.icedlatte.user.exception.UserException;
@@ -29,6 +30,13 @@ public class UserExceptionHandler {
     @ExceptionHandler(UserException.class)
     public ResponseEntity<ProblemDetail> handleUserException(final UserException ex) {
         return switch (ex) {
+            case DeliveryAddressNotFoundException _ ->
+                problem(
+                        "exception.delivery_address.not_found",
+                        ProblemType.DELIVERY_ADDRESS_NOT_FOUND,
+                        "Delivery address not found",
+                        HttpStatus.NOT_FOUND,
+                        "Delivery address not found.");
             case UserNotFoundException _ ->
                 problem(
                         "exception.user.not_found",

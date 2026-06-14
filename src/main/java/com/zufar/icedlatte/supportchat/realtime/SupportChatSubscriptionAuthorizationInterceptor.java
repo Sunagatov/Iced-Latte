@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.supportchat.realtime;
 
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_PREFIX;
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_SUFFIX;
+import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.SUPPORT_CHAT_TOPIC_PREFIX;
+
 import java.security.Principal;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,10 +25,6 @@ import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.service.SupportChatEligibilityService;
 
 import lombok.RequiredArgsConstructor;
-
-import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_PREFIX;
-import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.CONVERSATION_MESSAGES_SUFFIX;
-import static com.zufar.icedlatte.supportchat.realtime.SupportChatWebSocketDestinations.SUPPORT_CHAT_TOPIC_PREFIX;
 
 @Component
 @RequiredArgsConstructor
@@ -103,14 +103,11 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
     }
 
     private static Optional<UUID> userId(@Nullable Principal principal) {
-        if (principal instanceof Identifiable identifiable) {
-            return Optional.of(identifiable.getId());
-        }
-        if (principal instanceof Authentication authentication
-                && authentication.getPrincipal() instanceof Identifiable identifiable) {
-            return Optional.of(identifiable.getId());
-        }
-        return Optional.empty();
+        return switch (principal) {
+            case Identifiable identifiable -> Optional.of(identifiable.getId());
+            case Authentication authentication when authentication.getPrincipal() instanceof Identifiable identifiable -> Optional.of(identifiable.getId());
+            case null, default -> Optional.empty();
+        };
     }
 
     private static String sessionId(StompHeaderAccessor accessor) {

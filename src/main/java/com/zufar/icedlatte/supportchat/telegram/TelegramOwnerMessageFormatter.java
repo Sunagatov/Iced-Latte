@@ -1,10 +1,10 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
-
-import java.util.UUID;
 
 @Component
 class TelegramOwnerMessageFormatter {

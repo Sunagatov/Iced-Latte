@@ -1,5 +1,9 @@
 package com.zufar.icedlatte.supportchat.converter;
 
+import org.openapitools.jackson.nullable.JsonNullable;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
+
 import com.zufar.icedlatte.openapi.dto.SupportChatConversationDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessageDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessagePageDto;
@@ -7,9 +11,6 @@ import com.zufar.icedlatte.openapi.dto.SupportChatStatusDto;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.service.SupportChatService.SupportChatStatus;
-import org.openapitools.jackson.nullable.JsonNullable;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
 
 @Component
 public class SupportChatDtoConverter {
@@ -18,9 +19,10 @@ public class SupportChatDtoConverter {
         SupportChatStatusDto dto = new SupportChatStatusDto();
         dto.setEnabled(status.enabled());
         dto.setEligible(status.eligible());
-        if (status.reason() != null) {
-            dto.reason(SupportChatStatusDto.ReasonEnum.fromValue(status.reason()));
+        if (status.reason() == null) {
+            return dto;
         }
+        dto.reason(SupportChatStatusDto.ReasonEnum.fromValue(status.reason()));
         return dto;
     }
 

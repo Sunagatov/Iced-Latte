@@ -1,9 +1,10 @@
 package com.zufar.icedlatte.security.websocket;
 
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
+
 import java.util.Map;
 import java.util.Optional;
 
-import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.Ordered;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 
-import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

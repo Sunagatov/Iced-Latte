@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.security.websocket;
 
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
+import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_COOKIE_NAME;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -10,9 +13,6 @@ import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
-
-import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
-import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_COOKIE_NAME;
 
 @Component
 public class CookieTokenWebSocketHandshakeInterceptor implements HandshakeInterceptor {
