@@ -87,11 +87,10 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleNoResourceFoundException(final NoResourceFoundException exception) {
         String path = RequestPathUtils.normalizePath(RequestPathUtils.sanitize(exception.getResourcePath()));
         String method = exception.getHttpMethod().name();
-        if (RequestPathUtils.isPublicInternetNoise(path)) {
-            log.debug("exception.resource_not_found.scan: method={}, path={}", method, path);
-        } else {
-            log.debug("exception.resource_not_found: method={}, path={}", method, path);
-        }
+        String logMessage = RequestPathUtils.isPublicInternetNoise(path)
+                ? "exception.resource_not_found.scan: method={}, path={}"
+                : "exception.resource_not_found: method={}, path={}";
+        log.debug(logMessage, method, path);
         return problemDetailFactory.build(
                 "resource-not-found",
                 "Resource not found",
@@ -232,11 +231,11 @@ public class GlobalExceptionHandler {
         if (status.is5xxServerError()) {
             String logMessage = "exception.unhandled: exceptionClass={}, status={}";
             log.error(logMessage, exception.getClass().getName(), status.value(), exception);
-        } else {
-            String logMessage = "exception.annotated: exceptionClass={}, status={}";
-            log.debug(logMessage, exception.getClass().getSimpleName(), status.value());
+            return ResponseEntity.status(status).body(pd);
         }
 
+        String logMessage = "exception.annotated: exceptionClass={}, status={}";
+        log.debug(logMessage, exception.getClass().getSimpleName(), status.value());
         return ResponseEntity.status(status).body(pd);
     }
 
