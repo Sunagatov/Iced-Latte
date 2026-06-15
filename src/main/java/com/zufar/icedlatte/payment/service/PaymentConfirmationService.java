@@ -27,10 +27,12 @@ public class PaymentConfirmationService {
 
     @Transactional
     public void confirmPaid(UUID orderId, Session stripeSession, PaymentConfirmationSource source) {
+        String sourceEventType = source.eventType();
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
             String logMessage = "payment.paid.skipped: orderId={}, status={}, source={}";
-            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing", source.eventType());
+            String paymentStatus = payment != null ? payment.getStatus().name() : "missing";
+            log.info(logMessage, orderId, paymentStatus, sourceEventType);
             return;
         }
 
@@ -44,6 +46,7 @@ public class PaymentConfirmationService {
                 || !stripeCurrency.equalsIgnoreCase(payment.getCurrency())) {
             String logMessage =
                     "payment.reconciliation_failed: orderId={}, expected={}_{}, stripe={}_{}, paymentIntentPresent={}, source={}";
+            boolean paymentIntentPresent = paymentIntent != null;
             log.error(
                     logMessage,
                     orderId,
@@ -51,8 +54,8 @@ public class PaymentConfirmationService {
                     payment.getCurrency(),
                     stripeAmount,
                     stripeCurrency,
-                    paymentIntent != null,
-                    source.eventType());
+                    paymentIntentPresent,
+                    sourceEventType);
             markReconciliationFailed(payment, source);
             return;
         }
@@ -64,7 +67,7 @@ public class PaymentConfirmationService {
         if (!orderPaymentApi.confirmPayment(orderId, source.confirmationReason())) {
             payment.setStatus(PaymentStatus.RECONCILIATION_FAILED);
             paymentRepository.save(payment);
-            log.warn("payment.order_transition_failed: orderId={}, source={}", orderId, source.eventType());
+            log.warn("payment.order_transition_failed: orderId={}, source={}", orderId, sourceEventType);
             return;
         }
 
@@ -73,7 +76,7 @@ public class PaymentConfirmationService {
         orderPaymentApi.assignPaymentIntent(orderId, paymentIntent);
         cartCheckoutApi.deleteCartForUser(payment.getUserId());
         String logMessage = "payment.confirmed: orderId={}, paymentIntentId={}, source={}";
-        log.info(logMessage, orderId, paymentIntent, source.eventType());
+        log.info(logMessage, orderId, paymentIntent, sourceEventType);
     }
 
     private void markReconciliationFailed(Payment payment, PaymentConfirmationSource source) {

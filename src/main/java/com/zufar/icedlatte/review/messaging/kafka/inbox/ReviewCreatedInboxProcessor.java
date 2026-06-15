@@ -39,7 +39,8 @@ public class ReviewCreatedInboxProcessor {
             log.warn("review.inbox.locks.reclaimed: count={}", reclaimed);
         }
 
-        var events = inboxEventRepository.claimProcessableEvents(inbox.batchSize(), consumerName, REVIEW_CREATED_EVENT_TYPE, inbox.workerId());
+        var events = inboxEventRepository.claimProcessableEvents(
+                inbox.batchSize(), consumerName, REVIEW_CREATED_EVENT_TYPE, inbox.workerId());
         for (var event : events) {
             process(event);
         }

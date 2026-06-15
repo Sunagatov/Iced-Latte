@@ -38,17 +38,15 @@ public class ReviewCreatedKafkaConsumer {
             throw new IllegalStateException("Kafka inbox recording is disabled while Kafka consumer is active");
         }
 
+        String topic = record.topic();
+        int partition = record.partition();
+        long offset = record.offset();
         ReviewCreatedKafkaEvent event;
         try {
             event = objectMapper.readValue(record.value(), ReviewCreatedKafkaEvent.class);
         } catch (JsonProcessingException e) {
             String logMessage = "event.inbox.malformed: topic={}, partition={}, offset={}, exceptionClass={}";
-            log.warn(
-                    logMessage,
-                    record.topic(),
-                    record.partition(),
-                    record.offset(),
-                    e.getClass().getSimpleName());
+            log.warn(logMessage, topic, partition, offset, e.getClass().getSimpleName());
             acknowledgment.acknowledge();
             return;
         }
@@ -56,23 +54,16 @@ public class ReviewCreatedKafkaConsumer {
                 || event.eventVersion() != REVIEW_CREATED_EVENT_VERSION) {
             String logMessage =
                     "event.inbox.unsupported: eventId={}, eventType={}, eventVersion={}, topic={}, partition={}, offset={}";
-            log.warn(
-                    logMessage,
-                    event.eventId(),
-                    event.eventType(),
-                    event.eventVersion(),
-                    record.topic(),
-                    record.partition(),
-                    record.offset());
+            log.warn(logMessage, event.eventId(), event.eventType(), event.eventVersion(), topic, partition, offset);
             acknowledgment.acknowledge();
             return;
         }
         boolean inserted = inboxEventRepository.insertReceivedEvent(
                 event,
-                record.topic(),
+                topic,
                 record.key(),
-                record.partition(),
-                record.offset(),
+                partition,
+                offset,
                 properties.consumerGroups().reviewAi(),
                 record.value(),
                 safeHeadersAsJson(record),
@@ -81,10 +72,10 @@ public class ReviewCreatedKafkaConsumer {
 
         if (inserted) {
             String logMessage = "event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}";
-            log.info(logMessage, event.eventId(), record.topic(), record.partition(), record.offset());
+            log.info(logMessage, event.eventId(), topic, partition, offset);
         } else {
             String logMessage = "event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}";
-            log.info(logMessage, event.eventId(), record.topic(), record.partition(), record.offset());
+            log.info(logMessage, event.eventId(), topic, partition, offset);
         }
     }
 

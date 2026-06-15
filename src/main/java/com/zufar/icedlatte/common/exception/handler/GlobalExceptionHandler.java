@@ -198,12 +198,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleHttpRequestMethodNotSupportedException(
             final HttpRequestMethodNotSupportedException exception) {
         String logMessage = "exception.method_not_supported: method={}, status=405";
-        log.debug(logMessage, RequestPathUtils.sanitize(exception.getMethod()));
+        String sanitizedMethod = RequestPathUtils.sanitize(exception.getMethod());
+        log.debug(logMessage, sanitizedMethod);
         ProblemDetail pd = problemDetailFactory.build(
                 "about:blank",
                 "Method Not Allowed",
                 HttpStatus.METHOD_NOT_ALLOWED,
-                "HTTP method '" + RequestPathUtils.sanitize(exception.getMethod()) + "' is not supported.");
+                "HTTP method '" + sanitizedMethod + "' is not supported.");
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(pd);
     }
 

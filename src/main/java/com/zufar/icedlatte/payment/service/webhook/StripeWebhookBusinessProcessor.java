@@ -1,17 +1,5 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHARGE_REFUNDED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_COMPLETED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_EXPIRED;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
@@ -22,9 +10,19 @@ import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import com.zufar.icedlatte.payment.service.PaymentConfirmationService;
 import com.zufar.icedlatte.payment.service.PaymentConfirmationSource;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHARGE_REFUNDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_COMPLETED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_EXPIRED;
 
 /**
  * Transactional webhook business logic, extracted into a separate bean to ensure @Transactional is honored (avoids
@@ -66,26 +64,28 @@ public class StripeWebhookBusinessProcessor {
     }
 
     private void handleSessionCompleted(Event event, Session stripeSession) {
-        if (!"paid".equals(stripeSession.getPaymentStatus())) {
-            UUID orderId = extractOrderId(stripeSession);
-            Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
-            if (payment == null || payment.getStatus().isTerminal()) {
-                String logMessage = "payment.awaiting_async.skipped: orderId={}, status={}";
-                log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
-                return;
-            }
-            payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
-            payment.setRawEventId(event.getId());
-            payment.setLatestEventType(event.getType());
-            paymentRepository.save(payment);
-            log.info("payment.awaiting_async: orderId={}, paymentStatus={}", orderId, stripeSession.getPaymentStatus());
+        String sessionPaymentStatus = stripeSession.getPaymentStatus();
+        UUID orderId = extractOrderId(stripeSession);
+
+        if ("paid".equals(sessionPaymentStatus)) {
+            PaymentConfirmationSource stripePaymentConfirmed =
+                    new PaymentConfirmationSource(event.getId(), event.getType(), "Stripe payment confirmed");
+            paymentConfirmationService.confirmPaid(orderId, stripeSession, stripePaymentConfirmed);
             return;
         }
-        UUID orderId = extractOrderId(stripeSession);
-        paymentConfirmationService.confirmPaid(
-                orderId,
-                stripeSession,
-                new PaymentConfirmationSource(event.getId(), event.getType(), "Stripe payment confirmed"));
+        Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
+        if (payment == null || payment.getStatus().isTerminal()) {
+            String logMessage = "payment.awaiting_async.skipped: orderId={}, status={}";
+            log.info(logMessage, orderId, paymentStatusOrMissing(payment));
+            return;
+        }
+        payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
+        payment.setRawEventId(event.getId());
+        payment.setLatestEventType(event.getType());
+
+        paymentRepository.save(payment);
+
+        log.info("payment.awaiting_async: orderId={}, paymentStatus={}", orderId, sessionPaymentStatus);
     }
 
     private void handleExpired(Session stripeSession) {
@@ -94,7 +94,7 @@ public class StripeWebhookBusinessProcessor {
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
             String logMessage = "payment.expired.skipped: orderId={}, status={}";
-            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
+            log.info(logMessage, orderId, paymentStatusOrMissing(payment));
             return;
         }
 
@@ -112,7 +112,7 @@ public class StripeWebhookBusinessProcessor {
         Payment payment = paymentRepository.findByOrderIdForUpdate(orderId).orElse(null);
         if (payment == null || payment.getStatus().isTerminal()) {
             String logMessage = "payment.async_failed.skipped: orderId={}, status={}";
-            log.info(logMessage, orderId, payment != null ? payment.getStatus() : "missing");
+            log.info(logMessage, orderId, paymentStatusOrMissing(payment));
             return;
         }
 
@@ -131,8 +131,9 @@ public class StripeWebhookBusinessProcessor {
                 .map(com.stripe.model.Charge.class::cast)
                 .orElse(null);
 
+        String eventId = event.getId();
         if (charge == null) {
-            log.warn("payment.webhook.charge_missing: eventId={}", event.getId());
+            log.warn("payment.webhook.charge_missing: eventId={}", eventId);
             return;
         }
 
@@ -145,21 +146,23 @@ public class StripeWebhookBusinessProcessor {
         }
 
         OrderSnapshot order = orderOpt.get();
-        if (order.status() == OrderStatusSnapshot.REFUND_REQUESTED) {
-            if (orderPaymentApi.confirmRefund(order.id(), "Stripe refund confirmed")) {
-                paymentRepository.findByOrderIdForUpdate(order.id()).ifPresent(payment -> {
-                    payment.setStatus(PaymentStatus.REFUNDED);
-                    payment.setRawEventId(event.getId());
-                    payment.setLatestEventType(event.getType());
-                    paymentRepository.save(payment);
-                });
-                log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", order.id(), paymentIntentId);
-            } else {
-                log.warn("order.refund.transition_failed: orderId={}, status={}", order.id(), order.status());
-            }
-        } else {
-            log.info("order.refund.webhook_ignored: orderId={}, status={}", order.id(), order.status());
+        UUID orderId = order.id();
+        if (order.status() != OrderStatusSnapshot.REFUND_REQUESTED) {
+            log.info("order.refund.webhook_ignored: orderId={}, status={}", orderId, order.status());
+            return;
         }
+        if (!orderPaymentApi.confirmRefund(orderId, "Stripe refund confirmed")) {
+            log.warn("order.refund.transition_failed: orderId={}, status={}", orderId, order.status());
+            return;
+        }
+        paymentRepository.findByOrderIdForUpdate(orderId).ifPresent(payment -> {
+            payment.setStatus(PaymentStatus.REFUNDED);
+            payment.setRawEventId(eventId);
+            payment.setLatestEventType(event.getType());
+            paymentRepository.save(payment);
+        });
+        log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntentId);
+
     }
 
     private Session requireSession(Event event) {
@@ -183,5 +186,9 @@ public class StripeWebhookBusinessProcessor {
             throw new IllegalStateException("No orderId in Stripe session metadata");
         }
         return UUID.fromString(orderId);
+    }
+
+    private static String paymentStatusOrMissing(Payment payment) {
+        return payment != null ? payment.getStatus().name() : "missing";
     }
 }

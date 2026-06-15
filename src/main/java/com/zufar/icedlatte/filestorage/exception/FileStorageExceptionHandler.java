@@ -56,14 +56,14 @@ public class FileStorageExceptionHandler {
                                 e.getMessage());
                 };
 
-        if (mapping.status().is5xxServerError()) {
-            log.error("{}: status={}", mapping.logTag(), mapping.status().value(), ex);
+        HttpStatus status = mapping.status();
+        if (status.is5xxServerError()) {
+            log.error("{}: status={}", mapping.logTag(), status.value(), ex);
         } else {
-            log.debug("{}: status={}", mapping.logTag(), mapping.status().value());
+            log.debug("{}: status={}", mapping.logTag(), status.value());
         }
 
-        ProblemDetail pd =
-                problemDetailFactory.build(mapping.typeSlug(), mapping.title(), mapping.status(), mapping.detail());
-        return ResponseEntity.status(mapping.status()).body(pd);
+        ProblemDetail pd = problemDetailFactory.build(mapping.typeSlug(), mapping.title(), status, mapping.detail());
+        return ResponseEntity.status(status).body(pd);
     }
 }
