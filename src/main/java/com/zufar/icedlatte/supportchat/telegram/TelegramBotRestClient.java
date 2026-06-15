@@ -84,11 +84,10 @@ class TelegramBotRestClient implements TelegramBotClient {
             if (response == null || !response.ok() || response.result() == null) {
                 log.warn("support_chat.telegram.send_message.failed");
                 return Optional.empty();
-            } else {
-                long messageId = response.result().messageId();
-                TelegramMessageRef telegramMessageRef = new TelegramMessageRef(messageId);
-                return Optional.of(telegramMessageRef);
             }
+            long messageId = response.result().messageId();
+            TelegramMessageRef telegramMessageRef = new TelegramMessageRef(messageId);
+            return Optional.of(telegramMessageRef);
         } catch (RuntimeException ex) {
             String logMessage = "support_chat.telegram.send_message.error: exceptionClass={}";
             log.warn(logMessage, ex.getClass().getSimpleName());
