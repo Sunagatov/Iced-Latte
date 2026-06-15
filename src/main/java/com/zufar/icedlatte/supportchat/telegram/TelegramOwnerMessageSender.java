@@ -61,7 +61,8 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
                 long telegramMessageThreadId = topic.get().messageThreadId();
                 conversation.setTelegramMessageThreadId(telegramMessageThreadId);
                 conversationRepository.save(conversation);
-                OwnerMessageDeliveryResult topicDelivery = sendToExistingTopic(messageId, telegramMessageThreadId, text);
+                OwnerMessageDeliveryResult topicDelivery =
+                        sendToExistingTopic(messageId, telegramMessageThreadId, text);
                 if (!topicDelivery.delivered()) {
                     return sendFallback(messageId, conversation, text);
                 }

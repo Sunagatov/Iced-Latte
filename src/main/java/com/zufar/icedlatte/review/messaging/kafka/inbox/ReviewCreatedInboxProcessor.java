@@ -1,19 +1,17 @@
 package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
-import java.time.Instant;
-import java.util.UUID;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -41,8 +39,7 @@ public class ReviewCreatedInboxProcessor {
             log.warn("review.inbox.locks.reclaimed: count={}", reclaimed);
         }
 
-        var events = inboxEventRepository.claimProcessableEvents(
-                inbox.batchSize(), consumerName, REVIEW_CREATED_EVENT_TYPE, inbox.workerId());
+        var events = inboxEventRepository.claimProcessableEvents(inbox.batchSize(), consumerName, REVIEW_CREATED_EVENT_TYPE, inbox.workerId());
         for (var event : events) {
             process(event);
         }
@@ -50,32 +47,29 @@ public class ReviewCreatedInboxProcessor {
 
     private void process(InboxEventRepository.InboxEventRow row) {
         KafkaIntegrationProperties.Inbox inbox = properties.inbox();
+        String workerId = inbox.workerId();
+        UUID rowId = row.id();
+        String consumerName = properties.consumerGroups().reviewAi();
+        String eventType = REVIEW_CREATED_EVENT_TYPE;
+        UUID eventId = row.eventId();
         try {
-            log.info("event.inbox.processing.started: eventId={}", row.eventId());
+            log.info("event.inbox.processing.started: eventId={}", eventId);
             ReviewCreatedKafkaEvent event = objectMapper.readValue(row.payload(), ReviewCreatedKafkaEvent.class);
             UUID reviewId = event.payload().reviewId();
-            AsyncReviewProcessingService.ProcessingResult result = processingService.processByReviewId(reviewId);
-            if (result == AsyncReviewProcessingService.ProcessingResult.IGNORED) {
-                inboxEventRepository.markIgnored(row.id(), inbox.workerId(), consumerName(), REVIEW_CREATED_EVENT_TYPE);
-            } else {
-                inboxEventRepository.markProcessed(
-                        row.id(), inbox.workerId(), consumerName(), REVIEW_CREATED_EVENT_TYPE);
-            }
-            log.info("event.inbox.processing.succeeded: eventId={}, status={}", row.eventId(), result);
-        } catch (Exception e) {
-            inboxEventRepository.markFailed(
-                    row.id(),
-                    inbox.workerId(),
-                    consumerName(),
-                    REVIEW_CREATED_EVENT_TYPE,
-                    row.attemptCount(),
-                    row.maxAttempts(),
-                    e);
-            log.warn("event.inbox.processing.failed: eventId={}", row.eventId(), e);
-        }
-    }
 
-    private String consumerName() {
-        return properties.consumerGroups().reviewAi();
+            AsyncReviewProcessingService.ProcessingResult result = processingService.processByReviewId(reviewId);
+
+            switch (result) {
+                case IGNORED -> inboxEventRepository.markIgnored(rowId, workerId, consumerName, eventType);
+                case PROCESSED -> inboxEventRepository.markProcessed(rowId, workerId, consumerName, eventType);
+            }
+            log.info("event.inbox.processing.succeeded: eventId={}, status={}", eventId, result);
+        } catch (Exception e) {
+            int attemptCount = row.attemptCount();
+            int maxAttempts = row.maxAttempts();
+
+            inboxEventRepository.markFailed(rowId, workerId, consumerName, eventType, attemptCount, maxAttempts, e);
+            log.warn("event.inbox.processing.failed: eventId={}", eventId, e);
+        }
     }
 }

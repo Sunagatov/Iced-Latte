@@ -34,17 +34,18 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
             var response = reviewAiService.moderate(text);
             var normalizedResponse = response == null ? "" : response.trim();
 
-            if (!OK.equals(normalizedResponse)) {
-                String reason;
-                if (normalizedResponse.contains(":")) {
-                    reason = normalizedResponse
-                            .substring(normalizedResponse.indexOf(':') + 1)
-                            .trim();
-                } else {
-                    reason = normalizedResponse;
-                }
-                throw new ReviewModerationException(reason);
+            if (OK.equals(normalizedResponse)) {
+                return;
             }
+            String reason;
+            if (normalizedResponse.contains(":")) {
+                reason = normalizedResponse
+                        .substring(normalizedResponse.indexOf(':') + 1)
+                        .trim();
+            } else {
+                reason = normalizedResponse;
+            }
+            throw new ReviewModerationException(reason);
         } catch (ReviewModerationException e) {
             throw e;
         } catch (Exception e) {
@@ -56,9 +57,12 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
     @Override
     public String summarize(UUID productId) {
         try {
-            var reviews = reviewRepository.findAllByProductId(
-                    productId, PageRequest.of(0, MAX_REVIEWS_FOR_SUMMARY, Sort.by(Sort.Direction.DESC, "createdAt")));
-            if (reviews.isEmpty()) return null;
+            PageRequest pageRequest =
+                    PageRequest.of(0, MAX_REVIEWS_FOR_SUMMARY, Sort.by(Sort.Direction.DESC, "createdAt"));
+            var reviews = reviewRepository.findAllByProductId(productId, pageRequest);
+            if (reviews.isEmpty()) {
+                return null;
+            }
             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
             return reviewAiService.aggregateSummary(combined);
         } catch (Exception e) {

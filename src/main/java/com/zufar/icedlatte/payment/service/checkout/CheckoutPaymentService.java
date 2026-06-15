@@ -67,26 +67,29 @@ public class CheckoutPaymentService {
         CheckoutPreparation prepared = prepareCheckout(userId, request, idempotencyKey);
 
         // Idempotent retry: don't call Stripe with empty line items
-        if (prepared instanceof CheckoutPreparation.ExistingCheckout existingCheckout) {
-            return resolveExistingCheckout(existingCheckout, user.email());
-        }
+        return switch (prepared) {
+            case CheckoutPreparation.ExistingCheckout existingCheckout ->
+                resolveExistingCheckout(existingCheckout, user.email());
+            case CheckoutPreparation.NewCheckout newCheckout -> {
+                // Stage 2: Outside transaction — call Stripe
+                OrderSnapshot orderSnapshot = newCheckout.order();
+                StripeSessionResult stripeResult =
+                        stripeSessionCreator.create(orderSnapshot, user.email(), newCheckout.cartItems());
 
-        CheckoutPreparation.NewCheckout newCheckout = (CheckoutPreparation.NewCheckout) prepared;
+                // Stage 3: DB transaction — save Stripe details
+                txService.saveStripeDetails(newCheckout.payment().id(), stripeResult);
 
-        // Stage 2: Outside transaction — call Stripe
-        OrderSnapshot orderSnapshot = newCheckout.order();
-        StripeSessionResult stripeResult =
-                stripeSessionCreator.create(orderSnapshot, user.email(), newCheckout.cartItems());
+                log.info(
+                        "checkout.created: orderId={}, stripeSessionId={}",
+                        orderSnapshot.id(),
+                        stripeResult.sessionId());
 
-        // Stage 3: DB transaction — save Stripe details
-        txService.saveStripeDetails(newCheckout.payment().id(), stripeResult);
-
-        log.info("checkout.created: orderId={}, stripeSessionId={}", orderSnapshot.id(), stripeResult.sessionId());
-
-        return new CheckoutResponseDto()
-                .orderId(orderSnapshot.id())
-                .stripeSessionId(stripeResult.sessionId())
-                .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
+                yield new CheckoutResponseDto()
+                        .orderId(orderSnapshot.id())
+                        .stripeSessionId(stripeResult.sessionId())
+                        .checkoutUrl(URI.create(stripeResult.checkoutUrl()));
+            }
+        };
     }
 
     private CheckoutPreparation prepareCheckout(UUID userId, CreateCheckoutRequestDto request, String idempotencyKey) {

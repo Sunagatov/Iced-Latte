@@ -1,14 +1,6 @@
 package com.zufar.icedlatte.supportchat.service;
 
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
-import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -18,7 +10,16 @@ import java.time.ZoneOffset;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
+import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
+import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 
 @DisplayName("SupportChatAbuseGuard unit tests")
 class SupportChatAbuseGuardTest {

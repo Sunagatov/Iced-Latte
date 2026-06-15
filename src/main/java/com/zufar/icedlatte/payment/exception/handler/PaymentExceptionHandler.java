@@ -47,11 +47,13 @@ public class PaymentExceptionHandler {
                                 HttpStatus.FORBIDDEN,
                                 "Access denied.");
                     case StripeSessionException e -> {
-                        if (e.getCause() instanceof AuthenticationException) {
-                            log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);
-                        } else {
-                            String logMessage = "payment.session.failed: exceptionClass={}, status=502";
-                            log.warn(logMessage, e.getClass().getSimpleName());
+                        switch (e.getCause()) {
+                            case AuthenticationException _ ->
+                                log.error("payment.session.failed: reason=invalid_stripe_key, status=502", e);
+                            case null, default -> {
+                                String logMessage = "payment.session.failed: exceptionClass={}, status=502";
+                                log.warn(logMessage, e.getClass().getSimpleName());
+                            }
                         }
                         yield new ErrorMapping(
                                 "exception.payment.session_failed",
