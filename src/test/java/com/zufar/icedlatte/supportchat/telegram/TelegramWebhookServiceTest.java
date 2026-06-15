@@ -1,17 +1,5 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataIntegrityViolationException;
-
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
@@ -19,8 +7,25 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
+import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
+import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @DisplayName("TelegramWebhookService unit tests")
 class TelegramWebhookServiceTest {
@@ -29,6 +34,7 @@ class TelegramWebhookServiceTest {
     private static final UUID USER_ID = UUID.randomUUID();
 
     private final SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
+    private final SupportMessageRepository messageRepository = mock(SupportMessageRepository.class);
     private final SupportChatService supportChatService = mock(SupportChatService.class);
 
     @Test
@@ -47,8 +53,10 @@ class TelegramWebhookServiceTest {
     @DisplayName("Owner reply to fallback bot message is persisted")
     void handle_fallbackOwnerReply_persistsMessage() {
         SupportConversationEntity conversation = conversation();
+        SupportMessageEntity correlation = customerMessage(conversation.getId());
         TelegramWebhookUpdate.TelegramWebhookMessage message = message(7002L, null, "Fallback answer", 100L);
-        when(conversationRepository.findByTelegramFallbackMessageId(100L)).thenReturn(Optional.of(conversation));
+        when(messageRepository.findByTelegramMessageId(100L)).thenReturn(Optional.of(correlation));
+        when(conversationRepository.findById(conversation.getId())).thenReturn(Optional.of(conversation));
 
         var result = enabledService().handle("secret", update(9002L, message));
 
@@ -62,6 +70,7 @@ class TelegramWebhookServiceTest {
         SupportConversationEntity conversation = conversation();
         TelegramWebhookUpdate.TelegramWebhookMessage message = message(7002L, 999L, "Fallback answer", 100L);
         when(conversationRepository.findByTelegramMessageThreadId(999L)).thenReturn(Optional.empty());
+        when(messageRepository.findByTelegramMessageId(100L)).thenReturn(Optional.empty());
         when(conversationRepository.findByTelegramFallbackMessageId(100L)).thenReturn(Optional.of(conversation));
 
         var result = enabledService().handle("secret", update(9002L, message));
@@ -176,11 +185,13 @@ class TelegramWebhookServiceTest {
     }
 
     private TelegramWebhookService enabledService() {
-        return new TelegramWebhookService(properties(true), conversationRepository, supportChatService);
+        return new TelegramWebhookService(
+                properties(true), conversationRepository, messageRepository, supportChatService);
     }
 
     private TelegramWebhookService disabledService() {
-        return new TelegramWebhookService(properties(false), conversationRepository, supportChatService);
+        return new TelegramWebhookService(
+                properties(false), conversationRepository, messageRepository, supportChatService);
     }
 
     private static TelegramWebhookUpdate update(long updateId, TelegramWebhookUpdate.TelegramWebhookMessage message) {
@@ -210,6 +221,13 @@ class TelegramWebhookServiceTest {
         conversation.setId(CONVERSATION_ID);
         conversation.setUserId(USER_ID);
         return conversation;
+    }
+
+    private static SupportMessageEntity customerMessage(UUID conversationId) {
+        SupportMessageEntity message = new SupportMessageEntity();
+        message.setConversationId(conversationId);
+        message.setTelegramMessageId(100L);
+        return message;
     }
 
     private static SupportChatProperties properties(boolean enabled) {

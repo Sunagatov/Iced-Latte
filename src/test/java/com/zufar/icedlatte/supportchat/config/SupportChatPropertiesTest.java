@@ -35,6 +35,22 @@ class SupportChatPropertiesTest {
     }
 
     @Test
+    @DisplayName("Enabled support chat requires a working owner message mode")
+    void enabledSupportChat_disabledOwnerMode_rejectsConfiguration() {
+        assertThatThrownBy(() -> new SupportChatProperties(
+                        true,
+                        4000,
+                        90,
+                        OwnerMessageMode.DISABLED,
+                        null,
+                        new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
+                        null,
+                        Set.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("support-chat.owner-message-mode must not be DISABLED when support-chat.enabled=true");
+    }
+
+    @Test
     @DisplayName("Telegram mode requires webhook secret")
     void telegramMode_missingWebhookSecret_rejectsConfiguration() {
         assertThatThrownBy(() -> createProperties(new Telegram(

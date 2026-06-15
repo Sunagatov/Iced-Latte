@@ -22,6 +22,8 @@ public interface SupportMessageRepository extends JpaRepository<SupportMessageEn
 
     Optional<SupportMessageEntity> findByConversationIdAndClientMessageId(UUID conversationId, UUID clientMessageId);
 
+    Optional<SupportMessageEntity> findByTelegramMessageId(Long telegramMessageId);
+
     boolean existsByTelegramUpdateId(Long telegramUpdateId);
 
     long deleteByCreatedAtBefore(OffsetDateTime createdAt);
@@ -37,6 +39,14 @@ public interface SupportMessageRepository extends JpaRepository<SupportMessageEn
             @Param("messageId") UUID messageId,
             @Param("deliveryStatus") SupportMessageDeliveryStatus deliveryStatus,
             @Param("operatorInspectionRequired") boolean operatorInspectionRequired);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE SupportMessageEntity message
+            SET message.telegramMessageId = :telegramMessageId
+            WHERE message.id = :messageId
+            """)
+    int updateTelegramMessageId(@Param("messageId") UUID messageId, @Param("telegramMessageId") long telegramMessageId);
 
     Optional<SupportMessageEntity> findFirstByConversationIdAndSenderTypeOrderByCreatedAtDesc(
             UUID conversationId, SupportMessageSenderType senderType);

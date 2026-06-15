@@ -1,11 +1,11 @@
 package com.zufar.icedlatte.supportchat.config;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "support-chat")
 public record SupportChatProperties(
@@ -38,6 +38,10 @@ public record SupportChatProperties(
         }
         if (retentionDays < 1) {
             throw new IllegalStateException("support-chat.retention-days must be positive");
+        }
+        if (enabled && ownerMessageMode == OwnerMessageMode.DISABLED) {
+            throw new IllegalStateException(
+                    "support-chat.owner-message-mode must not be DISABLED when support-chat.enabled=true");
         }
         if (ownerMessageMode == OwnerMessageMode.TELEGRAM) {
             if (telegram.botToken().isBlank()) {

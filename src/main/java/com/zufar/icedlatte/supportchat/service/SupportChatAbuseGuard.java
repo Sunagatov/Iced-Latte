@@ -31,14 +31,11 @@ public class SupportChatAbuseGuard {
     }
 
     boolean requiresTurnstile(SupportMessageEntity previousCustomerMessage, UUID conversationId) {
-        if (!properties.turnstile().firstMessageEnabled()) {
-            return false;
-        }
-        if (previousCustomerMessage == null) {
-            return true;
-        }
         if (isChallengeCooldownActive(conversationId)) {
             return true;
+        }
+        if (previousCustomerMessage == null) {
+            return properties.turnstile().firstMessageEnabled();
         }
 
         OffsetDateTime cutoff = now().minus(properties.turnstile().longInactivityDuration());

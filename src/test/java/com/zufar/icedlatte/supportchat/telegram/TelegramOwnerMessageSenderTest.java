@@ -22,6 +22,7 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
+import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
 @DisplayName("TelegramOwnerMessageSender unit tests")
 class TelegramOwnerMessageSenderTest {
@@ -32,6 +33,7 @@ class TelegramOwnerMessageSenderTest {
             new OwnerMessage(CONVERSATION_ID, MESSAGE_ID, "Olivia Stone", "customer@example.com", "Hello support");
 
     private final SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
+    private final SupportMessageRepository messageRepository = mock(SupportMessageRepository.class);
     private final FakeTelegramBotClient telegramBotClient = new FakeTelegramBotClient();
     private final TelegramOwnerMessageFormatter formatter = new TelegramOwnerMessageFormatter();
 
@@ -40,6 +42,7 @@ class TelegramOwnerMessageSenderTest {
     void send_existingTopic_sendsToThread() {
         SupportConversationEntity conversation = conversation();
         conversation.setTelegramMessageThreadId(123L);
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 100L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(true).send(OWNER_MESSAGE);
@@ -62,6 +65,7 @@ class TelegramOwnerMessageSenderTest {
         conversation.setTelegramMessageThreadId(123L);
         telegramBotClient.nextMessages.add(null);
         telegramBotClient.nextMessages.add(new TelegramMessageRef(789L));
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 789L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(true).send(OWNER_MESSAGE);
@@ -79,6 +83,7 @@ class TelegramOwnerMessageSenderTest {
     void send_withoutTopic_createsTopicAndStoresCorrelation() {
         SupportConversationEntity conversation = conversation();
         telegramBotClient.nextTopic = new TelegramForumTopic(456L);
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 100L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(true).send(OWNER_MESSAGE);
@@ -95,6 +100,7 @@ class TelegramOwnerMessageSenderTest {
         SupportConversationEntity conversation = conversation();
         telegramBotClient.nextTopic = null;
         telegramBotClient.nextMessage = new TelegramMessageRef(789L);
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 789L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(true).send(OWNER_MESSAGE);
@@ -112,6 +118,7 @@ class TelegramOwnerMessageSenderTest {
         SupportConversationEntity conversation = conversation();
         conversation.setTelegramFallbackMessageId(100L);
         telegramBotClient.nextMessage = new TelegramMessageRef(101L);
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 101L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(false).send(OWNER_MESSAGE);
@@ -128,6 +135,7 @@ class TelegramOwnerMessageSenderTest {
         SupportConversationEntity conversation = conversation();
         telegramBotClient.nextMessages.add(null);
         telegramBotClient.nextMessages.add(new TelegramMessageRef(790L));
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 790L)).thenReturn(1);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         var result = sender(true).send(OWNER_MESSAGE);
@@ -177,6 +185,7 @@ class TelegramOwnerMessageSenderTest {
     void send_forumTopicsDisabled_sendsFallbackDirectly() {
         SupportConversationEntity conversation = conversation();
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
+        when(messageRepository.updateTelegramMessageId(MESSAGE_ID, 100L)).thenReturn(1);
 
         var result = sender(false).send(OWNER_MESSAGE);
 
@@ -199,7 +208,11 @@ class TelegramOwnerMessageSenderTest {
 
     private TelegramOwnerMessageSender sender(boolean forumTopicsEnabled) {
         return new TelegramOwnerMessageSender(
-                properties(forumTopicsEnabled), conversationRepository, telegramBotClient, formatter);
+                properties(forumTopicsEnabled),
+                conversationRepository,
+                messageRepository,
+                telegramBotClient,
+                formatter);
     }
 
     private static SupportConversationEntity conversation() {

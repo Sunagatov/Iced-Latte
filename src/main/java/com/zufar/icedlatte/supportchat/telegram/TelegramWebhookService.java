@@ -11,6 +11,7 @@ import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessage
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.exception.SupportChatException;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
+import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ class TelegramWebhookService {
 
     private final SupportChatProperties properties;
     private final SupportConversationRepository conversationRepository;
+    private final SupportMessageRepository messageRepository;
     private final SupportChatService supportChatService;
 
     TelegramWebhookResult handle(String secretToken, TelegramWebhookUpdate update) {
@@ -147,10 +149,16 @@ class TelegramWebhookService {
             }
         }
         TelegramWebhookUpdate.TelegramWebhookMessage replyToMessage = message.replyToMessage();
-        if (replyToMessage != null && replyToMessage.messageId() != null) {
-            return conversationRepository.findByTelegramFallbackMessageId(replyToMessage.messageId());
+        if (replyToMessage == null || replyToMessage.messageId() == null) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        Optional<SupportConversationEntity> conversation = messageRepository
+                .findByTelegramMessageId(replyToMessage.messageId())
+                .flatMap(correlation -> conversationRepository.findById(correlation.getConversationId()));
+        if (conversation.isPresent()) {
+            return conversation;
+        }
+        return conversationRepository.findByTelegramFallbackMessageId(replyToMessage.messageId());
     }
 
     private static boolean hasForwardMetadata(TelegramWebhookUpdate.TelegramWebhookMessage message) {
