@@ -1,26 +1,23 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
+import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
+import com.zufar.icedlatte.security.jwt.config.JwtProperties;
+import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
+import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.crypto.SecretKey;
-
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
-import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
-import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
-import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
-
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -54,14 +51,25 @@ public class JwtTokenProvider {
         return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSigningKeys.getRefresh());
     }
 
+    public String generateSupportChatWebSocketTicket(final String email) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
+        claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE);
+        return buildToken(claims, email, Duration.ofMinutes(2), jwtSigningKeys.get());
+    }
+
     private String buildToken(
             Map<String, Object> extraClaims, UserDetails userDetails, Duration expiration, SecretKey key) {
+        return buildToken(extraClaims, userDetails.getUsername(), expiration, key);
+    }
+
+    private String buildToken(Map<String, Object> extraClaims, String subject, Duration expiration, SecretKey key) {
         try {
             Instant now = Instant.now();
 
             return Jwts.builder()
                     .claims(extraClaims)
-                    .subject(userDetails.getUsername())
+                    .subject(subject)
                     .issuer(jwtProperties.issuer())
                     .audience()
                     .add(jwtProperties.audience())

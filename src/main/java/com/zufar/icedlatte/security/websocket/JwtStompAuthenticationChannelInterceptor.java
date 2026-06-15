@@ -1,8 +1,5 @@
 package com.zufar.icedlatte.security.websocket;
 
-import static com.zufar.icedlatte.security.websocket.WebSocketAuthenticationAttributes.ACCESS_TOKEN_ATTRIBUTE;
-
-import java.util.Map;
 import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
@@ -18,7 +15,6 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
-import com.zufar.icedlatte.security.jwt.provider.JwtAuthenticationProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtStompAuthenticationChannelInterceptor implements ChannelInterceptor {
 
     private final JwtProperties jwtProperties;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
+    private final SupportChatWebSocketAuthenticationService supportChatWebSocketAuthenticationService;
 
     @Override
     public @Nullable Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
@@ -44,25 +40,11 @@ public class JwtStompAuthenticationChannelInterceptor implements ChannelIntercep
         if (authorizationHeader.isEmpty()) {
             throw new AuthenticationCredentialsNotFoundException("Authentication required.");
         }
-        accessor.setUser(jwtAuthenticationProvider.get(authorizationHeader.get()));
+        accessor.setUser(supportChatWebSocketAuthenticationService.authenticate(authorizationHeader.get()));
     }
 
     private Optional<String> authorizationHeader(StompHeaderAccessor accessor) {
         String nativeAuthorizationHeader = accessor.getFirstNativeHeader(jwtProperties.header());
-        if (nativeAuthorizationHeader != null) {
-            return Optional.of(nativeAuthorizationHeader);
-        }
-
-        return accessTokenAttribute(accessor).map(token -> "Bearer " + token);
-    }
-
-    private static Optional<String> accessTokenAttribute(StompHeaderAccessor accessor) {
-        Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
-        if (sessionAttributes == null) {
-            return Optional.empty();
-        }
-
-        Object token = sessionAttributes.get(ACCESS_TOKEN_ATTRIBUTE);
-        return token instanceof String value && !value.isBlank() ? Optional.of(value) : Optional.empty();
+        return Optional.ofNullable(nativeAuthorizationHeader).filter(header -> !header.isBlank());
     }
 }

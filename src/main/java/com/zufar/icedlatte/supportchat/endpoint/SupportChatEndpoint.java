@@ -21,11 +21,13 @@ import com.zufar.icedlatte.openapi.dto.SupportChatConversationDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessageDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessagePageDto;
 import com.zufar.icedlatte.openapi.dto.SupportChatStatusDto;
+import com.zufar.icedlatte.openapi.dto.SupportChatWebSocketTicketDto;
 import com.zufar.icedlatte.openapi.supportchat.api.SupportChatApi;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import com.zufar.icedlatte.supportchat.converter.SupportChatDtoConverter;
 import com.zufar.icedlatte.supportchat.service.SupportChatService;
+import com.zufar.icedlatte.supportchat.service.SupportChatWebSocketAccessService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,6 +39,7 @@ public class SupportChatEndpoint implements SupportChatApi {
 
     private final CurrentUserProvider currentUserProvider;
     private final SupportChatService supportChatService;
+    private final SupportChatWebSocketAccessService supportChatWebSocketAccessService;
     private final SupportChatDtoConverter converter;
     private final HttpServletRequest httpRequest;
     private final ClientIpExtractor clientIpExtractor;
@@ -53,6 +56,15 @@ public class SupportChatEndpoint implements SupportChatApi {
     public ResponseEntity<SupportChatConversationDto> getCurrentSupportChatConversation() {
         var conversation = supportChatService.getOrCreateConversation(currentUserProvider.get());
         return ResponseEntity.ok(converter.toConversationDto(conversation));
+    }
+
+    @Override
+    @PostMapping("/websocket-ticket")
+    public ResponseEntity<SupportChatWebSocketTicketDto> createSupportChatWebSocketTicket() {
+        CurrentUserSnapshot user = currentUserProvider.get();
+        SupportChatWebSocketTicketDto response = new SupportChatWebSocketTicketDto();
+        response.setToken(supportChatWebSocketAccessService.issueTicket(user));
+        return ResponseEntity.ok(response);
     }
 
     @Override

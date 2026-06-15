@@ -21,6 +21,7 @@ public class JwtTokenClaims {
 
     private final JwtParser accessTokenParser;
     private final JwtParser refreshTokenParser;
+    private final JwtParser supportChatWebSocketTicketParser;
 
     public JwtTokenClaims(JwtSigningKeys jwtSigningKeys, JwtProperties jwtProperties) {
         this.accessTokenParser = Jwts.parser()
@@ -34,6 +35,12 @@ public class JwtTokenClaims {
                 .requireIssuer(jwtProperties.issuer())
                 .requireAudience(jwtProperties.audience())
                 .require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.REFRESH_TOKEN_PURPOSE)
+                .build();
+        this.supportChatWebSocketTicketParser = Jwts.parser()
+                .verifyWith(jwtSigningKeys.get())
+                .requireIssuer(jwtProperties.issuer())
+                .requireAudience(jwtProperties.audience())
+                .require(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE)
                 .build();
     }
 
@@ -62,6 +69,17 @@ public class JwtTokenClaims {
             throw ex;
         } catch (Exception ex) {
             throw new JwtTokenException("Invalid refresh token", ex);
+        }
+    }
+
+    public String extractSupportChatWebSocketTicketEmail(final String token) {
+        try {
+            return extractEmail(
+                    supportChatWebSocketTicketClaims(token), "Support chat WebSocket ticket has no subject");
+        } catch (ExpiredJwtException | JwtTokenException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new JwtTokenException("Invalid support chat WebSocket ticket", ex);
         }
     }
 
@@ -98,5 +116,9 @@ public class JwtTokenClaims {
 
     private Claims refreshTokenClaims(final String token) {
         return refreshTokenParser.parseSignedClaims(token).getPayload();
+    }
+
+    private Claims supportChatWebSocketTicketClaims(final String token) {
+        return supportChatWebSocketTicketParser.parseSignedClaims(token).getPayload();
     }
 }

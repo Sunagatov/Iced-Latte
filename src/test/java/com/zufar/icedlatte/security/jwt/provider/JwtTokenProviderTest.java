@@ -115,6 +115,22 @@ class JwtTokenProviderTest {
         assertThat(claims.get("role")).isEqualTo("ADMIN");
     }
 
+    @Test
+    @DisplayName("Generated support chat websocket ticket contains support chat purpose")
+    void generateSupportChatWebSocketTicketContainsSupportChatPurpose() {
+        String token = tokenProvider.generateSupportChatWebSocketTicket("eve@example.com");
+
+        Claims claims = Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        assertThat(claims.getSubject()).isEqualTo("eve@example.com");
+        assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE))
+                .isEqualTo(JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE);
+    }
+
     private static String refreshSecret() {
         byte[] bytes = new byte[64];
         bytes[0] = 1;

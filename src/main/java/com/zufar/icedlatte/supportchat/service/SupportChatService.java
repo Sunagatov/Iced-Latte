@@ -30,10 +30,7 @@ import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.exception.DuplicateSupportChatMessageException;
 import com.zufar.icedlatte.supportchat.exception.InvalidSupportChatMessageException;
-import com.zufar.icedlatte.supportchat.exception.SupportChatAccessRestrictedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
-import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
-import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededException;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
@@ -52,6 +49,7 @@ public class SupportChatService {
     private static final int MAX_PAGE_SIZE = 50;
 
     private final SupportChatProperties properties;
+    private final SupportChatAvailabilityService availabilityService;
     private final SupportChatEligibilityService eligibilityService;
     private final SupportConversationRepository conversationRepository;
     private final SupportMessageRepository messageRepository;
@@ -64,6 +62,7 @@ public class SupportChatService {
 
     public SupportChatService(
             SupportChatProperties properties,
+            SupportChatAvailabilityService availabilityService,
             SupportChatEligibilityService eligibilityService,
             SupportConversationRepository conversationRepository,
             SupportMessageRepository messageRepository,
@@ -74,6 +73,7 @@ public class SupportChatService {
             @Qualifier("openRateLimiter") RateLimiter rateLimiter,
             PlatformTransactionManager transactionManager) {
         this.properties = properties;
+        this.availabilityService = availabilityService;
         this.eligibilityService = eligibilityService;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
@@ -95,7 +95,7 @@ public class SupportChatService {
 
     @Transactional
     public SupportConversationEntity getOrCreateConversation(CurrentUserSnapshot user) {
-        ensureAvailable(user);
+        availabilityService.requireAvailable(user);
         UUID userId = user.id();
         return conversationRepository.findByUserId(userId).orElseGet(() -> {
             conversationRepository.insertOpenConversationIfAbsent(UUID.randomUUID(), userId);
@@ -108,7 +108,7 @@ public class SupportChatService {
 
     @Transactional(readOnly = true)
     public Page<SupportMessageEntity> getHistory(CurrentUserSnapshot user, UUID conversationId, int page, int size) {
-        ensureAvailable(user);
+        availabilityService.requireAvailable(user);
         ensureOwnsConversation(user.id(), conversationId);
         int safeSize = Math.clamp(size, 1, MAX_PAGE_SIZE);
         OffsetDateTime createdAfter = OffsetDateTime.now().minusDays(properties.retentionDays());
@@ -155,7 +155,7 @@ public class SupportChatService {
             String body,
             String turnstileToken,
             String clientIp) {
-        ensureAvailable(user);
+        availabilityService.requireAvailable(user);
         UUID userId = user.id();
         SupportConversationEntity conversation = ensureOwnsConversation(userId, conversationId);
         String messageBody = normalizeBody(body);
@@ -235,19 +235,6 @@ public class SupportChatService {
         log.info(logMessage, conversationId, saved.getId(), telegramUpdateId);
 
         return Optional.of(saved);
-    }
-
-    private void ensureAvailable(CurrentUserSnapshot user) {
-        if (!properties.enabled()) {
-            throw new SupportChatDisabledException();
-        }
-        SupportChatEligibility eligibility = eligibilityService.eligibilityFor(user.id());
-        if (!eligibility.eligible()) {
-            if (eligibility.isAccessRestricted()) {
-                throw new SupportChatAccessRestrictedException();
-            }
-            throw new SupportChatEmailVerificationRequiredException();
-        }
     }
 
     private SupportConversationEntity ensureOwnsConversation(UUID userId, UUID conversationId) {

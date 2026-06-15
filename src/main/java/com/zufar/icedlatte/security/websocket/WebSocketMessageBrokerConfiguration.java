@@ -23,12 +23,10 @@ public class WebSocketMessageBrokerConfiguration implements WebSocketMessageBrok
 
     private final CorsProperties corsProperties;
     private final ObjectProvider<ChannelInterceptor> channelInterceptors;
-    private final CookieTokenWebSocketHandshakeInterceptor cookieTokenWebSocketHandshakeInterceptor;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint(ApiPaths.WEBSOCKET)
-                .addInterceptors(cookieTokenWebSocketHandshakeInterceptor)
                 .setAllowedOriginPatterns(corsProperties.allowedOrigins().toArray(String[]::new));
     }
 

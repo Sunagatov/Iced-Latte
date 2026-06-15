@@ -90,6 +90,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/support-chat/websocket-ticket:
+    post:
+      tags:
+        - "Support Chat"
+      summary: "Create a short-lived support chat WebSocket ticket"
+      operationId: "createSupportChatWebSocketTicket"
+      responses:
+        "200":
+          description: "Short-lived support chat WebSocket ticket."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupportChatWebSocketTicketDto"
+        "401":
+          description: "Unauthorized access."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: "Email verification is required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Support chat is disabled or unavailable."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/support-chat/conversations/{conversationId}/messages:
     get:
       tags:
@@ -296,6 +334,14 @@ components:
         - id
         - createdAt
         - updatedAt
+
+    SupportChatWebSocketTicketDto:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+      required:
+        - token
 
     CreateSupportChatMessageRequest:
       type: "object"

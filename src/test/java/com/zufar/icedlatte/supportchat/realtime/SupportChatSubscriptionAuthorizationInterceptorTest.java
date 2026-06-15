@@ -7,9 +7,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
-import java.time.Duration;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -22,16 +20,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
-import com.zufar.icedlatte.supportchat.service.SupportChatEligibility;
-import com.zufar.icedlatte.supportchat.service.SupportChatEligibilityService;
+import com.zufar.icedlatte.supportchat.service.SupportChatAvailabilityService;
 
 @DisplayName("SupportChatSubscriptionAuthorizationInterceptor unit tests")
 class SupportChatSubscriptionAuthorizationInterceptorTest {
@@ -39,7 +30,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID CONVERSATION_ID = UUID.randomUUID();
 
-    private final SupportChatEligibilityService eligibilityService = mock(SupportChatEligibilityService.class);
+    private final SupportChatAvailabilityService availabilityService = mock(SupportChatAvailabilityService.class);
     private final SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
     private final MessageChannel channel = mock(MessageChannel.class);
 
@@ -47,7 +38,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
     @DisplayName("Allows owner of verified user's support chat conversation to subscribe")
     void preSend_supportChatSubscriptionOwnedByEligibleUser_allowsSubscription() {
         SupportConversationEntity conversation = conversation(USER_ID);
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(availabilityService.isEligible(USER_ID)).thenReturn(true);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         Message<?> message = subscriptionMessage(
@@ -61,7 +52,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
     @Test
     @DisplayName("Rejects support chat subscription for another user's conversation")
     void preSend_supportChatSubscriptionForForeignConversation_rejectsSubscription() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(availabilityService.isEligible(USER_ID)).thenReturn(true);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation(UUID.randomUUID())));
 
         Message<?> message = subscriptionMessage(
@@ -74,7 +65,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
     @Test
     @DisplayName("Rejects support chat subscription when user is not eligible")
     void preSend_supportChatSubscriptionForUnverifiedUser_rejectsSubscription() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.emailVerificationRequired());
+        when(availabilityService.isEligible(USER_ID)).thenReturn(false);
 
         Message<?> message = subscriptionMessage(
                 SupportChatWebSocketDestinations.conversationMessages(CONVERSATION_ID), new PrincipalUser(USER_ID));
@@ -92,7 +83,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         var result = enabledInterceptor().preSend(message, channel);
 
         assertThat(result).isSameAs(message);
-        verifyNoInteractions(eligibilityService, conversationRepository);
+        verifyNoInteractions(availabilityService, conversationRepository);
     }
 
     @Test
@@ -103,7 +94,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
 
         assertThatThrownBy(() -> enabledInterceptor().preSend(message, channel))
                 .isInstanceOf(AccessDeniedException.class);
-        verifyNoInteractions(eligibilityService, conversationRepository);
+        verifyNoInteractions(availabilityService, conversationRepository);
     }
 
     @Test
@@ -113,8 +104,8 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         SupportChatWebSocketSessionRegistry sessionRegistry = new SupportChatWebSocketSessionRegistry(1);
         SupportChatSubscriptionAuthorizationInterceptor interceptor =
                 new SupportChatSubscriptionAuthorizationInterceptor(
-                        enabledProperties(), eligibilityService, conversationRepository, sessionRegistry);
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+                        availabilityService, conversationRepository, sessionRegistry);
+        when(availabilityService.isEligible(USER_ID)).thenReturn(true);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         interceptor.preSend(
@@ -140,8 +131,8 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         SupportChatWebSocketSessionRegistry sessionRegistry = new SupportChatWebSocketSessionRegistry(1);
         SupportChatSubscriptionAuthorizationInterceptor interceptor =
                 new SupportChatSubscriptionAuthorizationInterceptor(
-                        enabledProperties(), eligibilityService, conversationRepository, sessionRegistry);
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+                        availabilityService, conversationRepository, sessionRegistry);
+        when(availabilityService.isEligible(USER_ID)).thenReturn(true);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         interceptor.preSend(
@@ -164,10 +155,7 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
 
     private SupportChatSubscriptionAuthorizationInterceptor enabledInterceptor() {
         return new SupportChatSubscriptionAuthorizationInterceptor(
-                enabledProperties(),
-                eligibilityService,
-                conversationRepository,
-                new SupportChatWebSocketSessionRegistry(5));
+                availabilityService, conversationRepository, new SupportChatWebSocketSessionRegistry(5));
     }
 
     private static Message<?> subscriptionMessage(String destination, Principal principal) {
@@ -193,23 +181,6 @@ class SupportChatSubscriptionAuthorizationInterceptorTest {
         conversation.setId(CONVERSATION_ID);
         conversation.setUserId(userId);
         return conversation;
-    }
-
-    private static SupportChatProperties enabledProperties() {
-        return new SupportChatProperties(
-                true,
-                4000,
-                90,
-                OwnerMessageMode.FAKE,
-                new Telegram("", "", 0L, "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
-                new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
-                new RateLimits(
-                        new Bucket(20, Duration.ofMinutes(1)),
-                        new Bucket(100, Duration.ofHours(1)),
-                        new Bucket(300, Duration.ofDays(1)),
-                        new Bucket(10, Duration.ofSeconds(10)),
-                        new Bucket(60, Duration.ofMinutes(1))),
-                Set.of());
     }
 
     private record PrincipalUser(UUID userId) implements Principal, Identifiable {

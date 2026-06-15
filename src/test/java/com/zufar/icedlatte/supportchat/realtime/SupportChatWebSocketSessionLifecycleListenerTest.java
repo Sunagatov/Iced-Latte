@@ -5,9 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.security.Principal;
-import java.time.Duration;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -21,16 +19,9 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.RateLimits;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Telegram;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Turnstile;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
-import com.zufar.icedlatte.supportchat.service.SupportChatEligibility;
-import com.zufar.icedlatte.supportchat.service.SupportChatEligibilityService;
+import com.zufar.icedlatte.supportchat.service.SupportChatAvailabilityService;
 
 @DisplayName("SupportChatWebSocketSessionLifecycleListener unit tests")
 class SupportChatWebSocketSessionLifecycleListenerTest {
@@ -41,16 +32,16 @@ class SupportChatWebSocketSessionLifecycleListenerTest {
     @Test
     @DisplayName("Releases a support chat session slot after transport disconnect")
     void onDisconnect_supportChatTransportDisconnect_releasesSessionSlot() {
-        SupportChatEligibilityService eligibilityService = mock(SupportChatEligibilityService.class);
+        SupportChatAvailabilityService availabilityService = mock(SupportChatAvailabilityService.class);
         SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
         MessageChannel channel = mock(MessageChannel.class);
         SupportChatWebSocketSessionRegistry sessionRegistry = new SupportChatWebSocketSessionRegistry(1);
         SupportChatSubscriptionAuthorizationInterceptor interceptor =
                 new SupportChatSubscriptionAuthorizationInterceptor(
-                        enabledProperties(), eligibilityService, conversationRepository, sessionRegistry);
+                        availabilityService, conversationRepository, sessionRegistry);
         SupportChatWebSocketSessionLifecycleListener listener =
                 new SupportChatWebSocketSessionLifecycleListener(sessionRegistry);
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        when(availabilityService.isEligible(USER_ID)).thenReturn(true);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
 
         interceptor.preSend(subscriptionMessage("session-1"), channel);
@@ -94,23 +85,6 @@ class SupportChatWebSocketSessionLifecycleListenerTest {
         conversation.setId(CONVERSATION_ID);
         conversation.setUserId(USER_ID);
         return conversation;
-    }
-
-    private static SupportChatProperties enabledProperties() {
-        return new SupportChatProperties(
-                true,
-                4000,
-                90,
-                OwnerMessageMode.FAKE,
-                new Telegram("", "", 0L, "", true, Duration.ofSeconds(3), Duration.ofSeconds(5)),
-                new Turnstile(false, Duration.ofHours(24), Duration.ofMinutes(5)),
-                new RateLimits(
-                        new Bucket(20, Duration.ofMinutes(1)),
-                        new Bucket(100, Duration.ofHours(1)),
-                        new Bucket(300, Duration.ofDays(1)),
-                        new Bucket(10, Duration.ofSeconds(10)),
-                        new Bucket(60, Duration.ofMinutes(1))),
-                Set.of());
     }
 
     private record PrincipalUser(UUID userId) implements Principal, Identifiable {

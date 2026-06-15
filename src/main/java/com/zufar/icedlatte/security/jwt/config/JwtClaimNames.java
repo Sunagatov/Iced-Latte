@@ -11,4 +11,5 @@ public class JwtClaimNames {
     public static final String TOKEN_PURPOSE = "purpose";
     public static final String ACCESS_TOKEN_PURPOSE = "access";
     public static final String REFRESH_TOKEN_PURPOSE = "refresh";
+    public static final String SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE = "support-chat-ws";
 }

@@ -20,9 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.common.audit.Identifiable;
-import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
-import com.zufar.icedlatte.supportchat.service.SupportChatEligibilityService;
+import com.zufar.icedlatte.supportchat.service.SupportChatAvailabilityService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelInterceptor {
 
-    private final SupportChatProperties properties;
-    private final SupportChatEligibilityService eligibilityService;
+    private final SupportChatAvailabilityService availabilityService;
     private final SupportConversationRepository conversationRepository;
     private final SupportChatWebSocketSessionRegistry sessionRegistry;
 
@@ -59,7 +57,7 @@ public class SupportChatSubscriptionAuthorizationInterceptor implements ChannelI
         }
 
         UUID userId = userId(accessor.getUser()).orElseThrow(() -> accessDeniedException);
-        if (!properties.enabled() || !eligibilityService.eligibilityFor(userId).eligible()) {
+        if (!availabilityService.isEligible(userId)) {
             throw accessDeniedException;
         }
 

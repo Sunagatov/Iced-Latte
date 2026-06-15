@@ -66,6 +66,9 @@ class SupportChatServiceTest {
     private SupportChatEligibilityService eligibilityService;
 
     @Mock
+    private SupportChatAvailabilityService availabilityService;
+
+    @Mock
     private SupportConversationRepository conversationRepository;
 
     @Mock
@@ -106,7 +109,7 @@ class SupportChatServiceTest {
     @DisplayName("Get or create reuses existing permanent conversation")
     void getOrCreateConversation_existing_returnsExisting() {
         SupportConversationEntity conversation = conversation();
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findByUserId(USER_ID)).thenReturn(Optional.of(conversation));
 
         var result = enabledService().getOrCreateConversation(USER);
@@ -119,7 +122,7 @@ class SupportChatServiceTest {
     @DisplayName("Get or create inserts one permanent conversation when absent")
     void getOrCreateConversation_absent_insertsPermanentConversation() {
         SupportConversationEntity conversation = conversation();
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findByUserId(USER_ID))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(conversation));
@@ -134,7 +137,9 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Unverified or ineligible user cannot create a conversation")
     void getOrCreateConversation_ineligible_throwsForbidden() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.emailVerificationRequired());
+        doThrow(new SupportChatEmailVerificationRequiredException())
+                .when(availabilityService)
+                .requireAvailable(USER);
 
         assertThatThrownBy(() -> enabledService().getOrCreateConversation(USER))
                 .isInstanceOf(SupportChatEmailVerificationRequiredException.class);
@@ -143,7 +148,9 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Restricted user cannot create a conversation")
     void getOrCreateConversation_accessRestricted_throwsForbidden() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.accessRestricted());
+        doThrow(new SupportChatAccessRestrictedException())
+                .when(availabilityService)
+                .requireAvailable(USER);
 
         assertThatThrownBy(() -> enabledService().getOrCreateConversation(USER))
                 .isInstanceOf(SupportChatAccessRestrictedException.class);
@@ -154,7 +161,7 @@ class SupportChatServiceTest {
     void sendCustomerMessage_valid_persistsAndSendsToOwner() {
         SupportConversationEntity conversation = conversation();
         SupportMessageEntity saved = savedCustomerMessage("Hello support");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -188,7 +195,7 @@ class SupportChatServiceTest {
     @DisplayName("Owner delivery exception stores failed message and returns generic support failure")
     void sendCustomerMessage_ownerSenderThrows_marksFailedAndThrowsGenericFailure() {
         SupportMessageEntity saved = savedCustomerMessage("Hello");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -252,6 +259,8 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Disabled support chat rejects message before persistence")
     void sendCustomerMessage_disabled_throwsNotFound() {
+        doThrow(new SupportChatDisabledException()).when(availabilityService).requireAvailable(USER);
+
         assertThatThrownBy(() -> disabledService()
                         .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
                 .isInstanceOf(SupportChatDisabledException.class);
@@ -263,7 +272,7 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Blank message is rejected before rate limiting and persistence")
     void sendCustomerMessage_blankBody_throwsBadRequest() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
 
         assertThatThrownBy(() -> enabledService()
@@ -279,7 +288,7 @@ class SupportChatServiceTest {
     void sendCustomerMessage_foreignConversation_throwsNotFound() {
         SupportConversationEntity conversation = conversation();
         conversation.setUserId(UUID.randomUUID());
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation));
 
         assertThatThrownBy(() -> enabledService()
@@ -293,7 +302,7 @@ class SupportChatServiceTest {
     @DisplayName("Sending with same client message ID is idempotent")
     void sendCustomerMessage_existingClientMessageId_returnsExistingMessage() {
         SupportMessageEntity existing = savedCustomerMessage("Already accepted");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.of(existing));
@@ -312,7 +321,7 @@ class SupportChatServiceTest {
     void sendCustomerMessage_repeatedIdenticalBody_throwsConflict() {
         SupportMessageEntity previous = savedCustomerMessage("Hello");
         previous.setNormalizedBody("hello");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -333,7 +342,7 @@ class SupportChatServiceTest {
         previous.setNormalizedBody("hello");
         previous.setDeliveryStatus(SupportMessageDeliveryStatus.FAILED);
         SupportMessageEntity saved = savedCustomerMessage("Hello");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -355,7 +364,7 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("Rate-limited message is rejected before persistence")
     void sendCustomerMessage_rateLimited_throwsTooManyRequests() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -373,7 +382,7 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("IP rate limit is enforced before persistence")
     void sendCustomerMessage_ipRateLimited_throwsTooManyRequests() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -398,7 +407,7 @@ class SupportChatServiceTest {
     @DisplayName("First customer message verifies Turnstile when enabled")
     void sendCustomerMessage_firstMessageWithTurnstileEnabled_verifiesToken() {
         SupportMessageEntity saved = savedCustomerMessage("Hello");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -424,7 +433,7 @@ class SupportChatServiceTest {
         SupportMessageEntity previous = savedCustomerMessage("Old message");
         previous.setCreatedAt(OffsetDateTime.now().minusDays(2));
         SupportMessageEntity saved = savedCustomerMessage("Hello again");
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
                 .thenReturn(Optional.empty());
@@ -447,7 +456,7 @@ class SupportChatServiceTest {
     @Test
     @DisplayName("History uses bounded page size and retention window")
     void getHistory_usesBoundedPageSizeAndRetentionWindow() {
-        when(eligibilityService.eligibilityFor(USER_ID)).thenReturn(SupportChatEligibility.createEligible());
+        doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
         when(messageRepository.findByConversationIdAndVisibleToCustomerTrueAndCreatedAtAfter(
                         eq(CONVERSATION_ID), any(OffsetDateTime.class), any()))
@@ -466,6 +475,7 @@ class SupportChatServiceTest {
         SupportChatProperties supportChatProperties = properties(true);
         return new SupportChatService(
                 supportChatProperties,
+                availabilityService,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
@@ -481,6 +491,7 @@ class SupportChatServiceTest {
         SupportChatProperties supportChatProperties = properties(false);
         return new SupportChatService(
                 supportChatProperties,
+                availabilityService,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
@@ -496,6 +507,7 @@ class SupportChatServiceTest {
         SupportChatProperties supportChatProperties = properties(true, true);
         return new SupportChatService(
                 supportChatProperties,
+                availabilityService,
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
