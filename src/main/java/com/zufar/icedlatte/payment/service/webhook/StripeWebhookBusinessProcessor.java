@@ -1,5 +1,17 @@
 package com.zufar.icedlatte.payment.service.webhook;
 
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHARGE_REFUNDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_COMPLETED;
+import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_EXPIRED;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
@@ -10,19 +22,9 @@ import com.zufar.icedlatte.payment.entity.PaymentStatus;
 import com.zufar.icedlatte.payment.repository.PaymentRepository;
 import com.zufar.icedlatte.payment.service.PaymentConfirmationService;
 import com.zufar.icedlatte.payment.service.PaymentConfirmationSource;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHARGE_REFUNDED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_FAILED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_ASYNC_PAYMENT_SUCCEEDED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_COMPLETED;
-import static com.zufar.icedlatte.payment.service.webhook.StripeWebhookEventType.CHECKOUT_SESSION_EXPIRED;
 
 /**
  * Transactional webhook business logic, extracted into a separate bean to ensure @Transactional is honored (avoids
@@ -64,12 +66,13 @@ public class StripeWebhookBusinessProcessor {
     }
 
     private void handleSessionCompleted(Event event, Session stripeSession) {
+        String eventType = event.getType();
         String sessionPaymentStatus = stripeSession.getPaymentStatus();
         UUID orderId = extractOrderId(stripeSession);
 
         if ("paid".equals(sessionPaymentStatus)) {
             PaymentConfirmationSource stripePaymentConfirmed =
-                    new PaymentConfirmationSource(event.getId(), event.getType(), "Stripe payment confirmed");
+                    new PaymentConfirmationSource(event.getId(), eventType, "Stripe payment confirmed");
             paymentConfirmationService.confirmPaid(orderId, stripeSession, stripePaymentConfirmed);
             return;
         }
@@ -81,7 +84,7 @@ public class StripeWebhookBusinessProcessor {
         }
         payment.setStatus(PaymentStatus.AWAITING_ASYNC_CONFIRMATION);
         payment.setRawEventId(event.getId());
-        payment.setLatestEventType(event.getType());
+        payment.setLatestEventType(eventType);
 
         paymentRepository.save(payment);
 
@@ -125,6 +128,7 @@ public class StripeWebhookBusinessProcessor {
     }
 
     private void handleChargeRefunded(Event event) {
+        String eventType = event.getType();
         var charge = event.getDataObjectDeserializer()
                 .getObject()
                 .filter(com.stripe.model.Charge.class::isInstance)
@@ -158,11 +162,10 @@ public class StripeWebhookBusinessProcessor {
         paymentRepository.findByOrderIdForUpdate(orderId).ifPresent(payment -> {
             payment.setStatus(PaymentStatus.REFUNDED);
             payment.setRawEventId(eventId);
-            payment.setLatestEventType(event.getType());
+            payment.setLatestEventType(eventType);
             paymentRepository.save(payment);
         });
         log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntentId);
-
     }
 
     private Session requireSession(Event event) {

@@ -62,6 +62,7 @@ public class CheckoutPaymentService {
 
         CurrentUserSnapshot user = currentUserProvider.get();
         UUID userId = user.id();
+        String customerEmail = user.email();
 
         // Stage 1: DB transaction — validate, create order + payment, commit
         CheckoutPreparation prepared = prepareCheckout(userId, request, idempotencyKey);
@@ -69,12 +70,12 @@ public class CheckoutPaymentService {
         // Idempotent retry: don't call Stripe with empty line items
         return switch (prepared) {
             case CheckoutPreparation.ExistingCheckout existingCheckout ->
-                resolveExistingCheckout(existingCheckout, user.email());
+                resolveExistingCheckout(existingCheckout, customerEmail);
             case CheckoutPreparation.NewCheckout newCheckout -> {
                 // Stage 2: Outside transaction — call Stripe
                 OrderSnapshot orderSnapshot = newCheckout.order();
                 StripeSessionResult stripeResult =
-                        stripeSessionCreator.create(orderSnapshot, user.email(), newCheckout.cartItems());
+                        stripeSessionCreator.create(orderSnapshot, customerEmail, newCheckout.cartItems());
 
                 // Stage 3: DB transaction — save Stripe details
                 txService.saveStripeDetails(newCheckout.payment().id(), stripeResult);

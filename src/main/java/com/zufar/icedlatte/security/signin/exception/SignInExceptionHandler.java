@@ -87,14 +87,15 @@ public class SignInExceptionHandler {
                                 "Access denied.");
                 };
 
-        if (!(ex instanceof AbsentBearerHeaderException && ApiPaths.AUTH_REFRESH.equals(request.getRequestURI()))) {
+        String requestUri = request.getRequestURI();
+        if (!(ex instanceof AbsentBearerHeaderException && ApiPaths.AUTH_REFRESH.equals(requestUri))) {
             String logMessage = "{}: status={}, method={}, path={}";
             log.debug(
                     logMessage,
                     mapping.logTag(),
                     mapping.status().value(),
                     request.getMethod(),
-                    RequestPathUtils.sanitize(request.getRequestURI()));
+                    RequestPathUtils.sanitize(requestUri));
         }
 
         ProblemDetail pd =
