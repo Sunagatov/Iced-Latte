@@ -11,11 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
 import com.zufar.icedlatte.cart.api.dto.CartSnapshot;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.openapi.dto.AddressDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
 import com.zufar.icedlatte.order.api.OrderCheckoutApi;
 import com.zufar.icedlatte.order.api.OrderPaymentApi;
 import com.zufar.icedlatte.order.api.OrderSnapshot;
-import com.zufar.icedlatte.order.converter.OrderDtoConverter;
+import com.zufar.icedlatte.order.api.dto.CheckoutOrderRequest;
+import com.zufar.icedlatte.order.api.dto.OrderAddressRequest;
 import com.zufar.icedlatte.payment.config.StripeProperties;
 import com.zufar.icedlatte.payment.dto.CheckoutPaymentSnapshot;
 import com.zufar.icedlatte.payment.dto.CheckoutPreparation;
@@ -42,7 +44,6 @@ public class CheckoutPaymentTransactionService {
     private final OrderPaymentApi orderPaymentApi;
     private final OrderCheckoutApi orderCheckoutApi;
     private final CartCheckoutApi cartCheckoutApi;
-    private final OrderDtoConverter orderDtoConverter;
     private final StripeProperties stripeProperties;
 
     @Transactional
@@ -58,7 +59,7 @@ public class CheckoutPaymentTransactionService {
             throw new BadRequestException("Cannot checkout: shopping cart is empty");
         }
 
-        var checkoutOrderRequest = orderDtoConverter.toCheckoutOrderRequest(request);
+        CheckoutOrderRequest checkoutOrderRequest = toCheckoutOrderRequest(request);
         OrderSnapshot order = orderCheckoutApi.createPendingPaymentOrderSnapshot(userId, checkoutOrderRequest, cart);
 
         Payment payment = Payment.builder()
@@ -106,5 +107,30 @@ public class CheckoutPaymentTransactionService {
 
     private CheckoutPaymentSnapshot toSnapshot(Payment payment) {
         return new CheckoutPaymentSnapshot(payment.getId(), payment.getProviderSessionId());
+    }
+
+    private static CheckoutOrderRequest toCheckoutOrderRequest(CreateCheckoutRequestDto request) {
+        AddressDto address = request.getAddress();
+        return new CheckoutOrderRequest(
+                request.getRecipientName(),
+                request.getRecipientSurname(),
+                request.getRecipientPhone(),
+                request.getDeliveryAddressId(),
+                address == null ? null : toAddressRequest(address));
+    }
+
+    private static OrderAddressRequest toAddressRequest(AddressDto address) {
+        return new OrderAddressRequest(
+                requireAddressPart(address.getCountry(), "country"),
+                requireAddressPart(address.getCity(), "city"),
+                requireAddressPart(address.getLine(), "line"),
+                requireAddressPart(address.getPostcode(), "postcode"));
+    }
+
+    private static String requireAddressPart(String value, String fieldName) {
+        if (value == null) {
+            throw new BadRequestException("Address field '" + fieldName + "' must be provided.");
+        }
+        return value;
     }
 }

@@ -224,6 +224,14 @@ class ArchitectureRulesTest {
             .resideInAPackage("..order.service..");
 
     @ArchTest
+    static final ArchRule non_order_modules_should_not_depend_on_order_implementation = noClasses()
+            .that()
+            .resideOutsideOfPackage("..order..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..order.repository..", "..order.entity..", "..order.converter..");
+
+    @ArchTest
     static final ArchRule order_services_should_not_depend_on_user_repositories = noClasses()
             .that()
             .resideInAPackage("..order.service..")
