@@ -70,13 +70,10 @@ public class ReviewCreatedKafkaConsumer {
                 properties.inbox().maxAttempts());
         acknowledgment.acknowledge();
 
-        if (inserted) {
-            String logMessage = "event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}";
-            log.info(logMessage, event.eventId(), topic, partition, offset);
-        } else {
-            String logMessage = "event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}";
-            log.info(logMessage, event.eventId(), topic, partition, offset);
-        }
+        String logMessage = inserted
+                ? "event.inbox.recorded: eventId={}, topic={}, partition={}, offset={}"
+                : "event.inbox.duplicate: eventId={}, topic={}, partition={}, offset={}";
+        log.info(logMessage, event.eventId(), topic, partition, offset);
     }
 
     private String safeHeadersAsJson(ConsumerRecord<String, String> record) {
