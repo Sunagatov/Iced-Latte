@@ -45,6 +45,7 @@ class ArchitectureRulesTest {
                     "..favorite..",
                     "..email..",
                     "..filestorage..",
+                    "..supportchat..",
                     "..icedlatte.security..",
                     "..icedlatte.user..");
 
@@ -264,6 +265,14 @@ class ArchitectureRulesTest {
             .resideInAPackage("..user.entity..");
 
     @ArchTest
+    static final ArchRule review_modules_should_not_depend_on_review_implementation = noClasses()
+            .that()
+            .resideOutsideOfPackage("..review..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..review.entity..", "..review.repository..", "..review.converter..");
+
+    @ArchTest
     static final ArchRule non_product_modules_should_not_depend_on_product_entities = noClasses()
             .that()
             .resideOutsideOfPackage("..product..")
@@ -280,6 +289,14 @@ class ArchitectureRulesTest {
             .resideInAnyPackage("..product.service..");
 
     @ArchTest
+    static final ArchRule non_product_modules_should_not_depend_on_product_implementation = noClasses()
+            .that()
+            .resideOutsideOfPackage("..product..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..product.entity..", "..product.repository..", "..product.converter..");
+
+    @ArchTest
     static final ArchRule non_cart_modules_should_not_depend_on_cart_services = noClasses()
             .that()
             .resideOutsideOfPackage("..cart..")
@@ -294,6 +311,14 @@ class ArchitectureRulesTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("..payment.service..");
+
+    @ArchTest
+    static final ArchRule non_payment_modules_should_not_depend_on_payment_implementation = noClasses()
+            .that()
+            .resideOutsideOfPackage("..payment..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..payment.entity..", "..payment.repository..", "..payment.converter..");
 
     @ArchTest
     static final ArchRule non_ratelimit_modules_should_not_depend_on_ratelimit_implementation = noClasses()

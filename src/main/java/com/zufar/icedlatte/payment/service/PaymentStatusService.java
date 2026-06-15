@@ -37,11 +37,8 @@ public class PaymentStatusService {
 
     public CheckoutStatusDto getStatus(UUID orderId) {
         OrderSnapshot order = orderPaymentApi.getSnapshot(orderId);
-
         var currentUser = currentUserProvider.get();
-        if (!order.userId().equals(currentUser.id())) {
-            throw new PaymentAccessDeniedException();
-        }
+        requireOwnedOrder(order, currentUser.id());
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
 
@@ -58,10 +55,16 @@ public class PaymentStatusService {
                 .orderStatus(OrderStatus.valueOf(order.status().name()));
 
         if (payment != null) {
-            dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(
-                    payment.getStatus().name()));
+            String status = payment.getStatus().name();
+            dto.paymentStatus(CheckoutStatusDto.PaymentStatusEnum.fromValue(status));
         }
 
         return dto;
+    }
+
+    private static void requireOwnedOrder(OrderSnapshot order, UUID userId) {
+        if (!order.userId().equals(userId)) {
+            throw new PaymentAccessDeniedException();
+        }
     }
 }

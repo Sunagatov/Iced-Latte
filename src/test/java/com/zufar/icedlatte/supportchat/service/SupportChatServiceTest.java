@@ -479,12 +479,17 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                ownerMessageSender,
-                messagePublisher,
-                turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                rateLimiter,
-                transactionManager);
+                new SupportChatMessageService(
+                        supportChatProperties,
+                        availabilityService,
+                        conversationRepository,
+                        messageRepository,
+                        ownerMessageSender,
+                        messagePublisher,
+                        turnstileVerifier,
+                        new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
+                        rateLimiter,
+                        transactionManager));
     }
 
     private SupportChatService disabledService() {
@@ -495,12 +500,17 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                ownerMessageSender,
-                messagePublisher,
-                turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                rateLimiter,
-                transactionManager);
+                new SupportChatMessageService(
+                        supportChatProperties,
+                        availabilityService,
+                        conversationRepository,
+                        messageRepository,
+                        ownerMessageSender,
+                        messagePublisher,
+                        turnstileVerifier,
+                        new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
+                        rateLimiter,
+                        transactionManager));
     }
 
     private SupportChatService turnstileEnabledService() {
@@ -511,12 +521,17 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                ownerMessageSender,
-                messagePublisher,
-                turnstileVerifier,
-                new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                rateLimiter,
-                transactionManager);
+                new SupportChatMessageService(
+                        supportChatProperties,
+                        availabilityService,
+                        conversationRepository,
+                        messageRepository,
+                        ownerMessageSender,
+                        messagePublisher,
+                        turnstileVerifier,
+                        new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
+                        rateLimiter,
+                        transactionManager));
     }
 
     private static SupportChatProperties properties(boolean enabled) {

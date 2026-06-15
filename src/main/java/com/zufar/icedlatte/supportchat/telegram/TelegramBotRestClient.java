@@ -51,7 +51,7 @@ class TelegramBotRestClient implements TelegramBotClient {
                     .body(body)
                     .retrieve()
                     .body(TelegramCreateForumTopicResponse.class);
-            if (response == null || !response.ok() || response.result() == null) {
+            if (isInvalidResponse(response)) {
                 log.warn("support_chat.telegram.create_forum_topic.failed");
                 return Optional.empty();
             }
@@ -81,7 +81,7 @@ class TelegramBotRestClient implements TelegramBotClient {
         try {
             TelegramSendMessageResponse response =
                     restClient.post().uri("/sendMessage").body(body).retrieve().body(TelegramSendMessageResponse.class);
-            if (response == null || !response.ok() || response.result() == null) {
+            if (isInvalidResponse(response)) {
                 log.warn("support_chat.telegram.send_message.failed");
                 return Optional.empty();
             }
@@ -95,15 +95,27 @@ class TelegramBotRestClient implements TelegramBotClient {
         }
     }
 
+    private static boolean isInvalidResponse(TelegramApiResponse response) {
+        return response == null || !response.ok() || response.result() == null;
+    }
+
+    private interface TelegramApiResponse {
+        boolean ok();
+
+        Object result();
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record TelegramCreateForumTopicResponse(boolean ok, TelegramCreateForumTopicResult result) {}
+    private record TelegramCreateForumTopicResponse(boolean ok, TelegramCreateForumTopicResult result)
+            implements TelegramApiResponse {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record TelegramCreateForumTopicResult(
             @JsonProperty("message_thread_id") long messageThreadId) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record TelegramSendMessageResponse(boolean ok, TelegramSendMessageResult result) {}
+    private record TelegramSendMessageResponse(boolean ok, TelegramSendMessageResult result)
+            implements TelegramApiResponse {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record TelegramSendMessageResult(

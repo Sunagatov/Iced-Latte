@@ -1,7 +1,24 @@
 package com.zufar.icedlatte.order.service.lifecycle;
 
-import static com.zufar.icedlatte.openapi.dto.OrderEvent.*;
-import static com.zufar.icedlatte.openapi.dto.OrderStatus.*;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.CANCEL;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.DELIVER;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.PAYMENT_CONFIRMED;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.PAYMENT_EXPIRED_EVENT;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.PAYMENT_FAILED_EVENT;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.PENDING_PAYMENT_CONFIRMED;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.REFUND_CONFIRMED;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.REQUEST_REFUND;
+import static com.zufar.icedlatte.openapi.dto.OrderEvent.SHIP;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.CANCELLED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.CREATED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.DELIVERED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.PAID;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.PAYMENT_EXPIRED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.PAYMENT_FAILED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.PENDING_PAYMENT;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.REFUNDED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.REFUND_REQUESTED;
+import static com.zufar.icedlatte.openapi.dto.OrderStatus.SHIPPED;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -60,7 +77,7 @@ public class OrderStatusTransitioner {
 
     @Transactional
     public Order expireUnpaid(UUID orderId, String reason) {
-        return transition(orderId, OrderEvent.CANCEL, null, reason, false);
+        return transition(orderId, CANCEL, null, reason, false);
     }
 
     private Order transition(
@@ -78,20 +95,18 @@ public class OrderStatusTransitioner {
         String logMessage = "order.status.transitioned: orderId={}, from={}, to={}, event={}, actor={}";
         log.info(logMessage, orderId, oldStatus, newStatus, event, actorId);
 
-        eventPublisher.publishEvent(
-                new OrderStatusChangedEvent(orderId, oldStatus, newStatus, actorId, reason, OffsetDateTime.now()));
+        OrderStatusChangedEvent orderStatusChangedEvent =
+                new OrderStatusChangedEvent(orderId, oldStatus, newStatus, actorId, reason, OffsetDateTime.now());
+        eventPublisher.publishEvent(orderStatusChangedEvent);
 
         return saved;
     }
 
     @Transactional
     public OrderDto cancel(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException();
-        }
+        Order order = requireOwnedOrder(orderId, userId);
         boolean wasPaid = order.getStatus() == OrderStatus.PAID;
-        Order cancelled = transition(orderId, OrderEvent.CANCEL, userId, "User cancelled");
+        Order cancelled = transition(orderId, CANCEL, userId, "User cancelled");
         if (wasPaid) {
             String logMessage = "order.cancel.refund_needed: orderId={}, stripePaymentIntentId={}";
             log.warn(logMessage, orderId, order.getStripePaymentIntentId());
@@ -101,11 +116,8 @@ public class OrderStatusTransitioner {
 
     @Transactional
     public OrderDto requestRefund(UUID orderId, UUID userId, String reason) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException();
-        }
-        Order refundRequested = transition(orderId, OrderEvent.REQUEST_REFUND, userId, reason);
+        requireOwnedOrder(orderId, userId);
+        Order refundRequested = transition(orderId, REQUEST_REFUND, userId, reason);
         refundRequested.setRefundReason(reason);
         orderRepository.save(refundRequested);
         String logMessage = "order.refund.requested: orderId={}, stripePaymentIntentId={}";
@@ -122,13 +134,21 @@ public class OrderStatusTransitioner {
     private static void validateGuards(
             Order order, OrderEvent event, UUID actorId, boolean enforceCancellationDeadline) {
         if (enforceCancellationDeadline
-                && event == OrderEvent.CANCEL
+                && event == CANCEL
                 && order.getCancellationDeadline() != null
                 && OffsetDateTime.now().isAfter(order.getCancellationDeadline())) {
             throw new OrderCancellationWindowExpiredException(order.getId());
         }
-        if (event == OrderEvent.REQUEST_REFUND && !order.getUserId().equals(actorId)) {
+        if (event == REQUEST_REFUND && !order.getUserId().equals(actorId)) {
             throw new OrderAccessDeniedException();
         }
+    }
+
+    private Order requireOwnedOrder(UUID orderId, UUID userId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUserId().equals(userId)) {
+            throw new OrderAccessDeniedException();
+        }
+        return order;
     }
 }

@@ -29,6 +29,7 @@ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
 import com.zufar.icedlatte.review.service.ai.summary.ProductReviewSummaryDebouncer;
 import com.zufar.icedlatte.review.service.validator.ProductReviewValidator;
 import com.zufar.icedlatte.user.api.UserLookupApi;
+import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,27 +64,16 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         productReviewValidator.validateReviewExistsForUser(userId, productId);
 
         var user = userLookupApi.getUserById(userId);
-        var productReview = ProductReview.builder()
-                .userId(userId)
-                .productId(productId)
-                .text(productReviewText.trim())
-                .productRating(reviewRequest.getRating())
-                .likesCount(0)
-                .dislikesCount(0)
-                .build();
+        var productReview = buildProductReview(productId, userId, reviewRequest);
 
         try {
             reviewRepository.saveAndFlush(productReview);
         } catch (DataIntegrityViolationException e) {
-            throw new ReviewConflictException(
-                    String.format(
-                            "Creation of the product's review for the user with userId = '%s' and the product with productId = '%s' is denied. Delete the previous product's review first.",
-                            userId, productId),
-                    e);
+            String errorMessage =
+                    "Creation of the product's review for the user with userId = '%s' and the product with productId = '%s' is denied. Delete the previous product's review first.";
+            throw new ReviewConflictException(String.format(errorMessage, userId, productId), e);
         }
-        summaryDebouncer.schedule(productId);
-
-        productReviewProductApi.refreshReviewAggregates(productId);
+        refreshReviewState(productId);
 
         eventPublisher.publishEvent(new ReviewCreatedEvent(productReview.getId(), productId));
 
@@ -97,9 +87,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
 
         reviewRepository.deleteById(productReviewId);
 
-        productReviewProductApi.refreshReviewAggregates(productId);
-
-        summaryDebouncer.schedule(productId);
+        refreshReviewState(productId);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -109,35 +97,13 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
             final UUID userId,
             final @Nullable Boolean newProductReviewLike) {
         if (newProductReviewLike == null) {
-            throw new BadRequestException(
-                    "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].");
+            String errorMessage =
+                    "GetReviewsRequest parameters are incorrect. Error messages are [ Review vote 'isLike' must be provided. ].";
+            throw new BadRequestException(errorMessage);
         }
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
-        Optional<ProductReviewLike> productReviewLike =
-                productReviewLikeRepository.findByUserIdAndProductReviewId(userId, productReviewId);
-
-        productReviewLike.ifPresentOrElse(
-                entity -> {
-                    if (!entity.getIsLike().equals(newProductReviewLike)) {
-                        entity.setIsLike(newProductReviewLike);
-                        productReviewLikeRepository.saveAndFlush(entity);
-                    }
-                },
-                () -> {
-                    ProductReviewLike newReviewLike = ProductReviewLike.builder()
-                            .userId(userId)
-                            .productId(productId)
-                            .productReviewId(productReviewId)
-                            .isLike(newProductReviewLike)
-                            .build();
-                    try {
-                        productReviewLikeRepository.saveAndFlush(newReviewLike);
-                    } catch (DataIntegrityViolationException e) {
-                        throw new ReviewConflictException(
-                                "Product review vote could not be recorded because it was changed concurrently.", e);
-                    }
-                });
+        upsertProductReviewLike(userId, productId, productReviewId, newProductReviewLike);
 
         reviewRepository.updateLikesCount(productReviewId);
         reviewRepository.updateDislikesCount(productReviewId);
@@ -145,8 +111,8 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         ProductReview productReview = reviewRepository
                 .findById(productReviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(productReviewId));
-        return productReviewDtoConverter.toProductReviewDto(
-                productReview, userLookupApi.getUserById(productReview.getUserId()));
+        UserLookupSnapshot user = userLookupApi.getUserById(productReview.getUserId());
+        return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
 
     @Override
@@ -154,5 +120,54 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     public void refreshAllCounts() {
         reviewRepository.updateAllLikesCounts();
         reviewRepository.updateAllDislikesCounts();
+    }
+
+    private ProductReview buildProductReview(UUID productId, UUID userId, ProductReviewRequest reviewRequest) {
+        return ProductReview.builder()
+                .userId(userId)
+                .productId(productId)
+                .text(reviewRequest.getText().trim())
+                .productRating(reviewRequest.getRating())
+                .likesCount(0)
+                .dislikesCount(0)
+                .build();
+    }
+
+    private void refreshReviewState(UUID productId) {
+        productReviewProductApi.refreshReviewAggregates(productId);
+        summaryDebouncer.schedule(productId);
+    }
+
+    private void upsertProductReviewLike(
+            UUID userId, UUID productId, UUID productReviewId, Boolean newProductReviewLike) {
+        productReviewLikeRepository
+                .findByUserIdAndProductReviewId(userId, productReviewId)
+                .ifPresentOrElse(
+                        entity -> updateExistingProductReviewLike(entity, newProductReviewLike),
+                        () -> createProductReviewLike(userId, productId, productReviewId, newProductReviewLike));
+    }
+
+    private void updateExistingProductReviewLike(ProductReviewLike entity, Boolean newProductReviewLike) {
+        if (entity.getIsLike().equals(newProductReviewLike)) {
+            return;
+        }
+        entity.setIsLike(newProductReviewLike);
+        productReviewLikeRepository.saveAndFlush(entity);
+    }
+
+    private void createProductReviewLike(
+            UUID userId, UUID productId, UUID productReviewId, Boolean newProductReviewLike) {
+        ProductReviewLike newReviewLike = ProductReviewLike.builder()
+                .userId(userId)
+                .productId(productId)
+                .productReviewId(productReviewId)
+                .isLike(newProductReviewLike)
+                .build();
+        try {
+            productReviewLikeRepository.saveAndFlush(newReviewLike);
+        } catch (DataIntegrityViolationException e) {
+            String errorMessage = "Product review vote could not be recorded because it was changed concurrently.";
+            throw new ReviewConflictException(errorMessage, e);
+        }
     }
 }

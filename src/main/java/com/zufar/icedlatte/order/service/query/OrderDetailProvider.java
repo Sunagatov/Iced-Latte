@@ -12,7 +12,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.zufar.icedlatte.openapi.dto.*;
+import com.zufar.icedlatte.openapi.dto.OrderDto;
+import com.zufar.icedlatte.openapi.dto.OrderPageDto;
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
+import com.zufar.icedlatte.openapi.dto.OrderStatusHistoryDto;
+import com.zufar.icedlatte.openapi.dto.OrderSummaryDto;
 import com.zufar.icedlatte.order.converter.OrderDtoConverter;
 import com.zufar.icedlatte.order.entity.Order;
 import com.zufar.icedlatte.order.exception.OrderAccessDeniedException;
@@ -35,11 +39,7 @@ public class OrderDetailProvider {
 
     @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException();
-        }
+        Order order = requireOwnedOrder(orderId, userId);
 
         OrderDto dto = orderDtoConverter.toResponseDto(order);
         dto.setCanCancel(canCancel(order));
@@ -50,10 +50,7 @@ public class OrderDetailProvider {
 
     @Transactional(readOnly = true)
     public List<OrderStatusHistoryDto> getOrderHistory(UUID orderId, UUID userId) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
-        if (!order.getUserId().equals(userId)) {
-            throw new OrderAccessDeniedException();
-        }
+        requireOwnedOrder(orderId, userId);
         return orderStatusHistoryRepository.findByOrderIdOrderByChangedAtAsc(orderId).stream()
                 .map(h -> new OrderStatusHistoryDto()
                         .id(h.getId())
@@ -123,5 +120,13 @@ public class OrderDetailProvider {
                                 : null)
                 .firstItemName(firstItemName)
                 .itemCount(order.getItems() != null ? order.getItems().size() : 0);
+    }
+
+    private Order requireOwnedOrder(UUID orderId, UUID userId) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUserId().equals(userId)) {
+            throw new OrderAccessDeniedException();
+        }
+        return order;
     }
 }
