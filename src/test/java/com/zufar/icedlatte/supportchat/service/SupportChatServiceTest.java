@@ -457,7 +457,8 @@ class SupportChatServiceTest {
     @DisplayName("History uses bounded page size and retention window")
     void getHistory_usesBoundedPageSizeAndRetentionWindow() {
         doNothing().when(availabilityService).requireAvailable(USER);
-        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
+        when(conversationRepository.existsByIdAndUserId(CONVERSATION_ID, USER_ID))
+                .thenReturn(true);
         when(messageRepository.findByConversationIdAndVisibleToCustomerTrueAndCreatedAtAfter(
                         eq(CONVERSATION_ID), any(OffsetDateTime.class), any()))
                 .thenReturn(new PageImpl<>(List.of()));

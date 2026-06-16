@@ -86,10 +86,9 @@ public class SupportChatService {
     }
 
     private void ensureOwnsConversation(UUID userId, UUID conversationId) {
-        conversationRepository
-                .findById(conversationId)
-                .filter(conversation -> conversation.getUserId().equals(userId))
-                .orElseThrow(SupportChatConversationNotFoundException::new);
+        if (!conversationRepository.existsByIdAndUserId(conversationId, userId)) {
+            throw new SupportChatConversationNotFoundException();
+        }
     }
 
     public record SupportChatStatus(boolean enabled, boolean eligible, String reason) {}

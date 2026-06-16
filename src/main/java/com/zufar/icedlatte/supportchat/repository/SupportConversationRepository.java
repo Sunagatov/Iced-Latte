@@ -12,6 +12,8 @@ import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 
 public interface SupportConversationRepository extends JpaRepository<SupportConversationEntity, UUID> {
 
+    boolean existsByIdAndUserId(UUID id, UUID userId);
+
     Optional<SupportConversationEntity> findByUserId(UUID userId);
 
     Optional<SupportConversationEntity> findByTelegramMessageThreadId(Long telegramMessageThreadId);
