@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,12 +36,10 @@ import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 class SupportChatMessageService {
 
     private final SupportChatProperties properties;
@@ -53,6 +52,29 @@ class SupportChatMessageService {
     private final SupportChatAbuseGuard abuseGuard;
     private final RateLimiter rateLimiter;
     private final PlatformTransactionManager transactionManager;
+
+    SupportChatMessageService(
+            SupportChatProperties properties,
+            SupportChatAvailabilityService availabilityService,
+            SupportConversationRepository conversationRepository,
+            SupportMessageRepository messageRepository,
+            OwnerMessageSender ownerMessageSender,
+            SupportChatMessagePublisher messagePublisher,
+            TurnstileVerifier turnstileVerifier,
+            SupportChatAbuseGuard abuseGuard,
+            @Qualifier("openRateLimiter") RateLimiter rateLimiter,
+            PlatformTransactionManager transactionManager) {
+        this.properties = properties;
+        this.availabilityService = availabilityService;
+        this.conversationRepository = conversationRepository;
+        this.messageRepository = messageRepository;
+        this.ownerMessageSender = ownerMessageSender;
+        this.messagePublisher = messagePublisher;
+        this.turnstileVerifier = turnstileVerifier;
+        this.abuseGuard = abuseGuard;
+        this.rateLimiter = rateLimiter;
+        this.transactionManager = transactionManager;
+    }
 
     public SupportMessageEntity sendCustomerMessage(
             CurrentUserSnapshot user,
