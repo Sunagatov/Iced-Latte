@@ -9,9 +9,11 @@ import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.security.api.SupportChatWebSocketTicketIssuer;
 import com.zufar.icedlatte.security.jwt.config.JwtClaimNames;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.jwt.config.JwtSigningKeys;
@@ -25,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class JwtTokenProvider {
+public class JwtTokenProvider implements SupportChatWebSocketTicketIssuer {
     private final JwtSigningKeys jwtSigningKeys;
     private final JwtProperties jwtProperties;
 
@@ -54,7 +56,8 @@ public class JwtTokenProvider {
         return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSigningKeys.getRefresh());
     }
 
-    public String generateSupportChatWebSocketTicket(final String email) {
+    @Override
+    public @NonNull String issue(final @NonNull String email) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
         claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE);

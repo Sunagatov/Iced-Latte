@@ -190,12 +190,13 @@ class ProductReviewsEndpointTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Should return 400 Bad Request on attempt to create review if previous still exists")
+    @DisplayName("Should return 409 Conflict on attempt to create review if previous still exists")
     void shouldReturnBadRequestOnAttemptToCreateReviewIfPreviousIsNotRemoved() {
         given(specification).body(getRequestBody(REVIEW_ADD_BODY)).post("/{productId}/reviews", AMERICANO_ID);
 
-        assertRestApiBadRequestResponse(
+        assertRestApiBodySchemaResponse(
                 given(specification).body(getRequestBody(REVIEW_ADD_BODY)).post("/{productId}/reviews", AMERICANO_ID),
+                HttpStatus.CONFLICT,
                 FAILED_REVIEW_SCHEMA);
     }
 

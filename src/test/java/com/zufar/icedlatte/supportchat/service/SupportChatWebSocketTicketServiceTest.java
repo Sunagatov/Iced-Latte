@@ -13,8 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.zufar.icedlatte.security.api.SupportChatWebSocketTicketIssuer;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
-import com.zufar.icedlatte.security.jwt.provider.JwtTokenProvider;
 import com.zufar.icedlatte.user.api.UserAuthenticationApi;
 import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 
@@ -23,7 +23,7 @@ import com.zufar.icedlatte.user.api.UserAuthenticationSnapshot;
 class SupportChatWebSocketTicketServiceTest {
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
+    private SupportChatWebSocketTicketIssuer webSocketTicketIssuer;
 
     @Mock
     private UserAuthenticationApi userAuthenticationApi;
@@ -36,15 +36,14 @@ class SupportChatWebSocketTicketServiceTest {
         UserAuthenticationSnapshot authentication = new UserAuthenticationSnapshot(
                 userId, "canonical@example.com", "password", java.util.List.of("ROLE_USER"), true, true, true, true);
         SupportChatWebSocketTicketService service =
-                new SupportChatWebSocketTicketService(jwtTokenProvider, userAuthenticationApi);
+                new SupportChatWebSocketTicketService(webSocketTicketIssuer, userAuthenticationApi);
         when(userAuthenticationApi.findUserAuthenticationById(userId)).thenReturn(Optional.of(authentication));
-        when(jwtTokenProvider.generateSupportChatWebSocketTicket("canonical@example.com"))
-                .thenReturn("ticket");
+        when(webSocketTicketIssuer.issue("canonical@example.com")).thenReturn("ticket");
 
         String ticket = service.issue(user);
 
         assertThat(ticket).isEqualTo("ticket");
         verify(userAuthenticationApi).findUserAuthenticationById(userId);
-        verify(jwtTokenProvider).generateSupportChatWebSocketTicket("canonical@example.com");
+        verify(webSocketTicketIssuer).issue("canonical@example.com");
     }
 }

@@ -118,7 +118,7 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("Generated support chat websocket ticket contains support chat purpose")
     void generateSupportChatWebSocketTicketContainsSupportChatPurpose() {
-        String token = tokenProvider.generateSupportChatWebSocketTicket("eve@example.com");
+        String token = tokenProvider.issue("eve@example.com");
 
         Claims claims = Jwts.parser()
                 .verifyWith(signingKey)
