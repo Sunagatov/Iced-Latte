@@ -1,22 +1,23 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import io.sentry.Breadcrumb;
-import io.sentry.SentryEvent;
-import io.sentry.SentryOptions;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+
 import com.zufar.icedlatte.common.http.RequestPathUtils;
+
+import io.sentry.Breadcrumb;
+import io.sentry.SentryEvent;
+import io.sentry.SentryOptions;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
@@ -25,8 +26,7 @@ public class SentryConfiguration {
 
     private static final Set<String> SENSITIVE_HEADER_NAMES =
             Set.of(HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
-    private static final Set<String> SENSITIVE_BREADCRUMB_KEYS =
-            Set.of("email", "password", "phone");
+    private static final Set<String> SENSITIVE_BREADCRUMB_KEYS = Set.of("email", "password", "phone");
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -125,7 +125,8 @@ public class SentryConfiguration {
         if (value == null) {
             return false;
         }
-        return configuredPrefixes(rawPrefixes).stream().anyMatch(prefix -> RequestPathUtils.matchesRootOrNested(value, prefix));
+        return configuredPrefixes(rawPrefixes).stream()
+                .anyMatch(prefix -> RequestPathUtils.matchesRootOrNested(value, prefix));
     }
 
     private static Set<String> configuredPrefixes(String rawPrefixes) {

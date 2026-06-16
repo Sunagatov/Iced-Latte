@@ -21,7 +21,8 @@ class RequestPathUtilsTest {
         assertThat(RequestPathUtils.isPublicInternetNoise("/actuator")).isFalse();
         assertThat(RequestPathUtils.isPublicInternetNoise("/actuator/health")).isFalse();
         assertThat(RequestPathUtils.isPublicInternetNoise("/api/docs")).isFalse();
-        assertThat(RequestPathUtils.isPublicInternetNoise("/api/docs/swagger-ui/index.html")).isFalse();
+        assertThat(RequestPathUtils.isPublicInternetNoise("/api/docs/swagger-ui/index.html"))
+                .isFalse();
     }
 
     @Test

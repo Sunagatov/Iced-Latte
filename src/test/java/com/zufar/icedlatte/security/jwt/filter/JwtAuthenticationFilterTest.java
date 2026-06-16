@@ -185,8 +185,7 @@ class JwtAuthenticationFilterTest {
 
         @Test
         @DisplayName("clears security context and MDC when post-authentication enrichment fails")
-        void clearsSecurityContextAndMdcWhenPostAuthenticationEnrichmentFails()
-                throws ServletException, IOException {
+        void clearsSecurityContextAndMdcWhenPostAuthenticationEnrichmentFails() throws ServletException, IOException {
             UUID userId = UUID.randomUUID();
             SecurityUserDetails user = user(userId);
             UsernamePasswordAuthenticationToken authentication =

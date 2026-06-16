@@ -56,8 +56,10 @@ class RequestCompletionLoggingFilterTest {
     @Test
     @DisplayName("shouldNotFilter returns true for exact actuator and docs roots")
     void shouldNotFilterExactRoots() {
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator"))).isTrue();
-        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs"))).isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/actuator")))
+                .isTrue();
+        assertThat(filter.shouldNotFilter(new MockHttpServletRequest("GET", "/api/docs")))
+                .isTrue();
     }
 
     @Test
