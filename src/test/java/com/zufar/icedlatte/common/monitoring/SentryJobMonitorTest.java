@@ -49,6 +49,15 @@ class SentryJobMonitorTest {
     }
 
     @Test
+    @DisplayName("trims surrounding whitespace from cron expressions before returning them")
+    void trimsSurroundingWhitespaceFromCronExpressions() {
+        SentryJobMonitor monitor = new SentryJobMonitor();
+
+        assertThat(monitor.toSentryCrontab("  */10 * * * * *  ")).isEqualTo("*/10 * * * * *");
+        assertThat(monitor.toSentryCrontab("  0 0/5 * * * *  ")).isEqualTo("0/5 * * * *");
+    }
+
+    @Test
     @DisplayName("builds fixed-delay monitor config in minutes")
     void buildsFixedDelayMonitorConfig() {
         SentryJobMonitor monitor = new SentryJobMonitor();

@@ -62,4 +62,25 @@ class InMemoryExpiringKeyValueStoreTest {
 
         assertThat(store.contains("key")).isFalse();
     }
+
+    @Test
+    @DisplayName("take does not return an expired value")
+    void takeDoesNotReturnExpiredValue() throws InterruptedException {
+        store.put("key", "value", Duration.ofMillis(5));
+
+        Thread.sleep(25);
+
+        assertThat(store.take("key")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("putIfAbsent can replace an expired value")
+    void putIfAbsentCanReplaceExpiredValue() throws InterruptedException {
+        assertThat(store.putIfAbsent("key", "first", Duration.ofMillis(5))).isTrue();
+
+        Thread.sleep(25);
+
+        assertThat(store.putIfAbsent("key", "second", Duration.ofMinutes(5))).isTrue();
+        assertThat(store.get("key")).contains("second");
+    }
 }

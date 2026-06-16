@@ -66,11 +66,12 @@ public class SentryJobMonitor {
         if (!StringUtils.hasText(springCron)) {
             return springCron;
         }
-        String[] fields = springCron.trim().split("\\s+");
+        String normalizedSpringCron = springCron.trim();
+        String[] fields = normalizedSpringCron.split("\\s+");
         if (fields.length == 6 && "0".equals(fields[0])) {
             return String.join(" ", fields[1], fields[2], fields[3], fields[4], fields[5]);
         }
-        return springCron;
+        return normalizedSpringCron;
     }
 
     private SentryId captureCheckIn(String monitorSlug, MonitorConfig monitorConfig) {

@@ -43,6 +43,28 @@ class OAuthStateCookieServiceTest {
     }
 
     @Test
+    void bindMarksCookieSecureBehindMultiHopForwardedHttpsProxy() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-Proto", "https,http");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        service.bind(request, response, OAuthProvider.GOOGLE, "state-token", Duration.ofMinutes(10));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).contains("Secure");
+    }
+
+    @Test
+    void bindMarksCookieSecureWhenForwardedHeaderDeclaresHttps() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Forwarded", "for=203.0.113.4;proto=https;host=app.example.com");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        service.bind(request, response, OAuthProvider.GOOGLE, "state-token", Duration.ofMinutes(10));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).contains("Secure");
+    }
+
+    @Test
     void matchesRequiresCookieValueToEqualCallbackState() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new jakarta.servlet.http.Cookie("iced_latte_oauth_state_google", "state-token"));

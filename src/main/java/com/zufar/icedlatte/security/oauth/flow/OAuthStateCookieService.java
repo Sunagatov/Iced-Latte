@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,9 @@ class OAuthStateCookieService {
 
     private static final String COOKIE_PREFIX = "iced_latte_oauth_state_";
     private static final String SAME_SITE_LAX = "Lax";
+    private static final String X_FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
+    private static final String FORWARDED_HEADER = "Forwarded";
+    private static final String HTTPS_SCHEME = "https";
 
     void bind(
             HttpServletRequest request,
@@ -60,6 +64,25 @@ class OAuthStateCookieService {
     }
 
     private static boolean isSecure(HttpServletRequest request) {
-        return request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+        return request.isSecure()
+                || headerContainsHttpsToken(request.getHeader(X_FORWARDED_PROTO_HEADER), ",", false)
+                || headerContainsHttpsToken(request.getHeader(FORWARDED_HEADER), "[,;]", true);
+    }
+
+    private static boolean headerContainsHttpsToken(
+            String headerValue, String entrySeparatorRegex, boolean requireProtoDirective) {
+        if (!StringUtils.hasText(headerValue)) {
+            return false;
+        }
+        return Arrays.stream(headerValue.split(entrySeparatorRegex))
+                .map(String::trim)
+                .map(part -> part.split("=", 2))
+                .anyMatch(part -> {
+                    if (part.length == 1) {
+                        return !requireProtoDirective && HTTPS_SCHEME.equalsIgnoreCase(part[0].trim());
+                    }
+                    return "proto".equalsIgnoreCase(part[0].trim())
+                            && HTTPS_SCHEME.equalsIgnoreCase(part[1].trim().replace("\"", ""));
+                });
     }
 }
