@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <version>4.0.7</version>
         <relativePath/>
     </parent>
 
@@ -110,11 +110,8 @@
         <postgresql.version>42.7.11</postgresql.version>
 
         <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
-        <spring-framework.version>7.0.7</spring-framework.version>
-        <spring-security.version>7.0.5</spring-security.version>
         <tomcat.version>11.0.22</tomcat.version>
         <jackson-bom.version>3.1.2</jackson-bom.version>
-        <kafka.version>4.3.0</kafka.version>
         <netty.version>4.2.15.Final</netty.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->

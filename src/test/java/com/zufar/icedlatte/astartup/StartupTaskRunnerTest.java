@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @ExtendWith(OutputCaptureExtension.class)
 @DisplayName("StartupTaskRunner unit tests")
+@SuppressWarnings("unused")
 class StartupTaskRunnerTest {
 
     @Test
@@ -41,7 +43,7 @@ class StartupTaskRunnerTest {
         StartupTaskRunner.runAsync("slow startup task", Duration.ofMillis(10), () -> {
             started.countDown();
             try {
-                new CountDownLatch(1).await(5, TimeUnit.SECONDS);
+                awaitLatchUntilTimeout();
             } catch (InterruptedException e) {
                 interrupted.countDown();
                 Thread.currentThread().interrupt();
@@ -59,7 +61,7 @@ class StartupTaskRunnerTest {
 
         StartupTaskRunner.runAsync("interrupt-swallowing task", Duration.ofMillis(10), () -> {
             try {
-                new CountDownLatch(1).await(5, TimeUnit.SECONDS);
+                awaitLatchUntilTimeout();
             } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             } finally {
@@ -68,8 +70,27 @@ class StartupTaskRunnerTest {
         });
 
         assertThat(finished.await(1, TimeUnit.SECONDS)).isTrue();
-        assertThat(output).contains("startup.task.timeout: task=interrupt-swallowing task");
-        assertThat(output).contains("startup.task.finish_after_timeout: task=interrupt-swallowing task");
+        assertThat(waitForOutput(output, "startup.task.timeout: task=interrupt-swallowing task"))
+                .isTrue();
+        assertThat(waitForOutput(output, "startup.task.finish_after_timeout: task=interrupt-swallowing task"))
+                .isTrue();
         assertThat(output).doesNotContain("startup.task.finish: task=interrupt-swallowing task");
+    }
+
+    private boolean waitForOutput(CapturedOutput output, String expectedMessage) throws InterruptedException {
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+        while (System.nanoTime() < deadlineNanos) {
+            if (output.getOut().contains(expectedMessage)) {
+                return true;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+        }
+        return output.getOut().contains(expectedMessage);
+    }
+
+    private void awaitLatchUntilTimeout() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        boolean completed = latch.await(5, TimeUnit.SECONDS);
+        assertThat(completed).isFalse();
     }
 }
