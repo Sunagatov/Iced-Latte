@@ -2,6 +2,7 @@ package com.zufar.icedlatte.cart.endpoint;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
+import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
 import com.zufar.icedlatte.cart.service.ShoppingCartService;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
@@ -87,6 +89,9 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
     }
 
     private static Set<AddCartItemRequest> toAddCartItemRequests(AddNewItemsToShoppingCartRequest request) {
+        if (request.getItems().stream().anyMatch(Objects::isNull)) {
+            throw new InvalidCartItemRequestException("Cart items to add must not contain null items.");
+        }
         return request.getItems().stream()
                 .collect(Collectors.toMap(
                         NewShoppingCartItemDto::getProductId, NewShoppingCartItemDto::getProductQuantity, Integer::sum))

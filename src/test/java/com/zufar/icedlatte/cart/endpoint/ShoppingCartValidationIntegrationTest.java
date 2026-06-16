@@ -55,6 +55,22 @@ class ShoppingCartValidationIntegrationTest extends AuthenticatedUserIntegration
     }
 
     @Test
+    @DisplayName("Should return bad request when adding a null item entry")
+    void shouldReturnBadRequestWhenAddingNullItemEntry() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .body("""
+                        {
+                          "items": [null]
+                        }
+                        """)
+                .post("/items")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+    }
+
+    @Test
     @DisplayName("Should return bad request when deleting empty item id list")
     void shouldReturnBadRequestWhenDeletingEmptyItemIdList() {
         AuthenticatedUser user = registerAndAuthenticateUser();

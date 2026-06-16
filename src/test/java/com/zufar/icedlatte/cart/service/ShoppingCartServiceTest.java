@@ -279,6 +279,20 @@ class ShoppingCartServiceTest {
     }
 
     @Test
+    @DisplayName("addItems rejects null items inside internal requests")
+    void addItemsRejectsNullItemsInsideInternalRequests() {
+        UUID userId = UUID.randomUUID();
+        Set<AddCartItemRequest> itemsToAdd = new HashSet<>();
+        itemsToAdd.add(null);
+
+        assertThatThrownBy(() -> shoppingCartService.addItems(userId, itemsToAdd))
+                .isInstanceOf(InvalidCartItemRequestException.class)
+                .hasMessageContaining("must not contain null items");
+
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+    }
+
+    @Test
     @DisplayName("addItems rejects new item quantities above the cart item limit")
     void addItemsRejectsNewItemQuantityAboveLimit() {
         UUID userId = UUID.randomUUID();
