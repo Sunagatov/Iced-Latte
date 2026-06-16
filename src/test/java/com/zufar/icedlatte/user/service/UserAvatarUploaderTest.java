@@ -116,6 +116,25 @@ class UserAvatarUploaderTest {
     }
 
     @Test
+    @DisplayName("uploadUserAvatar throws user-owned exception when bucket configuration is blank")
+    void uploadUserAvatarRejectsBlankBucketConfiguration() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
+        when(fileStorageService.isEnabled()).thenReturn(true);
+        var field = UserAvatarUploader.class.getDeclaredField("bucketName");
+        field.setAccessible(true);
+        field.set(uploader, "   ");
+
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "unused-turnstile-token"))
+                .isInstanceOf(UserAvatarUploadException.class)
+                .hasMessageContaining("userId=" + userId);
+
+        verify(fileStorageService).isEnabled();
+        verify(fileStorageService, never()).store(any(), any());
+    }
+
+    @Test
     @DisplayName("uploadUserAvatar rejects unsupported content types before upload")
     void uploadUserAvatarRejectsUnsupportedContentTypes() {
         UUID userId = UUID.randomUUID();

@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
@@ -63,7 +64,7 @@ public class UserAvatarUploader {
     }
 
     private void uploadAvatarFile(MultipartFile file, UUID userId, String fileName) {
-        if (!fileStorageWriterApi.isEnabled()) {
+        if (!fileStorageWriterApi.isEnabled() || !StringUtils.hasText(bucketName)) {
             throw new UserAvatarUploadException(userId, fileName);
         }
         fileStorageWriterApi.store(file, new FileMetadataDto(userId, bucketName, fileName));

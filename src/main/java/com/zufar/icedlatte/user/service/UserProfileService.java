@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.user.service;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -91,13 +92,15 @@ public class UserProfileService implements UserAccessControlApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int lockAccount(String email) {
-        return userRepository.setAccountNonLockedStatus(EmailNormalizer.normalize(email), false);
+        String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
+        return userRepository.setAccountNonLockedStatus(normalizedEmail, false);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public int unlockAccount(String email) {
-        return userRepository.setAccountNonLockedStatus(EmailNormalizer.normalize(email), true);
+        String normalizedEmail = Objects.requireNonNull(EmailNormalizer.normalize(email), "email must not be null");
+        return userRepository.setAccountNonLockedStatus(normalizedEmail, true);
     }
 
     public Optional<String> findAvatarLink(UUID userId) {

@@ -215,6 +215,28 @@ class UserProfileServiceTest {
             assertThat(updatedRows).isEqualTo(1);
             verify(userRepository).setAccountNonLockedStatus("user@example.com", true);
         }
+
+        @Test
+        @DisplayName("lockAccount rejects null email")
+        @SuppressWarnings("DataFlowIssue")
+        void lockAccountRejectsNullEmail() {
+            assertThatThrownBy(() -> userProfileService.lockAccount(null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("email must not be null");
+
+            verifyNoInteractions(userRepository);
+        }
+
+        @Test
+        @DisplayName("unlockAccount rejects null email")
+        @SuppressWarnings("DataFlowIssue")
+        void unlockAccountRejectsNullEmail() {
+            assertThatThrownBy(() -> userProfileService.unlockAccount(null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessage("email must not be null");
+
+            verifyNoInteractions(userRepository);
+        }
     }
 
     @Nested

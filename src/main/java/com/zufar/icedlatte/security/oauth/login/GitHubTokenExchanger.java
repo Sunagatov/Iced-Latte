@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,17 +46,16 @@ public class GitHubTokenExchanger implements OAuthProviderClient {
     private final String apiVersion;
     private final RestClient restClient;
 
-    @SuppressWarnings("unused")
+    @Autowired
     public GitHubTokenExchanger(GitHubOAuthProperties properties) {
+        GitHubOAuthProperties.Timeout timeout = properties.timeout();
         this(
                 properties.clientId(),
                 properties.clientSecret(),
                 properties.redirectUri(),
                 properties.scope(),
                 properties.apiVersion(),
-                restClient(
-                        properties.timeout().connectTimeout(),
-                        properties.timeout().readTimeout()));
+                restClient(timeout.connectTimeout(), timeout.readTimeout()));
     }
 
     GitHubTokenExchanger(
