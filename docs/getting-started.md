@@ -82,7 +82,7 @@ That file is intentionally safe for local contributors:
 
 - `SPRING_PROFILES_ACTIVE=dev`
 - Swagger UI is enabled
-- Stripe, Google OAuth, email, AI, Kafka, and Turnstile stay disabled unless you opt in
+- Stripe, social OAuth, email, AI, Kafka, and Turnstile stay disabled unless you opt in
 - local HTTP access logs run at `DEBUG`
 - Liquibase re-seeds local data in the default dev profile
 
@@ -118,7 +118,7 @@ Verify:
 
 Create your own account before testing authenticated flows. With the default
 local config, email confirmation is disabled and email sign-up authenticates you
-immediately. If you explicitly enable email or Google OAuth, follow that
+immediately. If you explicitly enable email or social OAuth, follow that
 provider's confirmation/authentication flow.
 
 ---
@@ -255,7 +255,7 @@ Use this checklist after starting any option:
 
 For authenticated checks, create your own account. With the default local
 config, email confirmation is disabled and email sign-up authenticates you
-immediately. If you explicitly enable email or Google OAuth, follow that
+immediately. If you explicitly enable email or social OAuth, follow that
 provider's confirmation/authentication flow.
 
 ---
@@ -305,7 +305,7 @@ Frontend E2E tests require the frontend running on `http://localhost:3000`:
 npm run test:e2e
 ```
 
-To verify the default local app without Stripe, Google OAuth, email
+To verify the default local app without Stripe, social OAuth, email
 confirmation, AI, or Cloudflare Turnstile:
 
 ```bash
@@ -376,12 +376,13 @@ Relevant files:
 
 ---
 
-## 🔐 Google OAuth Callback Note
+## 🔐 OAuth Callback Note
 
-The backend returns OAuth tokens in the URL fragment:
+The backend returns a short-lived OAuth handoff code in the URL fragment:
 
 ```text
-http://localhost:3000/auth/google/callback#token=...&refreshToken=...
+http://localhost:3000/auth/google/callback#oauthCode=...
+http://localhost:3000/auth/github/callback#oauthCode=...
 ```
 
 Frontend callback code should read:
@@ -408,7 +409,7 @@ window.location.search
 | Backend port `8083` already in use | Stop the process using the port, or run Docker with `BACKEND_HOST_PORT=8084` |
 | Frontend port `3000` already in use | Stop the process using the port, or run Docker with `FRONTEND_HOST_PORT=3001` |
 | `Could not resolve placeholder` | An env var is missing. Check the variable name in the error and compare with `.env.example` |
-| Login returns `401` | Create a fresh account. With default local config, email sign-up logs you in immediately; if you enabled email confirmation or Google OAuth, complete that provider flow first |
+| Login returns `401` | Create a fresh account. With default local config, email sign-up logs you in immediately; if you enabled email confirmation or social OAuth, complete that provider flow first |
 | Frontend container cannot reach local backend | Rebuild frontend with `FRONTEND_DOCKER_API_URL=http://host.docker.internal:8083/api/v1` |
 | Windows says `export` or `source` not found | Use IntelliJ with `.env.example`, or run the command in Git Bash |
 | Tests fail before starting | Make sure Docker Desktop is running |
@@ -427,8 +428,8 @@ FRONTEND_HOST_PORT=3001 docker compose --env-file .env.example --profile fronten
 ```text
 src/
 ├── main/java/com/zufar/icedlatte/
-│   ├── security/       # JWT auth, Google OAuth2, registration, login, sessions, rate limiting
-│   ├── auth/           # Google OAuth2 callback, auth redirects
+│   ├── security/       # JWT auth, OAuth2 social sign-in, registration, login, sessions, rate limiting
+│   ├── auth/           # Auth redirects and frontend callback handoff
 │   ├── user/           # User profile, addresses, avatars
 │   ├── product/        # Product catalog, filters, images
 │   ├── cart/           # Shopping cart

@@ -35,6 +35,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
     private static final String BASE_PATH = "/api/v1/auth";
     private static final String GOOGLE_OAUTH_STATE_COOKIE = "iced_latte_oauth_state_google";
+    private static final String GITHUB_OAUTH_STATE_COOKIE = "iced_latte_oauth_state_github";
 
     @LocalServerPort
     private Integer port;
@@ -139,6 +140,45 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .queryParam("code", "valid-code")
                 .queryParam("state", state)
                 .get("/oauth/google/callback");
+
+        callbackResponse
+                .then()
+                .statusCode(HttpStatus.FOUND.value())
+                .header("Location", allOf(containsString(callbackBase), containsString("#oauthCode=")))
+                .header("Location", not(containsString("jwt-token")))
+                .header("Location", not(containsString("refresh-token")));
+    }
+
+    @Test
+    @DisplayName("Should support provider-neutral GitHub OAuth routes")
+    void shouldSupportProviderNeutralGitHubOAuthRoutes() {
+        String callbackBase = frontendUrl + "/auth/github/callback";
+
+        when(oAuthLoginService.findClient(OAuthProvider.GITHUB)).thenReturn(Optional.of(oAuthProviderClient));
+        when(oAuthProviderClient.buildAuthorizationUri(any(String.class)))
+                .thenAnswer(invocation -> gitHubAuthUri(invocation.getArgument(0)));
+        when(oAuthLoginService.handle(
+                        eq(OAuthProvider.GITHUB), eq("valid-code"), any(AuthSessionRequestMetadata.class)))
+                .thenReturn(tokenPair("jwt-token", "refresh-token"));
+
+        Response initiateResponse = given(specification)
+                .redirects()
+                .follow(false)
+                .queryParam("redirectUrl", callbackBase)
+                .get("/oauth/github");
+
+        String state = extractState(initiateResponse);
+        String stateCookie = initiateResponse.getCookie(GITHUB_OAUTH_STATE_COOKIE);
+        assertNotNull(state);
+        assertNotNull(stateCookie);
+
+        Response callbackResponse = given(specification)
+                .redirects()
+                .follow(false)
+                .cookie(GITHUB_OAUTH_STATE_COOKIE, stateCookie)
+                .queryParam("code", "valid-code")
+                .queryParam("state", state)
+                .get("/oauth/github/callback");
 
         callbackResponse
                 .then()
@@ -360,6 +400,15 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
                 .queryParam("state", state)
                 .queryParam("client_id", "client-id")
                 .queryParam("redirect_uri", "http://localhost:" + port + BASE_PATH + "/oauth/google/callback")
+                .build()
+                .toUri();
+    }
+
+    private URI gitHubAuthUri(String state) {
+        return UriComponentsBuilder.fromUriString("https://github.com/login/oauth/authorize")
+                .queryParam("state", state)
+                .queryParam("client_id", "client-id")
+                .queryParam("redirect_uri", "http://localhost:" + port + BASE_PATH + "/oauth/github/callback")
                 .build()
                 .toUri();
     }

@@ -41,7 +41,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "OAuth provider identifier, for example google."
+          description: "OAuth provider identifier, for example google or github."
         - name: redirectUrl
           in: query
           required: false
@@ -77,7 +77,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "OAuth provider identifier, for example google."
+          description: "OAuth provider identifier, for example google or github."
         - name: code
           in: query
           required: false

@@ -69,6 +69,8 @@ class RateLimitingFilterTest {
         "/api/v1/auth/register,        global",
         "/api/v1/auth/oauth/google,    global",
         "/api/v1/auth/oauth/google/callback, global",
+        "/api/v1/auth/oauth/github,    global",
+        "/api/v1/auth/oauth/github/callback, global",
         "/api/v1/auth/refresh,         auth",
         "/api/v1/telemetry/report,     telemetry",
         "/api/v1/payment,              payment",

@@ -367,6 +367,18 @@ google:
     connect-timeout: ${GOOGLE_AUTH_CONNECT_TIMEOUT:PT2S}
     read-timeout: ${GOOGLE_AUTH_READ_TIMEOUT:PT3S}
 
+# --- GitHub OAuth2 (social login) ---
+github:
+  enabled: ${GITHUB_ENABLED:false}
+  scope: ${GITHUB_AUTH_SCOPE:read:user user:email}
+  client-id: ${GITHUB_AUTH_CLIENT_ID:}
+  client-secret: ${GITHUB_AUTH_CLIENT_SECRET:}
+  redirect-uri: ${GITHUB_AUTH_REDIRECT_URI:}
+  api-version: ${GITHUB_API_VERSION:2026-03-10}
+  timeout:
+    connect-timeout: ${GITHUB_AUTH_CONNECT_TIMEOUT:PT2S}
+    read-timeout: ${GITHUB_AUTH_READ_TIMEOUT:PT3S}
+
 # How long the OAuth "state" parameter remains valid (prevents CSRF in OAuth flow).
 oauth:
   state-ttl-minutes: 10

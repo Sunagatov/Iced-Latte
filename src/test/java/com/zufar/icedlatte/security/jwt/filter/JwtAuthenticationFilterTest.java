@@ -74,6 +74,9 @@ class JwtAuthenticationFilterTest {
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google/callback")))
                     .isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/github"))).isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/github/callback")))
+                    .isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/products"))).isFalse();
         }
     }

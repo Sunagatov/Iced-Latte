@@ -47,7 +47,7 @@ flowchart LR
   Backend --> Redis[(Redis)]
   Backend --> MinIO[MinIO / S3]
   Backend --> Stripe[Stripe]
-  Backend --> Google[Google OAuth2]
+  Backend --> OAuth[OAuth2 Providers]
   Backend --> Mail[SMTP Email]
   Backend --> AI[OpenAI-compatible API]
   Backend --> Observability[Sentry / OTEL / Loki / Datadog]
@@ -64,7 +64,7 @@ Local contributor defaults keep optional external integrations disabled, so you 
 - local `dev` profile
 - Swagger UI enabled
 - PostgreSQL, Redis, and MinIO mapped to localhost
-- Stripe, Google OAuth, email, AI, and remote observability disabled
+- Stripe, social OAuth, email, AI, and remote observability disabled
 - safe placeholder secrets for local-only use
 - local access logs at `DEBUG`
 
@@ -106,7 +106,7 @@ Profile behavior:
 
 Do not rely on a preconfigured account for manual checks. With the default local
 configuration, email sign-up authenticates you immediately. If you explicitly
-enable email confirmation or Google OAuth, complete that provider flow first.
+enable email confirmation or social OAuth, complete that provider flow first.
 
 ### Main tables
 
@@ -279,18 +279,22 @@ APP_JWT_REFRESH_SECRET=...
 
 Production-like deployments must use strong unique secrets and must not reuse local placeholder values.
 
-Google OAuth is disabled locally by default:
+Social OAuth providers are disabled locally by default:
 
 ```text
 GOOGLE_ENABLED=false
+GITHUB_ENABLED=false
 ```
 
-When enabled, configure:
+When enabled, configure the provider you want to test:
 
 ```text
 GOOGLE_AUTH_CLIENT_ID=<client-id>
 GOOGLE_AUTH_CLIENT_SECRET=<client-secret>
 GOOGLE_AUTH_REDIRECT_URI=<backend-callback-url>
+GITHUB_AUTH_CLIENT_ID=<client-id>
+GITHUB_AUTH_CLIENT_SECRET=<client-secret>
+GITHUB_AUTH_REDIRECT_URI=<backend-callback-url>
 ```
 
 ---

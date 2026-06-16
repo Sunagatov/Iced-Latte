@@ -5,7 +5,8 @@ import java.util.Locale;
 import java.util.Optional;
 
 public enum OAuthProvider {
-    GOOGLE;
+    GOOGLE,
+    GITHUB;
 
     public String id() {
         return name().toLowerCase(Locale.ROOT);
