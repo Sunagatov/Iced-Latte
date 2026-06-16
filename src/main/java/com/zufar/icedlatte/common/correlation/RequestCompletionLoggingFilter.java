@@ -53,8 +53,8 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
         return "OPTIONS".equalsIgnoreCase(method)
-                || path.startsWith(ApiPaths.ACTUATOR_ROOT)
-                || path.startsWith(ApiPaths.DOCS_ROOT);
+                || RequestPathUtils.matchesRootOrNested(path, ApiPaths.ACTUATOR_ROOT)
+                || RequestPathUtils.matchesRootOrNested(path, ApiPaths.DOCS_ROOT);
     }
 
     @Override

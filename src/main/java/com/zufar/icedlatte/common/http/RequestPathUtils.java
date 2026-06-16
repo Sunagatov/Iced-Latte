@@ -18,8 +18,17 @@ public class RequestPathUtils {
 
     public static boolean isPublicInternetNoise(String path) {
         String normalized = normalizePath(path);
-        return !normalized.startsWith(ApiPaths.API_ROOT + "/")
-                && !normalized.startsWith(ApiPaths.ACTUATOR_ROOT)
-                && !normalized.startsWith(ApiPaths.DOCS_ROOT);
+        return !matchesRootOrNested(normalized, ApiPaths.API_ROOT)
+                && !matchesRootOrNested(normalized, ApiPaths.ACTUATOR_ROOT)
+                && !matchesRootOrNested(normalized, ApiPaths.DOCS_ROOT);
+    }
+
+    public static boolean matchesRootOrNested(String path, String root) {
+        String normalizedPath = normalizePath(path);
+        String normalizedRoot = normalizePath(root);
+        String rootWithoutTrailingSlash = normalizedRoot.endsWith("/") && normalizedRoot.length() > 1
+                ? normalizedRoot.substring(0, normalizedRoot.length() - 1)
+                : normalizedRoot;
+        return normalizedPath.equals(rootWithoutTrailingSlash) || normalizedPath.startsWith(normalizedRoot);
     }
 }

@@ -1,20 +1,20 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import io.sentry.Breadcrumb;
+import io.sentry.SentryEvent;
+import io.sentry.SentryOptions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 
-import io.sentry.Breadcrumb;
-import io.sentry.SentryEvent;
-import io.sentry.SentryOptions;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Configuration
@@ -24,7 +24,7 @@ public class SentryConfiguration {
     private static final Set<String> SENSITIVE_HEADER_NAMES =
             Set.of(HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
     private static final Set<String> SENSITIVE_BREADCRUMB_KEYS =
-            Set.of("email", "Email", "EMAIL", "password", "Password", "PASSWORD", "phone", "Phone", "PHONE");
+            Set.of("email", "password", "phone");
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -109,7 +109,10 @@ public class SentryConfiguration {
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
-        SENSITIVE_BREADCRUMB_KEYS.forEach(breadcrumb::removeData);
+        breadcrumbDataKeys(breadcrumb).stream()
+                .filter(key -> SENSITIVE_BREADCRUMB_KEYS.contains(key.toLowerCase(Locale.ROOT)))
+                .toList()
+                .forEach(breadcrumb::removeData);
     }
 
     private void addCustomTags(SentryEvent event) {
@@ -121,7 +124,7 @@ public class SentryConfiguration {
         if (value == null) {
             return false;
         }
-        return configuredPrefixes(rawPrefixes).stream().anyMatch(value::contains);
+        return configuredPrefixes(rawPrefixes).stream().anyMatch(value::startsWith);
     }
 
     private static Set<String> configuredPrefixes(String rawPrefixes) {
@@ -132,5 +135,19 @@ public class SentryConfiguration {
                 .map(String::trim)
                 .filter(prefix -> !prefix.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static Set<String> breadcrumbDataKeys(Breadcrumb breadcrumb) {
+        try {
+            Object data = Breadcrumb.class.getMethod("getData").invoke(breadcrumb);
+            return data instanceof Map<?, ?> map
+                    ? map.keySet().stream()
+                            .filter(String.class::isInstance)
+                            .map(String.class::cast)
+                            .collect(Collectors.toUnmodifiableSet())
+                    : Set.of();
+        } catch (ReflectiveOperationException exception) {
+            return Set.of();
+        }
     }
 }

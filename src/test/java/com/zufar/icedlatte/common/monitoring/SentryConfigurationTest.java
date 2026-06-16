@@ -79,6 +79,21 @@ class SentryConfigurationTest {
     }
 
     @Test
+    @DisplayName("before-breadcrumb callback strips sensitive breadcrumb data regardless of key casing")
+    void beforeBreadcrumbCallbackSanitizesSensitiveDataRegardlessOfKeyCasing() {
+        SentryConfiguration configuration = configuration();
+        SentryOptions.BeforeBreadcrumbCallback callback = configuration.beforeBreadcrumbCallback();
+        Breadcrumb breadcrumb = new Breadcrumb();
+        breadcrumb.setData("eMaIl", "user@example.com");
+        breadcrumb.setData("PaSsWoRd", "secret");
+
+        Breadcrumb result = Objects.requireNonNull(callback.execute(breadcrumb, new Hint()));
+
+        assertThat(result.getData("eMaIl")).isNull();
+        assertThat(result.getData("PaSsWoRd")).isNull();
+    }
+
+    @Test
     @DisplayName("before-breadcrumb callback tolerates breadcrumbs without data")
     void beforeBreadcrumbCallbackToleratesBreadcrumbsWithoutData() {
         SentryConfiguration configuration = configuration();
@@ -106,6 +121,23 @@ class SentryConfigurationTest {
                 .isEqualTo(0.5);
         assertThat(callback.sample(new SamplingContext(
                         new TransactionContext("/actuator/info", "http.server"), customSamplingContext)))
+                .isEqualTo(0.1);
+    }
+
+    @Test
+    @DisplayName("trace sampler matches only configured path prefixes")
+    @SuppressWarnings("deprecation")
+    void tracesSamplerMatchesOnlyConfiguredPathPrefixes() {
+        SentryConfiguration configuration = configuration();
+        SentryOptions.TracesSamplerCallback callback = configuration.tracesSamplerCallback();
+        CustomSamplingContext customSamplingContext = new CustomSamplingContext();
+
+        assertThat(callback.sample(new SamplingContext(
+                        new TransactionContext("/internal/proxy/api/v1/products/42", "http.server"),
+                        customSamplingContext)))
+                .isEqualTo(0.1);
+        assertThat(callback.sample(new SamplingContext(
+                        new TransactionContext("/debug/api/v1/orders/123", "http.server"), customSamplingContext)))
                 .isEqualTo(0.1);
     }
 
