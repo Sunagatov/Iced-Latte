@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.zufar.icedlatte.common.http.RequestPathUtils;
+
 @Slf4j
 @Configuration
 @ConditionalOnProperty(name = "sentry.enabled", havingValue = "true")
@@ -88,8 +90,7 @@ public class SentryConfiguration {
             transaction.setTag("version", applicationVersion);
 
             // Filter out health check transactions
-            if (transaction.getTransaction() != null
-                    && transaction.getTransaction().contains("/actuator/health")) {
+            if (isHealthCheckTransaction(transaction.getTransaction())) {
                 return null; // Don't send health check transactions
             }
 
@@ -124,7 +125,7 @@ public class SentryConfiguration {
         if (value == null) {
             return false;
         }
-        return configuredPrefixes(rawPrefixes).stream().anyMatch(value::startsWith);
+        return configuredPrefixes(rawPrefixes).stream().anyMatch(prefix -> RequestPathUtils.matchesRootOrNested(value, prefix));
     }
 
     private static Set<String> configuredPrefixes(String rawPrefixes) {
@@ -135,6 +136,15 @@ public class SentryConfiguration {
                 .map(String::trim)
                 .filter(prefix -> !prefix.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static boolean isHealthCheckTransaction(String transactionName) {
+        if (transactionName == null) {
+            return false;
+        }
+        int pathStart = transactionName.indexOf('/');
+        String path = pathStart >= 0 ? transactionName.substring(pathStart) : transactionName;
+        return RequestPathUtils.matchesRootOrNested(path, "/actuator/health");
     }
 
     private static Set<String> breadcrumbDataKeys(Breadcrumb breadcrumb) {

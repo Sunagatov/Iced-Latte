@@ -43,14 +43,18 @@ public class ActuatorPrometheusScrapeTokenFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
-        String authorization = request.getHeader("Authorization");
-        if (isValidScrapeAuthorization(authorization)) {
-            var authentication =
-                    new UsernamePasswordAuthenticationToken("prometheus-scraper", null, List.of(ADMIN_AUTHORITY));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
+        try {
+            String authorization = request.getHeader("Authorization");
+            if (isValidScrapeAuthorization(authorization)) {
+                var authentication =
+                        new UsernamePasswordAuthenticationToken("prometheus-scraper", null, List.of(ADMIN_AUTHORITY));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     private boolean isValidScrapeAuthorization(String authorization) {

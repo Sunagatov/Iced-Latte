@@ -142,6 +142,22 @@ class SentryConfigurationTest {
     }
 
     @Test
+    @DisplayName("trace sampler does not treat lookalike prefixes as configured paths")
+    @SuppressWarnings("deprecation")
+    void tracesSamplerDoesNotTreatLookalikePrefixesAsConfiguredPaths() {
+        SentryConfiguration configuration = configurationWithoutTrailingSlashes();
+        SentryOptions.TracesSamplerCallback callback = configuration.tracesSamplerCallback();
+        CustomSamplingContext customSamplingContext = new CustomSamplingContext();
+
+        assertThat(callback.sample(new SamplingContext(
+                        new TransactionContext("/api/v1/cartography/42", "http.server"), customSamplingContext)))
+                .isEqualTo(0.1);
+        assertThat(callback.sample(new SamplingContext(
+                        new TransactionContext("/api/v1/authenticate-extra", "http.server"), customSamplingContext)))
+                .isEqualTo(0.1);
+    }
+
+    @Test
     @DisplayName("before-send-transaction adds tags and skips health checks")
     void beforeSendTransactionAddsTagsAndSkipsHealthChecks() {
         SentryConfiguration configuration = configuration();
@@ -161,6 +177,16 @@ class SentryConfigurationTest {
         when(health.getTransaction()).thenReturn("GET /actuator/health");
 
         assertThat(callback.execute(health, hint)).isNull();
+
+        SentryTransaction nestedHealth = Mockito.mock(SentryTransaction.class);
+        when(nestedHealth.getTransaction()).thenReturn("/actuator/health/readiness");
+
+        assertThat(callback.execute(nestedHealth, hint)).isNull();
+
+        SentryTransaction lookalike = Mockito.mock(SentryTransaction.class);
+        when(lookalike.getTransaction()).thenReturn("GET /actuator/healthcheck");
+
+        assertThat(callback.execute(lookalike, hint)).isSameAs(lookalike);
     }
 
     private SentryConfiguration configuration() {
@@ -170,6 +196,15 @@ class SentryConfigurationTest {
         ReflectionTestUtils.setField(
                 configuration, "traceCriticalPathPrefixes", "/api/v1/auth/,/api/v1/payment/,/api/v1/orders/");
         ReflectionTestUtils.setField(configuration, "traceUserFacingPathPrefixes", "/api/v1/products/,/api/v1/cart/");
+        return configuration;
+    }
+
+    private SentryConfiguration configurationWithoutTrailingSlashes() {
+        SentryConfiguration configuration = new SentryConfiguration();
+        ReflectionTestUtils.setField(configuration, "applicationName", "iced-latte");
+        ReflectionTestUtils.setField(configuration, "applicationVersion", "2026.04");
+        ReflectionTestUtils.setField(configuration, "traceCriticalPathPrefixes", "/api/v1/auth,/api/v1/payment");
+        ReflectionTestUtils.setField(configuration, "traceUserFacingPathPrefixes", "/api/v1/products,/api/v1/cart");
         return configuration;
     }
 }
