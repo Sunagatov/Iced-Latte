@@ -60,6 +60,36 @@ class ShoppingCartLifecycleIntegrationTest extends AuthenticatedUserIntegrationS
     }
 
     @Test
+    @DisplayName("Should merge duplicate rows from a single add-items request")
+    void shouldMergeDuplicateRowsFromSingleRequest() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .body("""
+                        {
+                          "items": [
+                            {
+                              "productId": "%s",
+                              "productQuantity": 1
+                            },
+                            {
+                              "productId": "%s",
+                              "productQuantity": 1
+                            }
+                          ]
+                        }
+                        """.formatted(PRODUCT_ID, PRODUCT_ID))
+                .post("/items")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("items", hasSize(1))
+                .body("items[0].productInfo.id", equalTo(PRODUCT_ID))
+                .body("items[0].productQuantity", equalTo(2))
+                .body("itemsQuantity", equalTo(1))
+                .body("productsQuantity", equalTo(2));
+    }
+
+    @Test
     @DisplayName("Should keep carts isolated between different users")
     void shouldKeepCartsIsolatedBetweenDifferentUsers() {
         AuthenticatedUser firstUser = registerAndAuthenticateUser();

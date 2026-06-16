@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.cart.endpoint;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -87,11 +88,15 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     private static Set<AddCartItemRequest> toAddCartItemRequests(AddNewItemsToShoppingCartRequest request) {
         return request.getItems().stream()
+                .collect(Collectors.toMap(
+                        NewShoppingCartItemDto::getProductId, NewShoppingCartItemDto::getProductQuantity, Integer::sum))
+                .entrySet()
+                .stream()
                 .map(CartEndpoint::toAddCartItemRequest)
                 .collect(Collectors.toSet());
     }
 
-    private static AddCartItemRequest toAddCartItemRequest(NewShoppingCartItemDto item) {
-        return new AddCartItemRequest(item.getProductId(), item.getProductQuantity());
+    private static AddCartItemRequest toAddCartItemRequest(Map.Entry<UUID, Integer> item) {
+        return new AddCartItemRequest(item.getKey(), item.getValue());
     }
 }

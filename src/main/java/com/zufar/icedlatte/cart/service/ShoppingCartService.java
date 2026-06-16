@@ -87,6 +87,7 @@ public class ShoppingCartService implements CartCheckoutApi {
         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
                 .collect(Collectors.toMap(
                         AddCartItemRequest::productId, AddCartItemRequest::productQuantity, Integer::sum));
+        validateProductsExist(productsWithQuantity.keySet());
         mergeIntoCart(shoppingCart, productsWithQuantity);
         return shoppingCartRepository.saveAndFlush(shoppingCart);
     }
@@ -139,17 +140,35 @@ public class ShoppingCartService implements CartCheckoutApi {
     private Map<UUID, ProductSnapshot> loadProductsById(ShoppingCart shoppingCart) {
         List<UUID> productIds = shoppingCart.getItems().stream()
                 .map(ShoppingCartItem::getProductId)
+                .distinct()
                 .toList();
         if (productIds.isEmpty()) {
             return Map.of();
         }
-        return productCatalogApi.getProductsByIds(productIds).stream()
+        Map<UUID, ProductSnapshot> productsById = productCatalogApi.getProductsByIds(productIds).stream()
                 .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
+        List<UUID> missingProductIds = productIds.stream()
+                .filter(productId -> !productsById.containsKey(productId))
+                .toList();
+        if (!missingProductIds.isEmpty()) {
+            throw new CartProductNotFoundException(missingProductIds);
+        }
+        return productsById;
     }
 
     private void mergeIntoCart(ShoppingCart cart, Map<UUID, Integer> productsWithQuantity) {
         increaseExistingItemQuantities(cart, productsWithQuantity);
         cart.getItems().addAll(createNewItems(productsWithQuantity, cart));
+    }
+
+    private void validateProductsExist(Set<UUID> productIds) {
+        Set<UUID> existingProductIds = productCatalogApi.findExistingProductIds(productIds);
+        List<UUID> missingProductIds = productIds.stream()
+                .filter(productId -> !existingProductIds.contains(productId))
+                .toList();
+        if (!missingProductIds.isEmpty()) {
+            throw new CartProductNotFoundException(missingProductIds);
+        }
     }
 
     private static void increaseExistingItemQuantities(
@@ -175,14 +194,6 @@ public class ShoppingCartService implements CartCheckoutApi {
 
         if (newProductIds.isEmpty()) {
             return List.of();
-        }
-
-        Set<UUID> catalogProductIds = productCatalogApi.findExistingProductIds(newProductIds);
-        List<UUID> missingIds = newProductIds.stream()
-                .filter(productId -> !catalogProductIds.contains(productId))
-                .toList();
-        if (!missingIds.isEmpty()) {
-            throw new CartProductNotFoundException(missingIds);
         }
 
         return newProductIds.stream()
@@ -216,7 +227,10 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
     }
 
-    private static void validateAddCartItemRequests(Collection<AddCartItemRequest> itemsToAdd) {
+    private static void validateAddCartItemRequests(@Nullable Collection<AddCartItemRequest> itemsToAdd) {
+        if (itemsToAdd == null) {
+            throw new InvalidCartItemRequestException("Cart items to add must not be null.");
+        }
         if (itemsToAdd.isEmpty()) {
             throw new InvalidCartItemRequestException("Cart items to add must not be empty.");
         }
@@ -225,7 +239,10 @@ public class ShoppingCartService implements CartCheckoutApi {
         }
     }
 
-    private static List<UUID> validateAndCopyDeleteItemIds(List<? extends @Nullable UUID> itemIds) {
+    private static List<UUID> validateAndCopyDeleteItemIds(@Nullable List<? extends @Nullable UUID> itemIds) {
+        if (itemIds == null) {
+            throw new InvalidCartItemRequestException("Cart item ids to delete must not be null.");
+        }
         if (itemIds.isEmpty()) {
             throw new InvalidCartItemRequestException("Cart item ids to delete must not be empty.");
         }

@@ -132,6 +132,23 @@ class ShoppingCartServiceTest {
     }
 
     @Test
+    @DisplayName("getByUserId fails with product not found when a cart item no longer exists in the catalog")
+    void getByUserIdFailsWhenCartContainsRemovedProduct() {
+        UUID userId = UUID.randomUUID();
+        ShoppingCart shoppingCart = CartDtoTestStub.createShoppingCart();
+
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
+        when(productCatalogApi.getProductsByIds(any()))
+                .thenReturn(List.of(
+                        CartDtoTestStub.createProductsById().get(CartDtoTestStub.SECOND_PRODUCT_ID),
+                        CartDtoTestStub.createProductsById().get(CartDtoTestStub.THIRD_PRODUCT_ID)));
+
+        assertThatThrownBy(() -> shoppingCartService.getByUserId(userId))
+                .isInstanceOf(CartProductNotFoundException.class)
+                .hasMessageContaining(CartDtoTestStub.FIRST_PRODUCT_ID.toString());
+    }
+
+    @Test
     @DisplayName("getByUserIdOrThrow fails when the user has no cart")
     void getByUserIdOrThrowFailsWhenCartMissing() {
         UUID userId = UUID.randomUUID();
@@ -166,7 +183,8 @@ class ShoppingCartServiceTest {
         ProductSnapshot newProduct = productDto(newProductId, BigDecimal.valueOf(3.5));
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
-        when(productCatalogApi.findExistingProductIds(Set.of(newProductId))).thenReturn(Set.of(newProductId));
+        when(productCatalogApi.findExistingProductIds(Set.of(existingProductId, newProductId)))
+                .thenReturn(Set.of(existingProductId, newProductId));
         when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of(existingProduct, newProduct));
         when(shoppingCartRepository.saveAndFlush(shoppingCart)).thenReturn(shoppingCart);
 
@@ -198,6 +216,33 @@ class ShoppingCartServiceTest {
     }
 
     @Test
+    @DisplayName("addItems rejects quantity increase for a cart item whose product was removed from the catalog")
+    void addItemsRejectsIncreaseForRemovedExistingProduct() {
+        UUID userId = UUID.randomUUID();
+        UUID removedProductId = UUID.randomUUID();
+        ShoppingCart cart = new ShoppingCart();
+        cart.setId(UUID.randomUUID());
+        cart.setUserId(userId);
+        ShoppingCartItem existingItem = ShoppingCartItem.builder()
+                .id(UUID.randomUUID())
+                .shoppingCart(cart)
+                .productId(removedProductId)
+                .productQuantity(1)
+                .build();
+        cart.setItems(new HashSet<>(Set.of(existingItem)));
+
+        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(cart));
+        when(productCatalogApi.findExistingProductIds(Set.of(removedProductId))).thenReturn(Set.of());
+
+        assertThatThrownBy(() ->
+                        shoppingCartService.addItemsToCart(userId, Set.of(new AddCartItemRequest(removedProductId, 1))))
+                .isInstanceOf(CartProductNotFoundException.class)
+                .hasMessageContaining(removedProductId.toString());
+
+        verify(shoppingCartRepository, never()).saveAndFlush(any(ShoppingCart.class));
+    }
+
+    @Test
     @DisplayName("addItems rejects empty internal requests")
     void addItemsRejectsEmptyInternalRequests() {
         UUID userId = UUID.randomUUID();
@@ -216,6 +261,19 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() ->
                         shoppingCartService.addItems(userId, Set.of(new AddCartItemRequest(UUID.randomUUID(), 100))))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
+
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+    }
+
+    @Test
+    @DisplayName("addItems rejects null internal requests")
+    @SuppressWarnings("DataFlowIssue")
+    void addItemsRejectsNullInternalRequests() {
+        UUID userId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> shoppingCartService.addItems(userId, null))
+                .isInstanceOf(InvalidCartItemRequestException.class)
+                .hasMessageContaining("must not be null");
 
         verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
@@ -252,6 +310,7 @@ class ShoppingCartServiceTest {
         AddCartItemRequest itemToAdd = new AddCartItemRequest(productId, 2);
 
         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
 
         assertThatThrownBy(() -> shoppingCartService.addItemsToCart(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
@@ -369,6 +428,19 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(
                         () -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
                 .isInstanceOf(InvalidCartItemRequestException.class);
+
+        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+    }
+
+    @Test
+    @DisplayName("deleteItems rejects null item id collections before touching repositories")
+    @SuppressWarnings("DataFlowIssue")
+    void deleteItemsRejectsNullItemIdCollections() {
+        UUID userId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> shoppingCartService.deleteItems(null, userId))
+                .isInstanceOf(InvalidCartItemRequestException.class)
+                .hasMessageContaining("must not be null");
 
         verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
     }
