@@ -182,6 +182,31 @@ class JwtAuthenticationFilterTest {
                     .contains("\"detail\":\"Authentication failed.\"")
                     .contains("\"status\":401");
         }
+
+        @Test
+        @DisplayName("clears security context and MDC when post-authentication enrichment fails")
+        void clearsSecurityContextAndMdcWhenPostAuthenticationEnrichmentFails()
+                throws ServletException, IOException {
+            UUID userId = UUID.randomUUID();
+            SecurityUserDetails user = user(userId);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(user, "credentials", user.getAuthorities());
+            MockHttpServletRequest request = request("/api/v1/me");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
+
+            when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
+            when(currentUserProvider.getUserId()).thenThrow(new RuntimeException("boom"));
+            when(clientIpExtractor.extract(request)).thenReturn("203.0.113.10");
+
+            filter().run(request, response, chain);
+
+            verifyNoInteractions(chain);
+            assertThat(response.getStatus()).isEqualTo(500);
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+            assertThat(MDC.get("userId")).isNull();
+            assertThat(MDC.get("sessionId")).isNull();
+        }
     }
 
     private TestableJwtAuthenticationFilter filter() {

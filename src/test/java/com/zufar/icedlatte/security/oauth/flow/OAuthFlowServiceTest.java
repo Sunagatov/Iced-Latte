@@ -185,6 +185,17 @@ class OAuthFlowServiceTest {
     }
 
     @Test
+    void completeCallbackClearsStateCookieWhenProviderBecomesUnavailable() {
+        when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
+
+        URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
+
+        assertThat(redirect.toString()).isEqualTo("https://app.example.com/signin?error=oauth_disabled");
+        verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
+        verifyNoInteractions(oAuthStateStore, oAuthTokenHandoffStore);
+    }
+
+    @Test
     void completeCallbackReplacesExistingFragmentWithOneTimeHandoffCode() {
         stubGoogleClient();
         when(oAuthStateCookieService.matches(request, OAuthProvider.GOOGLE, "state-token"))

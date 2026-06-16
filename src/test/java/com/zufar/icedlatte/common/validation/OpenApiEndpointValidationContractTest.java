@@ -140,9 +140,40 @@ class OpenApiEndpointValidationContractTest {
         Object[] args = new Object[constructor.getParameterCount()];
         Class<?>[] parameterTypes = constructor.getParameterTypes();
         for (int i = 0; i < parameterTypes.length; i++) {
-            args[i] = mock(parameterTypes[i]);
+            args[i] = defaultConstructorArgument(parameterTypes[i]);
         }
         return constructor.newInstance(args);
+    }
+
+    private static Object defaultConstructorArgument(Class<?> parameterType) {
+        if (!parameterType.isPrimitive()) {
+            return null;
+        }
+        if (parameterType == boolean.class) {
+            return false;
+        }
+        if (parameterType == char.class) {
+            return '\0';
+        }
+        if (parameterType == byte.class) {
+            return (byte) 0;
+        }
+        if (parameterType == short.class) {
+            return (short) 0;
+        }
+        if (parameterType == int.class) {
+            return 0;
+        }
+        if (parameterType == long.class) {
+            return 0L;
+        }
+        if (parameterType == float.class) {
+            return 0F;
+        }
+        if (parameterType == double.class) {
+            return 0D;
+        }
+        throw new IllegalArgumentException("Unsupported primitive constructor parameter: " + parameterType);
     }
 
     private static Object[] dummyArguments(Method method) throws ReflectiveOperationException {

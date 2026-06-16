@@ -29,6 +29,7 @@ public class RequestPathUtils {
         String rootWithoutTrailingSlash = normalizedRoot.endsWith("/") && normalizedRoot.length() > 1
                 ? normalizedRoot.substring(0, normalizedRoot.length() - 1)
                 : normalizedRoot;
-        return normalizedPath.equals(rootWithoutTrailingSlash) || normalizedPath.startsWith(normalizedRoot);
+        String nestedPrefix = normalizedRoot.endsWith("/") ? normalizedRoot : normalizedRoot + "/";
+        return normalizedPath.equals(rootWithoutTrailingSlash) || normalizedPath.startsWith(nestedPrefix);
     }
 }

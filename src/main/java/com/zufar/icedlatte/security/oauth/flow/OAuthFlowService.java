@@ -64,6 +64,7 @@ public class OAuthFlowService {
             HttpServletRequest request,
             HttpServletResponse response) {
         if (oAuthLoginService.findClient(provider).isEmpty()) {
+            oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(PROVIDER_DISABLED_ERROR);
         }
         if (code == null || code.isBlank()) {

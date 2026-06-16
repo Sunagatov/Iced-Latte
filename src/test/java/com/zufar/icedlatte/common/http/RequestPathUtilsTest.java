@@ -29,4 +29,12 @@ class RequestPathUtilsTest {
     void treatsUnrelatedPathsAsPublicInternetNoise() {
         assertThat(RequestPathUtils.isPublicInternetNoise("/wp-login.php")).isTrue();
     }
+
+    @Test
+    @DisplayName("does not treat lookalike prefixes as application paths")
+    void doesNotTreatLookalikePrefixesAsApplicationPaths() {
+        assertThat(RequestPathUtils.isPublicInternetNoise("/apiary")).isTrue();
+        assertThat(RequestPathUtils.isPublicInternetNoise("/actuatorx")).isTrue();
+        assertThat(RequestPathUtils.isPublicInternetNoise("/api-docs")).isTrue();
+    }
 }

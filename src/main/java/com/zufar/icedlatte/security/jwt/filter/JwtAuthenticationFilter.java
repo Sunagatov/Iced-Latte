@@ -69,6 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (AbsentBearerHeaderException _) {
             // No token present — continue as anonymous, let Spring Security authorization decide
         } catch (Exception ex) {
+            clearAuthState();
             handleAuthenticationException(httpRequest, httpResponse, ex);
             return;
         }
@@ -76,8 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(httpRequest, httpResponse);
         } finally {
-            MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
-            MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
+            clearAuthState();
         }
     }
 
@@ -117,5 +117,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 failure.detail(),
                 path,
                 requestId);
+    }
+
+    private void clearAuthState() {
+        SecurityContextHolder.clearContext();
+        MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
+        MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
     }
 }
