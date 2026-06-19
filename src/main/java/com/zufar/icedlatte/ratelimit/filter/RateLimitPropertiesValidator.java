@@ -15,9 +15,14 @@ class RateLimitPropertiesValidator {
         assertPositive("pre-auth", properties.getPreAuth());
         assertPositive("auth", properties.getAuth());
         assertPositive("global", properties.getGlobal());
+        assertPositive("login", properties.getLogin());
+        assertPositive("signup", properties.getSignup());
+        assertPositive("password-reset", properties.getPasswordReset());
         assertPositive("search", properties.getSearch());
         assertPositive("telemetry", properties.getTelemetry());
         assertPositive("payment", properties.getPayment());
+        assertPositive("checkout", properties.getCheckout());
+        assertPositive("review-write", properties.getReviewWrite());
         assertPositive("write", properties.getWrite());
         assertPositive("file-upload", properties.getFileUpload());
         assertPositiveBanConfiguration(properties);

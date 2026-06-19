@@ -63,25 +63,28 @@ class RateLimitingFilterTest {
         filter = newFilter(properties());
     }
 
-    @ParameterizedTest(name = "{0} -> {1}")
+    @ParameterizedTest(name = "{1} {0} -> {2}")
     @CsvSource({
-        "/api/v1/auth/authenticate,    global",
-        "/api/v1/auth/register,        global",
-        "/api/v1/auth/oauth/google,    global",
-        "/api/v1/auth/oauth/google/callback, global",
-        "/api/v1/auth/oauth/github,    global",
-        "/api/v1/auth/oauth/github/callback, global",
-        "/api/v1/auth/refresh,         auth",
-        "/api/v1/telemetry/report,     telemetry",
-        "/api/v1/payment,              payment",
-        "/api/v1/payment/stripe/webhook, payment",
-        "/api/v1/auth/password/forgot, auth",
-        "/api/v1/auth/password/change, auth",
-        "/api/v1/cart,                 global",
-        "/api/v1/users/me,             global",
+        "/api/v1/auth/authenticate, POST, login",
+        "/api/v1/auth/register, POST, signup",
+        "/api/v1/auth/oauth/google, GET, global",
+        "/api/v1/auth/oauth/google/callback, GET, global",
+        "/api/v1/auth/oauth/github, GET, global",
+        "/api/v1/auth/oauth/github/callback, GET, global",
+        "/api/v1/auth/refresh, POST, auth",
+        "/api/v1/telemetry/report, POST, telemetry",
+        "/api/v1/payment, GET, payment",
+        "/api/v1/payment/checkout, POST, checkout",
+        "/api/v1/payment/checkout/123/status, GET, payment",
+        "/api/v1/payment/stripe/webhook, POST, payment",
+        "/api/v1/auth/password/forgot, POST, password-reset",
+        "/api/v1/auth/password/change, POST, password-reset",
+        "/api/v1/products/123/reviews, POST, review-write",
+        "/api/v1/cart, GET, global",
+        "/api/v1/users/me, GET, global",
     })
     @DisplayName("resolves correct rate-limit category for path")
-    void categoryResolution(String path, String expectedCategory) throws Exception {
+    void categoryResolution(String path, String method, String expectedCategory) throws Exception {
         when(clientIpExtractor.extract(any())).thenReturn("1.2.3.4");
         when(closedRateLimiter.tryConsume(any(), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 10, 9, RESET_MILLIS));
@@ -91,7 +94,7 @@ class RateLimitingFilterTest {
                         argThat(key -> key != null && key.startsWith(expectedCategory.trim() + ":")), anyInt(), any()))
                 .thenReturn(new RateLimitResult(true, 60, 59, RESET_MILLIS));
 
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", path.trim());
+        MockHttpServletRequest request = new MockHttpServletRequest(method.trim(), path.trim());
         FilterChain chain = mock(FilterChain.class);
 
         filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
@@ -322,6 +325,17 @@ class RateLimitingFilterTest {
     }
 
     @Test
+    @DisplayName("validation rejects non-positive login limit")
+    void validateRejectsNonPositiveLoginLimit() {
+        RateLimitProperties properties = properties();
+        properties.getLogin().setMaxRequests(0);
+
+        assertThatThrownBy(() -> newFilter(properties))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("login.max-requests must be > 0");
+    }
+
+    @Test
     @DisplayName("validation rejects non-positive search window")
     void validateRejectsNonPositiveSearchWindow() {
         RateLimitProperties properties = properties();
@@ -532,6 +546,16 @@ class RateLimitingFilterTest {
         properties.getTelemetry().setWindowDuration(Duration.ofMinutes(1));
         properties.getPayment().setMaxRequests(20);
         properties.getPayment().setWindowDuration(Duration.ofMinutes(1));
+        properties.getLogin().setMaxRequests(5);
+        properties.getLogin().setWindowDuration(Duration.ofMinutes(1));
+        properties.getSignup().setMaxRequests(5);
+        properties.getSignup().setWindowDuration(Duration.ofMinutes(10));
+        properties.getPasswordReset().setMaxRequests(5);
+        properties.getPasswordReset().setWindowDuration(Duration.ofMinutes(10));
+        properties.getCheckout().setMaxRequests(10);
+        properties.getCheckout().setWindowDuration(Duration.ofMinutes(1));
+        properties.getReviewWrite().setMaxRequests(10);
+        properties.getReviewWrite().setWindowDuration(Duration.ofMinutes(10));
         properties.getWrite().setMaxRequests(20);
         properties.getWrite().setWindowDuration(Duration.ofMinutes(1));
         properties.getFileUpload().setMaxRequests(5);

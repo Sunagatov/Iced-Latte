@@ -15,6 +15,7 @@ class RateLimitRouteClassifier {
 
     private static final Set<String> READ_METHODS = Set.of("GET", "HEAD", "OPTIONS");
     private static final String AUTH_REGISTER = ApiPaths.AUTH + "/register";
+    private static final String PAYMENT_CHECKOUT = ApiPaths.PAYMENT + "/checkout";
     private static final String TELEMETRY_ROOT = ApiPaths.API_ROOT + "/v1/telemetry/";
 
     static boolean shouldSkip(HttpServletRequest request) {
@@ -27,9 +28,13 @@ class RateLimitRouteClassifier {
         String path = request.getRequestURI();
         String method = request.getMethod().toUpperCase(Locale.ROOT);
         return switch (path) {
+            case ApiPaths.AUTH_AUTHENTICATE -> RateLimitCategory.LOGIN;
+            case AUTH_REGISTER -> RateLimitCategory.SIGNUP;
+            case String uri when isPasswordResetPath(uri) -> RateLimitCategory.PASSWORD_RESET;
+            case String uri when uri.equals(PAYMENT_CHECKOUT) && "POST".equals(method) -> RateLimitCategory.CHECKOUT;
+            case String uri when isReviewWritePath(uri, method) -> RateLimitCategory.REVIEW_WRITE;
             case String uri
             when uri.startsWith(ApiPaths.AUTH_ROOT_PREFIX) && !isGlobalAuthPath(uri) -> RateLimitCategory.AUTH;
-            case String uri when isPasswordResetPath(uri) -> RateLimitCategory.AUTH;
             case String uri
             when uri.equals(ApiPaths.PAYMENT) || uri.startsWith(ApiPaths.PAYMENT + "/") -> RateLimitCategory.PAYMENT;
             case String uri
@@ -59,6 +64,13 @@ class RateLimitRouteClassifier {
         return contentType != null
                 && contentType.toLowerCase(Locale.ROOT).startsWith("multipart/")
                 && (path.endsWith("/avatar") || path.contains("/images"));
+    }
+
+    private static boolean isReviewWritePath(String path, String method) {
+        return "POST".equals(method)
+                && path.startsWith(ApiPaths.PRODUCTS + "/")
+                && path.endsWith("/reviews")
+                && !path.endsWith("/reviews/statistics");
     }
 
     private static boolean isPathUnder(String path, String root) {

@@ -16,9 +16,14 @@ public class RateLimitProperties {
 
     private Bucket global = new Bucket(60, Duration.ofMinutes(1));
     private Bucket auth = new Bucket(10, Duration.ofMinutes(1));
+    private Bucket login = new Bucket(5, Duration.ofMinutes(1));
+    private Bucket signup = new Bucket(5, Duration.ofMinutes(10));
+    private Bucket passwordReset = new Bucket(5, Duration.ofMinutes(10));
     private Bucket search = new Bucket(30, Duration.ofMinutes(1));
     private Bucket telemetry = new Bucket(120, Duration.ofMinutes(1));
     private Bucket payment = new Bucket(20, Duration.ofMinutes(1));
+    private Bucket checkout = new Bucket(10, Duration.ofMinutes(1));
+    private Bucket reviewWrite = new Bucket(10, Duration.ofMinutes(10));
     private Bucket write = new Bucket(20, Duration.ofMinutes(1));
     private Bucket fileUpload = new Bucket(5, Duration.ofMinutes(1));
     private Bucket preAuth = new Bucket(200, Duration.ofMinutes(1));
