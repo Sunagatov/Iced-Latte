@@ -44,11 +44,12 @@ public class AuthenticationEndpoint implements AuthenticationApi {
     @PostMapping("/api/v1/auth/register")
     public ResponseEntity<UserAuthenticationResponse> register(
             @RequestBody @Valid final UserRegistrationRequest request) {
+        AuthSessionRequestMetadata metadata = requestMetadata();
         if (emailEnabled) {
-            emailVerificationService.sendEmailVerificationCode(request);
+            emailVerificationService.sendEmailVerificationCode(request, metadata.ipAddress());
             return ResponseEntity.ok().build();
         }
-        AuthenticationTokens authenticationTokens = userRegistrationService.register(request, requestMetadata());
+        AuthenticationTokens authenticationTokens = userRegistrationService.register(request, metadata);
         return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 

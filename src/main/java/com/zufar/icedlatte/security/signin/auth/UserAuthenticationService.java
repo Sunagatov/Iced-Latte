@@ -37,7 +37,7 @@ public class UserAuthenticationService {
 
     public AuthenticationTokens authenticate(
             final UserAuthenticationRequest request, final AuthSessionRequestMetadata requestMetadata) {
-        turnstileVerifier.verify(request.getTurnstileToken());
+        turnstileVerifier.verify(request.getTurnstileToken(), requestMetadata.ipAddress());
         UserDetails userDetails = verifyCredentials(request);
         loginAttemptService.resetAfterSuccessfulAuthentication(EmailNormalizer.normalize(request.getEmail()));
         return sessionTokenService.issueForNewSession(userDetails, requestMetadata);

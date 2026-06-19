@@ -3,6 +3,7 @@ package com.zufar.icedlatte.common.turnstile;
 import java.time.Duration;
 
 import org.assertj.core.api.Assertions;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -77,6 +78,23 @@ class TurnstileVerifierTest {
             var verifier = new TurnstileVerifier(TurnstileProperties.enabledForTests(), restClient);
 
             Assertions.assertThatCode(() -> verifier.verify("valid-token")).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("should include remote IP when provided")
+        void includesRemoteIpWhenProvided() {
+            var builder = RestClient.builder();
+            var server = MockRestServiceServer.bindTo(builder).build();
+            server.expect(MockRestRequestMatchers.requestTo(
+                            "https://challenges.cloudflare.com/turnstile/v0/siteverify"))
+                    .andExpect(MockRestRequestMatchers.method(HttpMethod.POST))
+                    .andExpect(MockRestRequestMatchers.content()
+                            .string(Matchers.containsString("remoteip=203.0.113.10")))
+                    .andRespond(MockRestResponseCreators.withSuccess("{\"success\": true}", MediaType.APPLICATION_JSON));
+            var verifier = new TurnstileVerifier(TurnstileProperties.enabledForTests(), builder.build());
+
+            Assertions.assertThatCode(() -> verifier.verify("valid-token", "203.0.113.10")).doesNotThrowAnyException();
+            server.verify();
         }
 
         @Test

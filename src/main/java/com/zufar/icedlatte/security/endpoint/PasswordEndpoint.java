@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.security.endpoint;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.ChangePasswordRequest;
 import com.zufar.icedlatte.openapi.dto.ForgotPasswordRequest;
 import com.zufar.icedlatte.openapi.security.api.PasswordApi;
@@ -21,11 +23,13 @@ import lombok.RequiredArgsConstructor;
 public class PasswordEndpoint implements PasswordApi {
 
     private final PasswordResetService passwordResetService;
+    private final HttpServletRequest httpRequest;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     @PostMapping("/api/v1/auth/password/forgot")
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody final ForgotPasswordRequest request) {
-        passwordResetService.requestReset(request.getEmail(), request.getTurnstileToken());
+        passwordResetService.requestReset(request.getEmail(), request.getTurnstileToken(), clientIp());
         return ResponseEntity.ok().build();
     }
 
@@ -33,7 +37,12 @@ public class PasswordEndpoint implements PasswordApi {
     // amazonq-ignore-next-line
     @PostMapping("/api/v1/auth/password/change")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody final ChangePasswordRequest request) {
-        passwordResetService.confirmReset(request.getCode(), request.getPassword(), request.getTurnstileToken());
+        passwordResetService.confirmReset(
+                request.getCode(), request.getPassword(), request.getTurnstileToken(), clientIp());
         return ResponseEntity.ok().build();
+    }
+
+    private String clientIp() {
+        return clientIpExtractor.extract(httpRequest);
     }
 }

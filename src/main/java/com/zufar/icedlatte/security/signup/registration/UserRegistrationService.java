@@ -32,14 +32,19 @@ public class UserRegistrationService {
     private final TurnstileVerifier turnstileVerifier;
 
     public void ensureRegistrationAllowed(final UserRegistrationRequest userRegistrationRequest) {
-        turnstileVerifier.verify(userRegistrationRequest.getTurnstileToken());
+        ensureRegistrationAllowed(userRegistrationRequest, null);
+    }
+
+    public void ensureRegistrationAllowed(
+            final UserRegistrationRequest userRegistrationRequest, final String remoteIp) {
+        turnstileVerifier.verify(userRegistrationRequest.getTurnstileToken(), remoteIp);
         ensureEmailAvailable(userRegistrationRequest);
     }
 
     @Transactional
     public AuthenticationTokens register(
             final UserRegistrationRequest userRegistrationRequest, final AuthSessionRequestMetadata requestMetadata) {
-        ensureRegistrationAllowed(userRegistrationRequest);
+        ensureRegistrationAllowed(userRegistrationRequest, requestMetadata.ipAddress());
         String encryptedPassword =
                 Objects.requireNonNull(passwordEncoder.encode(userRegistrationRequest.getPassword()));
         return persistPasswordUser(userRegistrationRequest, encryptedPassword, requestMetadata);

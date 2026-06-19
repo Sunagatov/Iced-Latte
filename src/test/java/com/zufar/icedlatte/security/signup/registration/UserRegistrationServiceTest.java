@@ -78,7 +78,7 @@ class UserRegistrationServiceTest {
 
         AuthenticationTokens response = service.register(registrationRequest, REQUEST_METADATA);
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "127.0.0.1");
         verify(userRegistrationApi).existsByEmail("mixed.case@example.com");
         verify(userRegistrationApi)
                 .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
@@ -97,7 +97,7 @@ class UserRegistrationServiceTest {
 
         service.ensureRegistrationAllowed(registrationRequest);
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", null);
         verify(userRegistrationApi).existsByEmail("available@example.com");
     }
 
@@ -113,7 +113,7 @@ class UserRegistrationServiceTest {
                 .isInstanceOf(UserRegistrationException.class)
                 .hasMessage("This email is already registered. Please sign in or use a different email.");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", null);
         verify(userRegistrationApi).existsByEmail("duplicate@example.com");
     }
 

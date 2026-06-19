@@ -48,6 +48,10 @@ public class TurnstileVerifier {
     }
 
     public void verify(@Nullable String token) {
+        verify(token, null);
+    }
+
+    public void verify(@Nullable String token, @Nullable String remoteIp) {
         if (!enabled) {
             return;
         }
@@ -58,6 +62,9 @@ public class TurnstileVerifier {
             LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
             form.add("secret", secretKey);
             form.add("response", token);
+            if (remoteIp != null && !remoteIp.isBlank()) {
+                form.add("remoteip", remoteIp);
+            }
 
             TurnstileResponse result = restClient
                     .post()

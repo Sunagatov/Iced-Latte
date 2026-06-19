@@ -161,7 +161,7 @@ class UserAuthenticationServiceTest {
         AuthenticationTokens response = userAuthenticationService.authenticate(request, REQUEST_METADATA);
 
         assertSame(expectedResponse, response);
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "127.0.0.1");
         verify(sessionTokenService).issueForNewSession(userDetails, REQUEST_METADATA);
         verify(loginAttemptService).resetAfterSuccessfulAuthentication("known@example.com");
     }

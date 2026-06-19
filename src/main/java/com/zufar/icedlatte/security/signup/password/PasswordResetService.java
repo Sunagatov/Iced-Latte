@@ -21,7 +21,11 @@ public class PasswordResetService {
     private final TurnstileVerifier turnstileVerifier;
 
     public void requestReset(String email, String turnstileToken) {
-        turnstileVerifier.verify(turnstileToken);
+        requestReset(email, turnstileToken, null);
+    }
+
+    public void requestReset(String email, String turnstileToken, String remoteIp) {
+        turnstileVerifier.verify(turnstileToken, remoteIp);
         String normalizedEmail = EmailNormalizer.normalize(email);
         try {
             if (userLookupApi.findUserByEmail(normalizedEmail).isEmpty()) {
@@ -36,7 +40,11 @@ public class PasswordResetService {
     }
 
     public void confirmReset(String token, String newPassword, String turnstileToken) {
-        turnstileVerifier.verify(turnstileToken);
+        confirmReset(token, newPassword, turnstileToken, null);
+    }
+
+    public void confirmReset(String token, String newPassword, String turnstileToken, String remoteIp) {
+        turnstileVerifier.verify(turnstileToken, remoteIp);
         emailVerificationService.confirmResetPasswordEmailByCode(token, newPassword);
         log.info("auth.password.changed");
     }

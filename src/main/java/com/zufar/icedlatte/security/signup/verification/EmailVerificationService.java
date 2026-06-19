@@ -24,7 +24,11 @@ public class EmailVerificationService {
     private final UserAccessControlApi userAccessControlApi;
 
     public void sendEmailVerificationCode(UserRegistrationRequest request) {
-        userRegistrationService.ensureRegistrationAllowed(request);
+        sendEmailVerificationCode(request, null);
+    }
+
+    public void sendEmailVerificationCode(UserRegistrationRequest request, String remoteIp) {
+        userRegistrationService.ensureRegistrationAllowed(request, remoteIp);
         String token = emailTokenService.generateEmailVerificationToken(request);
         emailConfirmation.sendTemporaryCode(EmailNormalizer.normalize(request.getEmail()), token);
     }

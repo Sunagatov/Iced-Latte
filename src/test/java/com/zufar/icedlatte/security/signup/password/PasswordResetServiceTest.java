@@ -49,7 +49,7 @@ class PasswordResetServiceTest {
 
             service.requestReset(email, "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token");
+            verify(turnstileVerifier).verify("turnstile-token", null);
             verify(userLookupApi).findUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
@@ -64,7 +64,7 @@ class PasswordResetServiceTest {
 
             service.requestReset("  Known@Example.com ", "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token");
+            verify(turnstileVerifier).verify("turnstile-token", null);
             verify(userLookupApi).findUserByEmail(normalizedEmail);
             verify(emailVerificationService).sendPasswordResetCode(normalizedEmail);
         }
@@ -77,7 +77,7 @@ class PasswordResetServiceTest {
 
             service.requestReset(email, "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token");
+            verify(turnstileVerifier).verify("turnstile-token", null);
             verify(userLookupApi).findUserByEmail(email);
             verifyNoInteractions(emailVerificationService);
         }
@@ -95,7 +95,7 @@ class PasswordResetServiceTest {
             service.requestReset(email, "turnstile-token");
 
             verify(userLookupApi).findUserByEmail(email);
-            verify(turnstileVerifier).verify("turnstile-token");
+            verify(turnstileVerifier).verify("turnstile-token", null);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
     }
@@ -105,7 +105,7 @@ class PasswordResetServiceTest {
     void confirmResetDelegatesWithProvidedTokenAndPassword() {
         service.confirmReset("reset-token", "new-password", "turnstile-token");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", null);
         verify(emailVerificationService).confirmResetPasswordEmailByCode("reset-token", "new-password");
     }
 }
