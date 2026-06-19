@@ -18,6 +18,7 @@ import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClientRegistry;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
@@ -35,6 +36,7 @@ public class OAuthFlowService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final OAuthLoginService oAuthLoginService;
+    private final OAuthProviderClientRegistry oAuthProviderClientRegistry;
     private final OAuthStateStore oAuthStateStore;
     private final OAuthTokenHandoffStore oAuthTokenHandoffStore;
     private final OAuthRedirectService oAuthRedirectService;
@@ -43,7 +45,7 @@ public class OAuthFlowService {
 
     public Optional<URI> initiate(
             OAuthProvider provider, String redirectUrl, HttpServletRequest request, HttpServletResponse response) {
-        var client = oAuthLoginService.findClient(provider);
+        var client = oAuthProviderClientRegistry.findClient(provider);
         if (client.isEmpty()) {
             log.warn("auth.oauth.disabled: provider={}", provider.id());
             return Optional.empty();
@@ -63,7 +65,8 @@ public class OAuthFlowService {
             String state,
             HttpServletRequest request,
             HttpServletResponse response) {
-        if (oAuthLoginService.findClient(provider).isEmpty()) {
+
+        if (oAuthProviderClientRegistry.findClient(provider).isEmpty()) {
             oAuthStateCookieService.clear(request, response, provider);
             return oAuthRedirectService.signInErrorRedirect(PROVIDER_DISABLED_ERROR);
         }

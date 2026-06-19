@@ -66,7 +66,7 @@ class OAuthLoginServiceTest {
     void setUp() {
         providerClient = new FakeOAuthProviderClient();
         service = new OAuthLoginService(
-                List.of(providerClient),
+                new OAuthProviderClientRegistry(List.of(providerClient)),
                 oAuthIdentityRepository,
                 userAuthenticationApi,
                 userRegistrationApi,
@@ -291,16 +291,18 @@ class OAuthLoginServiceTest {
     }
 
     @Test
-    void returnsEmptyWhenProviderClientIsNotRegistered() {
+    void rejectsWhenProviderClientIsNotRegistered() {
         OAuthLoginService service = new OAuthLoginService(
-                List.of(),
+                new OAuthProviderClientRegistry(List.of()),
                 oAuthIdentityRepository,
                 userAuthenticationApi,
                 userRegistrationApi,
                 passwordEncoder,
                 sessionTokenService);
 
-        assertThat(service.findClient(OAuthProvider.GOOGLE)).isEmpty();
+        assertThatThrownBy(() -> service.handle(OAuthProvider.GOOGLE, AUTH_CODE, REQUEST_METADATA))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("OAuth provider is not available.");
     }
 
     private AuthenticationTokens handle() {

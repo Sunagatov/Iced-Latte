@@ -23,6 +23,7 @@ import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClientRegistry;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 import com.zufar.icedlatte.test.config.IntegrationTestBase;
@@ -47,6 +48,9 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     private OAuthLoginService oAuthLoginService;
 
     @MockitoBean
+    private OAuthProviderClientRegistry oAuthProviderClientRegistry;
+
+    @MockitoBean
     private OAuthProviderClient oAuthProviderClient;
 
     private RequestSpecification specification;
@@ -54,7 +58,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     @BeforeEach
     void setUp() {
         specification = given().port(port).basePath(BASE_PATH);
-        when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
+        when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
         when(oAuthProviderClient.buildAuthorizationUri(any(String.class)))
                 .thenAnswer(invocation -> googleAuthUri(invocation.getArgument(0)));
     }
@@ -154,7 +158,7 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
     void shouldSupportProviderNeutralGitHubOAuthRoutes() {
         String callbackBase = frontendUrl + "/auth/github/callback";
 
-        when(oAuthLoginService.findClient(OAuthProvider.GITHUB)).thenReturn(Optional.of(oAuthProviderClient));
+        when(oAuthProviderClientRegistry.findClient(OAuthProvider.GITHUB)).thenReturn(Optional.of(oAuthProviderClient));
         when(oAuthProviderClient.buildAuthorizationUri(any(String.class)))
                 .thenAnswer(invocation -> gitHubAuthUri(invocation.getArgument(0)));
         when(oAuthLoginService.handle(

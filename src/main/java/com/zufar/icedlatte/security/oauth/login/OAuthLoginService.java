@@ -1,6 +1,5 @@
 package com.zufar.icedlatte.security.oauth.login;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,24 +36,19 @@ public class OAuthLoginService {
     private static final int MAX_PROVIDER_SUBJECT_LENGTH = 255;
     private static final int MAX_NAME_LENGTH = 128;
 
-    private final List<OAuthProviderClient> providerClients;
+    private final OAuthProviderClientRegistry providerClientRegistry;
     private final OAuthIdentityRepository oAuthIdentityRepository;
     private final UserAuthenticationApi userAuthenticationApi;
     private final UserRegistrationApi userRegistrationApi;
     private final PasswordEncoder passwordEncoder;
     private final SessionTokenService sessionTokenService;
 
-    public Optional<OAuthProviderClient> findClient(OAuthProvider provider) {
-        return providerClients.stream()
-                .filter(client -> client.provider() == provider)
-                .findFirst();
-    }
-
     @Transactional
     public AuthenticationTokens handle(
             OAuthProvider provider, String authorizationCode, AuthSessionRequestMetadata requestMetadata) {
-        OAuthProviderClient client =
-                findClient(provider).orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
+        OAuthProviderClient client = providerClientRegistry
+                .findClient(provider)
+                .orElseThrow(() -> new BadRequestException("OAuth provider is not available."));
         OAuthProfile profile = client.exchangeCode(authorizationCode);
 
         String providerSubject = normalizeRequired(profile.providerSubject());

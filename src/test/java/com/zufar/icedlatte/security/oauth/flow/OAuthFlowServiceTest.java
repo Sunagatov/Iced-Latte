@@ -25,6 +25,7 @@ import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
 import com.zufar.icedlatte.security.oauth.login.OAuthLoginService;
 import com.zufar.icedlatte.security.oauth.login.OAuthProviderClient;
+import com.zufar.icedlatte.security.oauth.login.OAuthProviderClientRegistry;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 
@@ -36,6 +37,9 @@ class OAuthFlowServiceTest {
 
     @Mock
     private OAuthLoginService oAuthLoginService;
+
+    @Mock
+    private OAuthProviderClientRegistry oAuthProviderClientRegistry;
 
     @Mock
     private OAuthStateStore oAuthStateStore;
@@ -64,6 +68,7 @@ class OAuthFlowServiceTest {
     void setUp() {
         service = new OAuthFlowService(
                 oAuthLoginService,
+                oAuthProviderClientRegistry,
                 oAuthStateStore,
                 oAuthTokenHandoffStore,
                 new OAuthRedirectService("https://app.example.com"),
@@ -142,7 +147,7 @@ class OAuthFlowServiceTest {
 
     @Test
     void initiateReturnsEmptyWhenProviderClientIsNotRegistered() {
-        when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
+        when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
         Optional<URI> result = service.initiate(OAuthProvider.GOOGLE, null, request, response);
 
@@ -186,7 +191,7 @@ class OAuthFlowServiceTest {
 
     @Test
     void completeCallbackClearsStateCookieWhenProviderBecomesUnavailable() {
-        when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
+        when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
 
@@ -332,7 +337,7 @@ class OAuthFlowServiceTest {
     }
 
     private void stubGoogleClient() {
-        when(oAuthLoginService.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
+        when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
     }
 
     private static AuthenticationTokens tokenPair() {
