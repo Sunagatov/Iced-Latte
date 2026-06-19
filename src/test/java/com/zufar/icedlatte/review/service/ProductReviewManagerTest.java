@@ -159,10 +159,10 @@ class ProductReviewManagerTest {
                     .saveAndFlush(any(ProductReview.class));
             when(productReviewDtoConverter.toProductReviewDto(any(), eq(user))).thenReturn(expectedDto);
 
-            ProductReviewDto result = service.create(productId, userId, request);
+            ProductReviewDto result = service.create(productId, userId, request, "203.0.113.10");
 
             assertThat(result).isEqualTo(expectedDto);
-            verify(turnstileVerifier).verify("turnstile-token");
+            verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
             verify(reviewRepository).saveAndFlush(any(ProductReview.class));
         }
 
@@ -178,13 +178,13 @@ class ProductReviewManagerTest {
             request.setTurnstileToken("bad-token");
             doThrow(new BadRequestException("Turnstile verification failed"))
                     .when(turnstileVerifier)
-                    .verify("bad-token");
+                    .verify("bad-token", "203.0.113.10");
 
-            assertThatThrownBy(() -> service.create(productId, userId, request))
+            assertThatThrownBy(() -> service.create(productId, userId, request, "203.0.113.10"))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessage("Turnstile verification failed");
 
-            verify(turnstileVerifier).verify("bad-token");
+            verify(turnstileVerifier).verify("bad-token", "203.0.113.10");
             verifyNoInteractions(productReviewValidator, userLookupApi, reviewRepository);
         }
 

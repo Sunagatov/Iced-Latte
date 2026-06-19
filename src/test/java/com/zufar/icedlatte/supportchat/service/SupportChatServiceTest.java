@@ -424,7 +424,7 @@ class SupportChatServiceTest {
                 .sendCustomerMessage(
                         USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
     }
 
     @Test
@@ -450,7 +450,7 @@ class SupportChatServiceTest {
                 .sendCustomerMessage(
                         USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello again", "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
     }
 
     @Test

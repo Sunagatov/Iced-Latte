@@ -51,10 +51,19 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ProductReviewDto create(
             final UUID productId, final UUID userId, final @Nullable ProductReviewRequest productReviewRequest) {
+        return create(productId, userId, productReviewRequest, null);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ProductReviewDto create(
+            final UUID productId,
+            final UUID userId,
+            final @Nullable ProductReviewRequest productReviewRequest,
+            final @Nullable String remoteIp) {
         ProductReviewRequest reviewRequest = Optional.ofNullable(productReviewRequest)
                 .orElseThrow(() -> new BadRequestException("Product's review request must be provided"));
         if (turnstileProperties.reviewsEnabled()) {
-            turnstileVerifier.verify(reviewRequest.getTurnstileToken());
+            turnstileVerifier.verify(reviewRequest.getTurnstileToken(), remoteIp);
         }
         var productReviewText = reviewRequest.getText();
 

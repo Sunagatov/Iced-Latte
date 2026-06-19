@@ -2,6 +2,7 @@ package com.zufar.icedlatte.review.endpoint;
 
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
 import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
@@ -35,13 +37,15 @@ public class UserReviewsEndpoint implements UserReviewsApi {
     private final ProductReviewManager productReviewService;
     private final ProductReviewsProvider productReviewsProvider;
     private final CurrentUserProvider currentUserProvider;
+    private final HttpServletRequest httpRequest;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews")
     public ResponseEntity<ProductReviewDto> addNewProductReview(
             @PathVariable UUID productId, @Valid @RequestBody ProductReviewRequest productReviewRequest) {
         UUID userId = currentUserProvider.getUserId();
-        var review = productReviewService.create(productId, userId, productReviewRequest);
+        var review = productReviewService.create(productId, userId, productReviewRequest, clientIpExtractor.extract(httpRequest));
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
     }

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.endpoint;
 
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.user.api.UserAvatarApi;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
@@ -35,6 +37,8 @@ public class UserAvatarEndpoint implements UserAvatarApi {
     private final UserProfileService userProfileService;
     private final UserAvatarUploader userAvatarUploader;
     private final CurrentUserIdProvider currentUserIdProvider;
+    private final HttpServletRequest httpRequest;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     @PostMapping(
@@ -44,7 +48,7 @@ public class UserAvatarEndpoint implements UserAvatarApi {
             @RequestPart(value = "file") MultipartFile file,
             @Size(max = 2048) @Valid @RequestParam(value = "turnstileToken", required = false) String turnstileToken) {
         var userId = currentUserId();
-        userAvatarUploader.uploadUserAvatar(userId, file, turnstileToken);
+        userAvatarUploader.uploadUserAvatar(userId, file, turnstileToken, clientIp());
         log.info("user.avatar.uploaded: userId={}", userId);
         return ResponseEntity.ok().build();
     }
@@ -71,5 +75,9 @@ public class UserAvatarEndpoint implements UserAvatarApi {
 
     private UUID currentUserId() {
         return currentUserIdProvider.getUserId();
+    }
+
+    private String clientIp() {
+        return clientIpExtractor.extract(httpRequest);
     }
 }

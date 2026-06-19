@@ -50,6 +50,10 @@ public class CheckoutPaymentService {
     private final TurnstileProperties turnstileProperties;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
+        return checkout(request, idempotencyKey, null);
+    }
+
+    public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey, String remoteIp) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new BadRequestException("Idempotency-Key header is required and must not be blank.");
         }
@@ -57,7 +61,7 @@ public class CheckoutPaymentService {
             throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
         }
         if (turnstileProperties.checkoutEnabled()) {
-            turnstileVerifier.verify(request.getTurnstileToken());
+            turnstileVerifier.verify(request.getTurnstileToken(), remoteIp);
         }
 
         CurrentUserSnapshot user = currentUserProvider.get();

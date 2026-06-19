@@ -184,9 +184,9 @@ class UserAvatarUploaderTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
         when(fileStorageService.isEnabled()).thenReturn(true);
 
-        uploader.uploadUserAvatar(userId, file, "turnstile-token");
+        uploader.uploadUserAvatar(userId, file, "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
         verify(fileStorageService).store(eq(file), any(FileMetadataDto.class));
     }
 
@@ -197,13 +197,13 @@ class UserAvatarUploaderTest {
         UUID userId = UUID.randomUUID();
         doThrow(new BadRequestException("Turnstile verification failed"))
                 .when(turnstileVerifier)
-                .verify("bad-token");
+                .verify("bad-token", "203.0.113.10");
 
-        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "bad-token"))
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "bad-token", "203.0.113.10"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Turnstile verification failed");
 
-        verify(turnstileVerifier).verify("bad-token");
+        verify(turnstileVerifier).verify("bad-token", "203.0.113.10");
         verifyNoInteractions(fileStorageService);
     }
 }

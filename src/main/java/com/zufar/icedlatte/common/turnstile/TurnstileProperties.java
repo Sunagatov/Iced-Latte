@@ -1,6 +1,8 @@
 package com.zufar.icedlatte.common.turnstile;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Locale;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -12,12 +14,21 @@ public record TurnstileProperties(
         boolean avatarEnabled,
         String secretKey,
         Duration connectTimeout,
-        Duration readTimeout) {
+        Duration readTimeout,
+        List<String> expectedHostnames) {
 
     public TurnstileProperties {
         secretKey = secretKey == null ? "" : secretKey.trim();
         connectTimeout = connectTimeout == null ? Duration.ofSeconds(2) : connectTimeout;
         readTimeout = readTimeout == null ? Duration.ofSeconds(3) : readTimeout;
+        expectedHostnames = expectedHostnames == null
+                ? List.of()
+                : expectedHostnames.stream()
+                        .map(String::trim)
+                        .filter(value -> !value.isBlank())
+                        .map(value -> value.toLowerCase(Locale.ROOT))
+                        .distinct()
+                        .toList();
         if (connectTimeout.isZero() || connectTimeout.isNegative()) {
             throw new IllegalStateException("turnstile.connect-timeout must be positive");
         }
@@ -34,11 +45,12 @@ public record TurnstileProperties(
     }
 
     static TurnstileProperties disabled() {
-        return new TurnstileProperties(false, false, false, false, "", Duration.ofSeconds(2), Duration.ofSeconds(3));
+        return new TurnstileProperties(
+                false, false, false, false, "", Duration.ofSeconds(2), Duration.ofSeconds(3), List.of());
     }
 
     static TurnstileProperties enabledForTests() {
         return new TurnstileProperties(
-                true, false, false, false, "test-secret", Duration.ofSeconds(2), Duration.ofSeconds(3));
+                true, false, false, false, "test-secret", Duration.ofSeconds(2), Duration.ofSeconds(3), List.of());
     }
 }

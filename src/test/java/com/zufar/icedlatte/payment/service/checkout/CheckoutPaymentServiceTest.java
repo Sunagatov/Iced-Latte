@@ -141,8 +141,8 @@ class CheckoutPaymentServiceTest {
         when(stripeSessionCreator.createFromLineItems(eq(order), eq("user@example.com"), eq(List.of())))
                 .thenReturn(new StripeSessionResult("cs_test_1", "https://checkout.stripe.test/session"));
 
-        service.checkout(request, "same-key");
+        service.checkout(request, "same-key", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token");
+        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
     }
 }

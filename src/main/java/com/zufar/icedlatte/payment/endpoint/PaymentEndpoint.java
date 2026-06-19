@@ -2,6 +2,7 @@ package com.zufar.icedlatte.payment.endpoint;
 
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CheckoutStatusDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -32,13 +34,15 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
     private final CheckoutPaymentService checkoutPaymentService;
     private final PaymentStatusService paymentStatusService;
     private final StripeWebhookService stripeWebhookService;
+    private final HttpServletRequest httpRequest;
+    private final ClientIpExtractor clientIpExtractor;
 
     @Override
     @PostMapping("/checkout")
     public ResponseEntity<CheckoutResponseDto> createCheckout(
             @NotNull @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateCheckoutRequestDto request) {
-        CheckoutResponseDto response = checkoutPaymentService.checkout(request, idempotencyKey);
+        CheckoutResponseDto response = checkoutPaymentService.checkout(request, idempotencyKey, clientIp());
         return ResponseEntity.ok(response);
     }
 
@@ -54,5 +58,9 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
             @NotNull @RequestHeader("Stripe-Signature") String stripeSignature, @Valid @RequestBody String body) {
         stripeWebhookService.processWebhook(body, stripeSignature);
         return ResponseEntity.ok().build();
+    }
+
+    private String clientIp() {
+        return clientIpExtractor.extract(httpRequest);
     }
 }

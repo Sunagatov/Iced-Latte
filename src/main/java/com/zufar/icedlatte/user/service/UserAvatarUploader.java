@@ -36,8 +36,16 @@ public class UserAvatarUploader {
     private String bucketName;
 
     public void uploadUserAvatar(final UUID userId, final MultipartFile file, @Nullable final String turnstileToken) {
+        uploadUserAvatar(userId, file, turnstileToken, null);
+    }
+
+    public void uploadUserAvatar(
+            final UUID userId,
+            final MultipartFile file,
+            @Nullable final String turnstileToken,
+            @Nullable final String remoteIp) {
         if (turnstileProperties.avatarEnabled()) {
-            turnstileVerifier.verify(turnstileToken);
+            turnstileVerifier.verify(turnstileToken, remoteIp);
         }
 
         String contentType = AvatarContentTypes.normalize(file);

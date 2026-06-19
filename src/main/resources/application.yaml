@@ -293,6 +293,18 @@ security:
       # Tighter limit on login/register/password-reset to prevent credential stuffing.
       max-requests: 10
       window-duration: PT1M
+    login:
+      # Login is a higher-risk public write path than general auth.
+      max-requests: 5
+      window-duration: PT1M
+    signup:
+      # Account creation should stay tighter than general browsing traffic.
+      max-requests: 5
+      window-duration: PT10M
+    password-reset:
+      # Password reset is abuse-prone and should be throttled separately.
+      max-requests: 5
+      window-duration: PT10M
     search:
       max-requests: 30
       window-duration: PT1M
@@ -307,6 +319,14 @@ security:
       # Tight limit on payment endpoints to prevent abuse.
       max-requests: 20
       window-duration: PT1M
+    checkout:
+      # Checkout is a sensitive write path and gets a stricter user-aware bucket.
+      max-requests: 10
+      window-duration: PT1M
+    review-write:
+      # Review creation is a user-facing write path that is easy to spam.
+      max-requests: 10
+      window-duration: PT10M
     write:
       # Mutating operations (POST/PUT/DELETE) that don't match a more specific category.
       max-requests: 20
@@ -344,6 +364,7 @@ turnstile:
   secret-key: ${TURNSTILE_SECRET_KEY:}
   connect-timeout: ${TURNSTILE_CONNECT_TIMEOUT:PT2S}
   read-timeout: ${TURNSTILE_READ_TIMEOUT:PT3S}
+  expected-hostnames: ${TURNSTILE_EXPECTED_HOSTNAMES:}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

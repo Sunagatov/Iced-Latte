@@ -46,7 +46,7 @@ class SupportChatCustomerMessagePolicy {
             String turnstileToken) {
         preventRepeatedMessage(conversationId, messageContent.duplicateKey(), previousCustomerMessage);
         enforceRateLimits(userId, conversationId, clientIp);
-        verifyTurnstileIfRequired(conversationId, previousCustomerMessage, turnstileToken);
+        verifyTurnstileIfRequired(conversationId, previousCustomerMessage, turnstileToken, clientIp);
     }
 
     private void preventRepeatedMessage(
@@ -87,12 +87,12 @@ class SupportChatCustomerMessagePolicy {
     }
 
     private void verifyTurnstileIfRequired(
-            UUID conversationId, SupportMessageEntity previousCustomerMessage, String turnstileToken) {
+            UUID conversationId, SupportMessageEntity previousCustomerMessage, String turnstileToken, String clientIp) {
         if (!abuseGuard.requiresTurnstile(previousCustomerMessage, conversationId)) {
             return;
         }
         try {
-            turnstileVerifier.verify(turnstileToken);
+            turnstileVerifier.verify(turnstileToken, clientIp);
             abuseGuard.clearTurnstileRequirement(conversationId);
         } catch (TurnstileVerificationException ex) {
             abuseGuard.requireTurnstileForNextMessage(conversationId);

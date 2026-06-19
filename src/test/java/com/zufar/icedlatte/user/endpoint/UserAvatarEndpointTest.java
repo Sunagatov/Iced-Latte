@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
+import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
 
@@ -30,11 +32,17 @@ class UserAvatarEndpointTest {
     @Mock
     private CurrentUserIdProvider currentUserIdProvider;
 
+    @Mock
+    private ClientIpExtractor clientIpExtractor;
+
     private UserAvatarEndpoint endpoint;
+    private MockHttpServletRequest httpServletRequest;
 
     @BeforeEach
     void setUp() {
-        endpoint = new UserAvatarEndpoint(userProfileService, userAvatarUploader, currentUserIdProvider);
+        httpServletRequest = new MockHttpServletRequest();
+        endpoint = new UserAvatarEndpoint(
+                userProfileService, userAvatarUploader, currentUserIdProvider, httpServletRequest, clientIpExtractor);
     }
 
     @Test
@@ -43,10 +51,11 @@ class UserAvatarEndpointTest {
         UUID userId = UUID.randomUUID();
         MultipartFile file = avatarFile();
         when(currentUserIdProvider.getUserId()).thenReturn(userId);
+        when(clientIpExtractor.extract(httpServletRequest)).thenReturn("203.0.113.10");
 
         endpoint.uploadUserAvatar(file, "turnstile-token");
 
-        verify(userAvatarUploader).uploadUserAvatar(userId, file, "turnstile-token");
+        verify(userAvatarUploader).uploadUserAvatar(userId, file, "turnstile-token", "203.0.113.10");
     }
 
     private static MultipartFile avatarFile() {
