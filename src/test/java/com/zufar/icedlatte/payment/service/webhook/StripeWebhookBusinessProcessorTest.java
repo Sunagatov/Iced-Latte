@@ -10,10 +10,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,11 +43,19 @@ class StripeWebhookBusinessProcessorTest {
     @Mock
     private PaymentConfirmationService paymentConfirmationService;
 
-    @InjectMocks
     private StripeWebhookBusinessProcessor processor;
 
     private static final UUID ORDER_ID = UUID.randomUUID();
     private static final UUID USER_ID = UUID.randomUUID();
+
+    @BeforeEach
+    void setUp() {
+        processor = new StripeWebhookBusinessProcessor(List.of(
+                new CheckoutSessionCompletedWebhookHandler(paymentRepository, paymentConfirmationService),
+                new CheckoutSessionExpiredWebhookHandler(orderPaymentApi, paymentRepository),
+                new CheckoutSessionAsyncPaymentFailedWebhookHandler(orderPaymentApi, paymentRepository),
+                new ChargeRefundedWebhookHandler(orderPaymentApi, paymentRepository)));
+    }
 
     @Test
     @DisplayName("checkout.session.completed with paid status marks payment PAID and transitions order")
@@ -58,12 +66,9 @@ class StripeWebhookBusinessProcessorTest {
 
         processor.process(event);
 
-        verify(paymentConfirmationService)
-                .confirmPaid(
-                        eq(ORDER_ID),
-                        eq(session),
-                        eq(new PaymentConfirmationSource(
-                                "evt_1", "checkout.session.completed", "Stripe payment confirmed")));
+        PaymentConfirmationSource paymentConfirmationSource =
+                new PaymentConfirmationSource("evt_1", "checkout.session.completed", "Stripe payment confirmed");
+        verify(paymentConfirmationService).confirmPaid(eq(ORDER_ID), eq(session), eq(paymentConfirmationSource));
     }
 
     @Test
