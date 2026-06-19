@@ -480,17 +480,7 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                new SupportChatMessageService(
-                        supportChatProperties,
-                        availabilityService,
-                        conversationRepository,
-                        messageRepository,
-                        ownerMessageSender,
-                        messagePublisher,
-                        turnstileVerifier,
-                        new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                        rateLimiter,
-                        transactionManager));
+                createMessageFlowService(supportChatProperties));
     }
 
     private SupportChatService disabledService() {
@@ -501,17 +491,7 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                new SupportChatMessageService(
-                        supportChatProperties,
-                        availabilityService,
-                        conversationRepository,
-                        messageRepository,
-                        ownerMessageSender,
-                        messagePublisher,
-                        turnstileVerifier,
-                        new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                        rateLimiter,
-                        transactionManager));
+                createMessageFlowService(supportChatProperties));
     }
 
     private SupportChatService turnstileEnabledService() {
@@ -522,17 +502,23 @@ class SupportChatServiceTest {
                 eligibilityService,
                 conversationRepository,
                 messageRepository,
-                new SupportChatMessageService(
+                createMessageFlowService(supportChatProperties));
+    }
+
+    private SupportChatMessageFlowService createMessageFlowService(SupportChatProperties supportChatProperties) {
+        return new SupportChatMessageFlowService(
+                availabilityService,
+                conversationRepository,
+                messageRepository,
+                new SupportChatMessageBodyPolicy(supportChatProperties),
+                new SupportChatCustomerMessagePolicy(
                         supportChatProperties,
-                        availabilityService,
-                        conversationRepository,
-                        messageRepository,
-                        ownerMessageSender,
-                        messagePublisher,
                         turnstileVerifier,
                         new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                        rateLimiter,
-                        transactionManager));
+                        rateLimiter),
+                ownerMessageSender,
+                messagePublisher,
+                transactionManager);
     }
 
     private static SupportChatProperties properties(boolean enabled) {

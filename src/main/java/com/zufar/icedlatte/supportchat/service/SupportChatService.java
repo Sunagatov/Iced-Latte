@@ -33,7 +33,7 @@ public class SupportChatService {
     private final SupportChatEligibilityService eligibilityService;
     private final SupportConversationRepository conversationRepository;
     private final SupportMessageRepository messageRepository;
-    private final SupportChatMessageService messageService;
+    private final SupportChatMessageFlowService messageFlowService;
 
     public SupportChatStatus status(CurrentUserSnapshot user) {
         if (!properties.enabled()) {
@@ -75,14 +75,14 @@ public class SupportChatService {
             String body,
             String turnstileToken,
             String clientIp) {
-        return messageService.sendCustomerMessage(
+        return messageFlowService.sendCustomerMessage(
                 user, conversationId, clientMessageId, body, turnstileToken, clientIp);
     }
 
     @Transactional
     public Optional<SupportMessageEntity> saveOwnerReply(
             SupportConversationEntity conversation, String body, long telegramUpdateId, long telegramMessageId) {
-        return messageService.saveOwnerReply(conversation, body, telegramUpdateId, telegramMessageId);
+        return messageFlowService.saveOwnerReply(conversation, body, telegramUpdateId, telegramMessageId);
     }
 
     private void ensureOwnsConversation(UUID userId, UUID conversationId) {

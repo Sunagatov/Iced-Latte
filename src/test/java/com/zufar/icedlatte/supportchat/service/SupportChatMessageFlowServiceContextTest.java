@@ -19,24 +19,30 @@ import com.zufar.icedlatte.supportchat.realtime.SupportChatMessagePublisher;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
-@DisplayName("SupportChatMessageService Spring context tests")
-class SupportChatMessageServiceContextTest {
+@DisplayName("SupportChatMessageFlowService Spring context tests")
+class SupportChatMessageFlowServiceContextTest {
 
     private final ApplicationContextRunner contextRunner =
-            new ApplicationContextRunner().withUserConfiguration(SupportChatMessageServiceConfiguration.class);
+            new ApplicationContextRunner().withUserConfiguration(SupportChatMessageFlowServiceConfiguration.class);
 
     @Test
-    @DisplayName("creates SupportChatMessageService when both rate limiter beans exist")
-    void createsSupportChatMessageServiceWhenBothRateLimiterBeansExist() {
+    @DisplayName("creates SupportChatMessageFlowService when both rate limiter beans exist")
+    void createsSupportChatMessageFlowServiceWhenBothRateLimiterBeansExist() {
         contextRunner.run(context -> {
             assertThat(context).hasNotFailed();
-            assertThat(context).hasSingleBean(SupportChatMessageService.class);
+            assertThat(context).hasSingleBean(SupportChatMessageFlowService.class);
+            assertThat(context).hasSingleBean(SupportChatMessageBodyPolicy.class);
+            assertThat(context).hasSingleBean(SupportChatCustomerMessagePolicy.class);
         });
     }
 
     @Configuration
-    @Import(SupportChatMessageService.class)
-    static class SupportChatMessageServiceConfiguration {
+    @Import({
+        SupportChatMessageFlowService.class,
+        SupportChatMessageBodyPolicy.class,
+        SupportChatCustomerMessagePolicy.class
+    })
+    static class SupportChatMessageFlowServiceConfiguration {
 
         @Bean
         SupportChatProperties supportChatProperties() {
