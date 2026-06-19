@@ -1,14 +1,15 @@
 package com.zufar.icedlatte.security.oauth.login;
 
-import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
-import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.URI;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
+
+import com.zufar.icedlatte.security.oauth.config.OAuthProvider;
+import com.zufar.icedlatte.security.oauth.dto.OAuthProfile;
 
 class OAuthProviderClientRegistryTest {
 
