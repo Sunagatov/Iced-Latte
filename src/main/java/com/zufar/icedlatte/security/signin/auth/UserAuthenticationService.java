@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
@@ -37,7 +38,8 @@ public class UserAuthenticationService {
 
     public AuthenticationTokens authenticate(
             final UserAuthenticationRequest request, final AuthSessionRequestMetadata requestMetadata) {
-        turnstileVerifier.verify(request.getTurnstileToken(), requestMetadata.ipAddress());
+        turnstileVerifier.verify(TurnstileVerificationRequest.forAction(
+                request.getTurnstileToken(), requestMetadata.ipAddress(), "login"));
         UserDetails userDetails = verifyCredentials(request);
         loginAttemptService.resetAfterSuccessfulAuthentication(EmailNormalizer.normalize(request.getEmail()));
         return sessionTokenService.issueForNewSession(userDetails, requestMetadata);

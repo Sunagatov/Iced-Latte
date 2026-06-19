@@ -20,6 +20,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -143,6 +144,7 @@ class CheckoutPaymentServiceTest {
 
         service.checkout(request, "same-key", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", "203.0.113.10", "checkout", "checkout"));
     }
 }

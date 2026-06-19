@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
@@ -45,7 +46,7 @@ public class UserAvatarUploader {
             @Nullable final String turnstileToken,
             @Nullable final String remoteIp) {
         if (turnstileProperties.avatarEnabled()) {
-            turnstileVerifier.verify(turnstileToken, remoteIp);
+            turnstileVerifier.verify(TurnstileVerificationRequest.forAction(turnstileToken, remoteIp, "avatar"));
         }
 
         String contentType = AvatarContentTypes.normalize(file);

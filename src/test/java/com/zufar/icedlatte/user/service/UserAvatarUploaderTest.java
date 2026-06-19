@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
@@ -186,7 +187,8 @@ class UserAvatarUploaderTest {
 
         uploader.uploadUserAvatar(userId, file, "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", "203.0.113.10", "avatar", "avatar"));
         verify(fileStorageService).store(eq(file), any(FileMetadataDto.class));
     }
 
@@ -197,13 +199,14 @@ class UserAvatarUploaderTest {
         UUID userId = UUID.randomUUID();
         doThrow(new BadRequestException("Turnstile verification failed"))
                 .when(turnstileVerifier)
-                .verify("bad-token", "203.0.113.10");
+                .verify(new TurnstileVerificationRequest("bad-token", "203.0.113.10", "avatar", "avatar"));
 
         assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, "bad-token", "203.0.113.10"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Turnstile verification failed");
 
-        verify(turnstileVerifier).verify("bad-token", "203.0.113.10");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("bad-token", "203.0.113.10", "avatar", "avatar"));
         verifyNoInteractions(fileStorageService);
     }
 }

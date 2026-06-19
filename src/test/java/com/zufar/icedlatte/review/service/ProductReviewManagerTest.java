@@ -21,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
@@ -162,7 +163,8 @@ class ProductReviewManagerTest {
             ProductReviewDto result = service.create(productId, userId, request, "203.0.113.10");
 
             assertThat(result).isEqualTo(expectedDto);
-            verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest("turnstile-token", "203.0.113.10", "review", "review"));
             verify(reviewRepository).saveAndFlush(any(ProductReview.class));
         }
 
@@ -178,13 +180,14 @@ class ProductReviewManagerTest {
             request.setTurnstileToken("bad-token");
             doThrow(new BadRequestException("Turnstile verification failed"))
                     .when(turnstileVerifier)
-                    .verify("bad-token", "203.0.113.10");
+                    .verify(new TurnstileVerificationRequest("bad-token", "203.0.113.10", "review", "review"));
 
             assertThatThrownBy(() -> service.create(productId, userId, request, "203.0.113.10"))
                     .isInstanceOf(BadRequestException.class)
                     .hasMessage("Turnstile verification failed");
 
-            verify(turnstileVerifier).verify("bad-token", "203.0.113.10");
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest("bad-token", "203.0.113.10", "review", "review"));
             verifyNoInteractions(productReviewValidator, userLookupApi, reviewRepository);
         }
 

@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
@@ -78,7 +79,8 @@ class UserRegistrationServiceTest {
 
         AuthenticationTokens response = service.register(registrationRequest, REQUEST_METADATA);
 
-        verify(turnstileVerifier).verify("turnstile-token", "127.0.0.1");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", "127.0.0.1", "register", "register"));
         verify(userRegistrationApi).existsByEmail("mixed.case@example.com");
         verify(userRegistrationApi)
                 .registerPasswordUser(eq("Alice"), eq("Example"), eq("mixed.case@example.com"), eq("encoded-password"));
@@ -97,7 +99,8 @@ class UserRegistrationServiceTest {
 
         service.ensureRegistrationAllowed(registrationRequest);
 
-        verify(turnstileVerifier).verify("turnstile-token", null);
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", null, "register", "register"));
         verify(userRegistrationApi).existsByEmail("available@example.com");
     }
 
@@ -113,7 +116,8 @@ class UserRegistrationServiceTest {
                 .isInstanceOf(UserRegistrationException.class)
                 .hasMessage("This email is already registered. Please sign in or use a different email.");
 
-        verify(turnstileVerifier).verify("turnstile-token", null);
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", null, "register", "register"));
         verify(userRegistrationApi).existsByEmail("duplicate@example.com");
     }
 

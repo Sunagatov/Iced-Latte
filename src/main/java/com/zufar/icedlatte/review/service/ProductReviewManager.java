@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
 import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
@@ -63,7 +64,8 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         ProductReviewRequest reviewRequest = Optional.ofNullable(productReviewRequest)
                 .orElseThrow(() -> new BadRequestException("Product's review request must be provided"));
         if (turnstileProperties.reviewsEnabled()) {
-            turnstileVerifier.verify(reviewRequest.getTurnstileToken(), remoteIp);
+            turnstileVerifier.verify(
+                    TurnstileVerificationRequest.forAction(reviewRequest.getTurnstileToken(), remoteIp, "review"));
         }
         var productReviewText = reviewRequest.getText();
 

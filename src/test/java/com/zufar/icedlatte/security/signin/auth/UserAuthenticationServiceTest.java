@@ -18,6 +18,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.UserAuthenticationRequest;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
@@ -161,7 +162,8 @@ class UserAuthenticationServiceTest {
         AuthenticationTokens response = userAuthenticationService.authenticate(request, REQUEST_METADATA);
 
         assertSame(expectedResponse, response);
-        verify(turnstileVerifier).verify("turnstile-token", "127.0.0.1");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest("turnstile-token", "127.0.0.1", "login", "login"));
         verify(sessionTokenService).issueForNewSession(userDetails, REQUEST_METADATA);
         verify(loginAttemptService).resetAfterSuccessfulAuthentication("known@example.com");
     }

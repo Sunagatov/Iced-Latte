@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.verification.EmailVerificationService;
@@ -49,7 +50,9 @@ class PasswordResetServiceTest {
 
             service.requestReset(email, "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token", null);
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest(
+                            "turnstile-token", null, "forgot_password", "forgot_password"));
             verify(userLookupApi).findUserByEmail(email);
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
@@ -64,7 +67,9 @@ class PasswordResetServiceTest {
 
             service.requestReset("  Known@Example.com ", "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token", null);
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest(
+                            "turnstile-token", null, "forgot_password", "forgot_password"));
             verify(userLookupApi).findUserByEmail(normalizedEmail);
             verify(emailVerificationService).sendPasswordResetCode(normalizedEmail);
         }
@@ -77,7 +82,9 @@ class PasswordResetServiceTest {
 
             service.requestReset(email, "turnstile-token");
 
-            verify(turnstileVerifier).verify("turnstile-token", null);
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest(
+                            "turnstile-token", null, "forgot_password", "forgot_password"));
             verify(userLookupApi).findUserByEmail(email);
             verifyNoInteractions(emailVerificationService);
         }
@@ -95,7 +102,9 @@ class PasswordResetServiceTest {
             service.requestReset(email, "turnstile-token");
 
             verify(userLookupApi).findUserByEmail(email);
-            verify(turnstileVerifier).verify("turnstile-token", null);
+            verify(turnstileVerifier)
+                    .verify(new TurnstileVerificationRequest(
+                            "turnstile-token", null, "forgot_password", "forgot_password"));
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
     }
@@ -105,7 +114,9 @@ class PasswordResetServiceTest {
     void confirmResetDelegatesWithProvidedTokenAndPassword() {
         service.confirmReset("reset-token", "new-password", "turnstile-token");
 
-        verify(turnstileVerifier).verify("turnstile-token", null);
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest(
+                        "turnstile-token", null, "change_password", "change_password"));
         verify(emailVerificationService).confirmResetPasswordEmailByCode("reset-token", "new-password");
     }
 }

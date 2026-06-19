@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
@@ -424,7 +425,9 @@ class SupportChatServiceTest {
                 .sendCustomerMessage(
                         USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest(
+                        "turnstile-token", "203.0.113.10", "support_chat", "support_chat"));
     }
 
     @Test
@@ -450,7 +453,9 @@ class SupportChatServiceTest {
                 .sendCustomerMessage(
                         USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello again", "turnstile-token", "203.0.113.10");
 
-        verify(turnstileVerifier).verify("turnstile-token", "203.0.113.10");
+        verify(turnstileVerifier)
+                .verify(new TurnstileVerificationRequest(
+                        "turnstile-token", "203.0.113.10", "support_chat", "support_chat"));
     }
 
     @Test

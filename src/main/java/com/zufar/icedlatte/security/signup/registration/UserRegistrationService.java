@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
@@ -37,7 +38,8 @@ public class UserRegistrationService {
 
     public void ensureRegistrationAllowed(
             final UserRegistrationRequest userRegistrationRequest, final String remoteIp) {
-        turnstileVerifier.verify(userRegistrationRequest.getTurnstileToken(), remoteIp);
+        turnstileVerifier.verify(TurnstileVerificationRequest.forAction(
+                userRegistrationRequest.getTurnstileToken(), remoteIp, "register"));
         ensureEmailAvailable(userRegistrationRequest);
     }
 

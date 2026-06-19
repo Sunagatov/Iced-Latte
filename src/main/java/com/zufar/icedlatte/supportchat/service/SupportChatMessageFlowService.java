@@ -105,17 +105,8 @@ class SupportChatMessageFlowService {
         }
 
         var messageContent = messageBodyPolicy.normalizeAndValidate(body);
-
-        SupportMessageEntity message = new SupportMessageEntity();
-        message.setConversationId(conversationId);
-        message.setSenderType(OWNER);
-        message.setBody(messageContent.body());
-        message.setNormalizedBody(messageContent.duplicateKey());
-        message.setDeliveryStatus(SENT);
-        message.setTelegramUpdateId(telegramUpdateId);
-        message.setTelegramMessageId(telegramMessageId);
-
-        SupportMessageEntity saved = messageRepository.save(message);
+        SupportMessageEntity saved = messageRepository.save(
+                createOwnerReply(conversationId, messageContent, telegramUpdateId, telegramMessageId));
         conversationRepository.touchLastMessageAt(conversationId);
         messagePublisher.publishOwnerReply(conversation, saved);
 
@@ -141,10 +132,11 @@ class SupportChatMessageFlowService {
 
         var existing = messageRepository.findByConversationIdAndClientMessageId(conversationId, clientMessageId);
         if (existing.isPresent()) {
-            if (existing.get().getDeliveryStatus() == FAILED) {
+            SupportMessageEntity acceptedMessage = existing.get();
+            if (acceptedMessage.getDeliveryStatus() == FAILED) {
                 throw new SupportChatOwnerDeliveryFailedException();
             }
-            return new PendingCustomerMessage(conversation, existing.get(), true);
+            return new PendingCustomerMessage(conversation, acceptedMessage, true);
         }
 
         SupportMessageEntity previousCustomerMessage = messageRepository
@@ -153,15 +145,8 @@ class SupportChatMessageFlowService {
         customerMessagePolicy.enforceCustomerMessageRules(
                 userId, conversationId, clientIp, messageContent, previousCustomerMessage, turnstileToken);
 
-        SupportMessageEntity message = new SupportMessageEntity();
-        message.setConversationId(conversation.getId());
-        message.setSenderType(CUSTOMER);
-        message.setSenderUserId(userId);
-        message.setClientMessageId(clientMessageId);
-        message.setBody(messageContent.body());
-        message.setNormalizedBody(messageContent.duplicateKey());
-
-        SupportMessageEntity saved = messageRepository.save(message);
+        SupportMessageEntity saved = messageRepository.save(
+                createCustomerMessage(conversation.getId(), userId, clientMessageId, messageContent));
         conversationRepository.touchLastMessageAt(conversation.getId());
         return new PendingCustomerMessage(conversation, saved, false);
     }
@@ -202,6 +187,37 @@ class SupportChatMessageFlowService {
                     ex.getClass().getSimpleName());
             return OwnerMessageDeliveryResult.failedResult();
         }
+    }
+
+    private static SupportMessageEntity createOwnerReply(
+            UUID conversationId,
+            SupportChatMessageBodyPolicy.MessageContent messageContent,
+            long telegramUpdateId,
+            long telegramMessageId) {
+        SupportMessageEntity message = new SupportMessageEntity();
+        message.setConversationId(conversationId);
+        message.setSenderType(OWNER);
+        message.setBody(messageContent.body());
+        message.setNormalizedBody(messageContent.duplicateKey());
+        message.setDeliveryStatus(SENT);
+        message.setTelegramUpdateId(telegramUpdateId);
+        message.setTelegramMessageId(telegramMessageId);
+        return message;
+    }
+
+    private static SupportMessageEntity createCustomerMessage(
+            UUID conversationId,
+            UUID userId,
+            UUID clientMessageId,
+            SupportChatMessageBodyPolicy.MessageContent messageContent) {
+        SupportMessageEntity message = new SupportMessageEntity();
+        message.setConversationId(conversationId);
+        message.setSenderType(CUSTOMER);
+        message.setSenderUserId(userId);
+        message.setClientMessageId(clientMessageId);
+        message.setBody(messageContent.body());
+        message.setNormalizedBody(messageContent.duplicateKey());
+        return message;
     }
 
     private static TransactionTemplate createTransactionTemplate(PlatformTransactionManager transactionManager) {

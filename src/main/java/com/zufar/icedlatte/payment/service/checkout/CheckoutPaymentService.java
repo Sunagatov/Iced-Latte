@@ -13,6 +13,7 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.CheckoutResponseDto;
 import com.zufar.icedlatte.openapi.dto.CreateCheckoutRequestDto;
@@ -61,7 +62,8 @@ public class CheckoutPaymentService {
             throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
         }
         if (turnstileProperties.checkoutEnabled()) {
-            turnstileVerifier.verify(request.getTurnstileToken(), remoteIp);
+            turnstileVerifier.verify(
+                    TurnstileVerificationRequest.forAction(request.getTurnstileToken(), remoteIp, "checkout"));
         }
 
         CurrentUserSnapshot user = currentUserProvider.get();

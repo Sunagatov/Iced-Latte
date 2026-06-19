@@ -33,6 +33,7 @@ public class TurnstileVerifier {
     private static final int MAX_TOKEN_LENGTH = 2048;
 
     private final boolean enabled;
+    private final boolean validateActions;
     private final String secretKey;
     private final List<String> expectedHostnames;
     private final RestClient restClient;
@@ -53,6 +54,7 @@ public class TurnstileVerifier {
 
     TurnstileVerifier(TurnstileProperties properties, RestClient restClient, MeterRegistry meterRegistry) {
         this.enabled = properties.enabled();
+        this.validateActions = properties.validateActions();
         this.secretKey = properties.secretKey();
         this.expectedHostnames = properties.expectedHostnames();
         this.restClient = restClient;
@@ -126,7 +128,9 @@ public class TurnstileVerifier {
                         expectedHostnames);
                 throw new TurnstileVerificationException("Turnstile verification failed");
             }
-            if (request.expectedAction() != null && !request.expectedAction().equals(result.action())) {
+            if (validateActions
+                    && request.expectedAction() != null
+                    && !request.expectedAction().equals(result.action())) {
                 recordVerification(request.source(), "action_mismatch");
                 log.warn(
                         "turnstile.verification.failed: source={}, reason=action_mismatch, expectedAction={}, actualAction={}",

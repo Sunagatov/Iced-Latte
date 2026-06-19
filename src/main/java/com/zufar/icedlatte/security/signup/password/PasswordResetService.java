@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.signup.password;
 
 import org.springframework.stereotype.Service;
 
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
@@ -25,7 +26,7 @@ public class PasswordResetService {
     }
 
     public void requestReset(String email, String turnstileToken, String remoteIp) {
-        turnstileVerifier.verify(turnstileToken, remoteIp);
+        turnstileVerifier.verify(TurnstileVerificationRequest.forAction(turnstileToken, remoteIp, "forgot_password"));
         String normalizedEmail = EmailNormalizer.normalize(email);
         try {
             if (userLookupApi.findUserByEmail(normalizedEmail).isEmpty()) {
@@ -44,7 +45,7 @@ public class PasswordResetService {
     }
 
     public void confirmReset(String token, String newPassword, String turnstileToken, String remoteIp) {
-        turnstileVerifier.verify(turnstileToken, remoteIp);
+        turnstileVerifier.verify(TurnstileVerificationRequest.forAction(turnstileToken, remoteIp, "change_password"));
         emailVerificationService.confirmResetPasswordEmailByCode(token, newPassword);
         log.info("auth.password.changed");
     }

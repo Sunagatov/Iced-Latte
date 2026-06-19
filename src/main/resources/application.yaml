@@ -358,6 +358,7 @@ unlock-account-scheduler-cron: '0 0/5 * * * *'
 # Bot protection for login/register. Disabled when secret-key is blank.
 turnstile:
   enabled: ${TURNSTILE_ENABLED:false}
+  validate-actions: ${TURNSTILE_VALIDATE_ACTIONS:false}
   checkout-enabled: ${TURNSTILE_CHECKOUT_ENABLED:false}
   reviews-enabled: ${TURNSTILE_REVIEWS_ENABLED:false}
   avatar-enabled: ${TURNSTILE_AVATAR_ENABLED:false}

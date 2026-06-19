@@ -117,6 +117,7 @@ class TurnstileVerifierTest {
             var restClient = buildMockedRestClient("{\"success\": true, \"hostname\": \"attacker.example\"}");
             var properties = new TurnstileProperties(
                     true,
+                    true,
                     false,
                     false,
                     false,
@@ -129,6 +130,51 @@ class TurnstileVerifierTest {
             Assertions.assertThatThrownBy(() -> verifier.verify("valid-token"))
                     .isInstanceOf(TurnstileVerificationException.class)
                     .hasMessage("Turnstile verification failed");
+        }
+
+        @Test
+        @DisplayName("should reject success response with unexpected action when action validation is enabled")
+        void rejectWhenActionDoesNotMatchExpectedAction() {
+            var restClient = buildMockedRestClient(
+                    "{\"success\": true, \"hostname\": \"app.iced-latte.uk\", \"action\": \"signup\"}");
+            var properties = new TurnstileProperties(
+                    true,
+                    true,
+                    false,
+                    false,
+                    false,
+                    "test-secret",
+                    Duration.ofSeconds(2),
+                    Duration.ofSeconds(3),
+                    List.of("app.iced-latte.uk"));
+            var verifier = new TurnstileVerifier(properties, restClient);
+
+            Assertions.assertThatThrownBy(
+                            () -> verifier.verify(TurnstileVerificationRequest.forAction("valid-token", null, "login")))
+                    .isInstanceOf(TurnstileVerificationException.class)
+                    .hasMessage("Turnstile verification failed");
+        }
+
+        @Test
+        @DisplayName("should allow action mismatch when action validation is disabled")
+        void allowActionMismatchWhenActionValidationDisabled() {
+            var restClient = buildMockedRestClient(
+                    "{\"success\": true, \"hostname\": \"app.iced-latte.uk\", \"action\": \"signup\"}");
+            var properties = new TurnstileProperties(
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    "test-secret",
+                    Duration.ofSeconds(2),
+                    Duration.ofSeconds(3),
+                    List.of("app.iced-latte.uk"));
+            var verifier = new TurnstileVerifier(properties, restClient);
+
+            Assertions.assertThatCode(
+                            () -> verifier.verify(TurnstileVerificationRequest.forAction("valid-token", null, "login")))
+                    .doesNotThrowAnyException();
         }
 
         @Test
@@ -160,6 +206,7 @@ class TurnstileVerifierTest {
                             false,
                             false,
                             false,
+                            false,
                             "test-secret",
                             Duration.ofMillis(500),
                             Duration.ofSeconds(1),
@@ -172,6 +219,7 @@ class TurnstileVerifierTest {
         void trimsSecretKey() {
             TurnstileProperties properties = new TurnstileProperties(
                     true,
+                    false,
                     false,
                     false,
                     false,
@@ -208,11 +256,11 @@ class TurnstileVerifierTest {
         @DisplayName("should fail fast when timeout settings are not positive")
         void failFastWhenTimeoutSettingsAreNotPositive() {
             Assertions.assertThatThrownBy(() -> new TurnstileProperties(
-                            false, false, false, false, "", Duration.ZERO, Duration.ofSeconds(1), List.of()))
+                            false, false, false, false, false, "", Duration.ZERO, Duration.ofSeconds(1), List.of()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("turnstile.connect-timeout must be positive");
             Assertions.assertThatThrownBy(() -> new TurnstileProperties(
-                            false, false, false, false, "", Duration.ofSeconds(1), Duration.ZERO, List.of()))
+                            false, false, false, false, false, "", Duration.ofSeconds(1), Duration.ZERO, List.of()))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("turnstile.read-timeout must be positive");
         }

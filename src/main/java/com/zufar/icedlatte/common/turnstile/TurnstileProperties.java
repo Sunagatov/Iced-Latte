@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "turnstile")
 public record TurnstileProperties(
         boolean enabled,
+        boolean validateActions,
         boolean checkoutEnabled,
         boolean reviewsEnabled,
         boolean avatarEnabled,
@@ -46,11 +47,19 @@ public record TurnstileProperties(
 
     static TurnstileProperties disabled() {
         return new TurnstileProperties(
-                false, false, false, false, "", Duration.ofSeconds(2), Duration.ofSeconds(3), List.of());
+                false, false, false, false, false, "", Duration.ofSeconds(2), Duration.ofSeconds(3), List.of());
     }
 
     static TurnstileProperties enabledForTests() {
         return new TurnstileProperties(
-                true, false, false, false, "test-secret", Duration.ofSeconds(2), Duration.ofSeconds(3), List.of());
+                true,
+                false,
+                false,
+                false,
+                false,
+                "test-secret",
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(3),
+                List.of());
     }
 }

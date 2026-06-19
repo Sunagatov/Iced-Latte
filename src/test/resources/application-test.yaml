@@ -137,6 +137,15 @@ security:
     auth:
       max-requests: 100000
       window-duration: PT1M
+    login:
+      max-requests: 100000
+      window-duration: PT1M
+    signup:
+      max-requests: 100000
+      window-duration: PT10M
+    password-reset:
+      max-requests: 100000
+      window-duration: PT10M
     search:
       max-requests: 100000
       window-duration: PT1M
@@ -149,12 +158,20 @@ security:
     payment:
       max-requests: 100000
       window-duration: PT1M
+    checkout:
+      max-requests: 100000
+      window-duration: PT1M
+    review-write:
+      max-requests: 100000
+      window-duration: PT10M
     write:
       max-requests: 100000
       window-duration: PT1M
     file-upload:
       max-requests: 100000
       window-duration: PT1M
+    ban-threshold: 100000
+    ban-duration: PT1M
 
 
 # ─────────────────────────────────────────────────────────────────────────────

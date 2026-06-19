@@ -18,6 +18,11 @@ public record TurnstileVerificationRequest(
         return new TurnstileVerificationRequest(token, remoteIp, "unspecified", null);
     }
 
+    public static TurnstileVerificationRequest forAction(
+            @Nullable String token, @Nullable String remoteIp, String action) {
+        return new TurnstileVerificationRequest(token, remoteIp, action, action);
+    }
+
     private static @Nullable String normalize(@Nullable String value) {
         if (value == null) {
             return null;

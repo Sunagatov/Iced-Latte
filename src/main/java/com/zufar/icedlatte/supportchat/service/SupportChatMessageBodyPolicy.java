@@ -35,7 +35,7 @@ class SupportChatMessageBodyPolicy {
     }
 
     private static String toDuplicateKey(String body) {
-        return body.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+        return body.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
     record MessageContent(String body, String duplicateKey) {}

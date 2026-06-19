@@ -32,12 +32,12 @@ public abstract class StorageBackedIntegrationTestBase extends ContainerizedInte
     protected JavaMailSender javaMailSender;
 
     @SuppressWarnings("resource")
-    protected static final GenericContainer<?> MINIO =
-            new GenericContainer<>(DockerImageName.parse("minio/minio:latest"))
-                    .withEnv("MINIO_ROOT_USER", MINIO_ACCESS_KEY)
-                    .withEnv("MINIO_ROOT_PASSWORD", MINIO_SECRET_KEY)
-                    .withCommand("server", "/data", "--console-address", ":9001")
-                    .withExposedPorts(9000, 9001);
+    protected static final GenericContainer<?> MINIO = new GenericContainer<>(
+                    DockerImageName.parse("minio/minio:latest"))
+            .withEnv("MINIO_ROOT_USER", MINIO_ACCESS_KEY)
+            .withEnv("MINIO_ROOT_PASSWORD", MINIO_SECRET_KEY)
+            .withCommand("server", "/data", "--console-address", ":9001")
+            .withExposedPorts(9000, 9001);
 
     static {
         MINIO.start();
@@ -63,9 +63,8 @@ public abstract class StorageBackedIntegrationTestBase extends ContainerizedInte
                         AwsBasicCredentials.create(MINIO_ACCESS_KEY, MINIO_SECRET_KEY)))
                 .region(Region.of(MINIO_REGION))
                 .endpointOverride(URI.create(minioEndpoint()))
-                .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .build())
+                .serviceConfiguration(
+                        S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build()) {
             client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
         } catch (BucketAlreadyOwnedByYouException _) {

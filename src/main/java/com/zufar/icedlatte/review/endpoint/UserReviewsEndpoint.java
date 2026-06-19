@@ -45,7 +45,8 @@ public class UserReviewsEndpoint implements UserReviewsApi {
     public ResponseEntity<ProductReviewDto> addNewProductReview(
             @PathVariable UUID productId, @Valid @RequestBody ProductReviewRequest productReviewRequest) {
         UUID userId = currentUserProvider.getUserId();
-        var review = productReviewService.create(productId, userId, productReviewRequest, clientIpExtractor.extract(httpRequest));
+        var review = productReviewService.create(
+                productId, userId, productReviewRequest, clientIpExtractor.extract(httpRequest));
         log.info("review.created: reviewId={}, productId={}", review.getProductReviewId(), productId);
         return ResponseEntity.ok(review);
     }

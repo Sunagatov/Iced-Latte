@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
+import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
@@ -92,7 +93,7 @@ class SupportChatCustomerMessagePolicy {
             return;
         }
         try {
-            turnstileVerifier.verify(turnstileToken, clientIp);
+            turnstileVerifier.verify(TurnstileVerificationRequest.forAction(turnstileToken, clientIp, "support_chat"));
             abuseGuard.clearTurnstileRequirement(conversationId);
         } catch (TurnstileVerificationException ex) {
             abuseGuard.requireTurnstileForNextMessage(conversationId);
