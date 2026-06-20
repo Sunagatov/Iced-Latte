@@ -1,8 +1,6 @@
 package com.zufar.icedlatte.security.jwt.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.Base64;
@@ -35,20 +33,15 @@ class JwtTokenProviderTest {
 
     private JwtTokenProvider tokenProvider;
     private SecretKey signingKey;
+    private SecretKey refreshSigningKey;
 
     @BeforeEach
     void setUp() {
-        JwtProperties props = mock(JwtProperties.class);
-        when(props.secret()).thenReturn(SECRET);
-        when(props.refreshSecret()).thenReturn(REFRESH_SECRET);
-        when(props.expiration()).thenReturn(Duration.ofMinutes(15));
-        when(props.refreshExpiration()).thenReturn(Duration.ofDays(7));
-        when(props.issuer()).thenReturn("iced-latte");
-        when(props.audience()).thenReturn("iced-latte-client");
-
+        JwtProperties props = properties();
         JwtSigningKeys keyProvider = new JwtSigningKeys(props);
         tokenProvider = new JwtTokenProvider(keyProvider, props);
         signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
+        refreshSigningKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(REFRESH_SECRET));
     }
 
     private UserDetails user(String email) {
@@ -60,13 +53,11 @@ class JwtTokenProviderTest {
     void generateTokenContainsCorrectSubject() {
         String token = tokenProvider.generateToken(user("alice@example.com"), UUID.randomUUID());
 
-        Claims claims = Jwts.parser()
-                .verifyWith(signingKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        var jws = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token);
+        Claims claims = jws.getPayload();
         assertThat(claims.getSubject()).isEqualTo("alice@example.com");
         assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE)).isEqualTo(JwtClaimNames.ACCESS_TOKEN_PURPOSE);
+        assertThat(jws.getHeader().getKeyId()).isEqualTo("access-active");
     }
 
     @Test
@@ -92,14 +83,11 @@ class JwtTokenProviderTest {
     void generateRefreshTokenContainsRefreshPurpose() {
         String token = tokenProvider.generateRefreshToken(user("carol@example.com"), UUID.randomUUID());
 
-        SecretKey refreshKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(REFRESH_SECRET));
-        Claims claims = Jwts.parser()
-                .verifyWith(refreshKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        var jws = Jwts.parser().verifyWith(refreshSigningKey).build().parseSignedClaims(token);
+        Claims claims = jws.getPayload();
 
         assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE)).isEqualTo(JwtClaimNames.REFRESH_TOKEN_PURPOSE);
+        assertThat(jws.getHeader().getKeyId()).isEqualTo("refresh-active");
     }
 
     @Test
@@ -120,20 +108,35 @@ class JwtTokenProviderTest {
     void generateSupportChatWebSocketTicketContainsSupportChatPurpose() {
         String token = tokenProvider.issue("eve@example.com");
 
-        Claims claims = Jwts.parser()
-                .verifyWith(signingKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        var jws = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token);
+        Claims claims = jws.getPayload();
 
         assertThat(claims.getSubject()).isEqualTo("eve@example.com");
         assertThat(claims.get(JwtClaimNames.TOKEN_PURPOSE))
                 .isEqualTo(JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE);
+        assertThat(jws.getHeader().getKeyId()).isEqualTo("access-active");
     }
 
     private static String refreshSecret() {
         byte[] bytes = new byte[64];
         bytes[0] = 1;
         return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    private static JwtProperties properties() {
+        return new JwtProperties(
+                "Authorization",
+                SECRET,
+                REFRESH_SECRET,
+                Duration.ofMinutes(15),
+                Duration.ofDays(7),
+                "iced-latte",
+                "iced-latte-client",
+                "access-active",
+                "refresh-active",
+                null,
+                null,
+                null,
+                null);
     }
 }

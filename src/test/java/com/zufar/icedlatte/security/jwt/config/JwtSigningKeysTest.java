@@ -31,7 +31,13 @@ class JwtSigningKeysTest {
                 Duration.ofMinutes(15),
                 Duration.ofDays(7),
                 "iced-latte",
-                "iced-latte-client");
+                "iced-latte-client",
+                "access-active",
+                "refresh-active",
+                null,
+                null,
+                null,
+                null);
 
         JwtSigningKeys provider = new JwtSigningKeys(properties);
 
@@ -42,6 +48,42 @@ class JwtSigningKeysTest {
         assertThat(provider.getRefresh().getEncoded()).isEqualTo(expectedRefresh.getEncoded());
         assertThat(provider.get().getEncoded())
                 .isNotEqualTo(provider.getRefresh().getEncoded());
+        assertThat(provider.getKeyId()).isEqualTo("access-active");
+        assertThat(provider.getRefreshKeyId()).isEqualTo("refresh-active");
+    }
+
+    @Test
+    @DisplayName("resolves previous signing keys by kid during rotation")
+    void resolvesPreviousSigningKeysByKid() {
+        String secret = Base64.getEncoder().encodeToString(new byte[64]);
+        byte[] refreshBytes = new byte[64];
+        refreshBytes[0] = 1;
+        String refreshSecret = Base64.getEncoder().encodeToString(refreshBytes);
+        byte[] previousAccessBytes = new byte[64];
+        previousAccessBytes[1] = 2;
+        byte[] previousRefreshBytes = new byte[64];
+        previousRefreshBytes[2] = 3;
+        JwtProperties properties = new JwtProperties(
+                "Authorization",
+                secret,
+                refreshSecret,
+                Duration.ofMinutes(15),
+                Duration.ofDays(7),
+                "iced-latte",
+                "iced-latte-client",
+                "access-active",
+                "refresh-active",
+                Base64.getEncoder().encodeToString(previousAccessBytes),
+                Base64.getEncoder().encodeToString(previousRefreshBytes),
+                "access-previous",
+                "refresh-previous");
+
+        JwtSigningKeys provider = new JwtSigningKeys(properties);
+
+        assertThat(provider.resolveAccessVerificationKey("access-previous").getEncoded())
+                .isEqualTo(Keys.hmacShaKeyFor(previousAccessBytes).getEncoded());
+        assertThat(provider.resolveRefreshVerificationKey("refresh-previous").getEncoded())
+                .isEqualTo(Keys.hmacShaKeyFor(previousRefreshBytes).getEncoded());
     }
 
     @Test
@@ -55,7 +97,13 @@ class JwtSigningKeysTest {
                 Duration.ofMinutes(15),
                 Duration.ofDays(7),
                 "iced-latte",
-                "iced-latte-client");
+                "iced-latte-client",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
 
         assertThatThrownBy(() -> new JwtSigningKeys(properties))
                 .isInstanceOf(IllegalStateException.class)

@@ -37,7 +37,13 @@ class JwtPropertiesTest {
                 Duration.ofMinutes(15),
                 Duration.ofDays(7),
                 "iced-latte",
-                "iced-latte-users");
+                "iced-latte-users",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
 
         assertThat(validator.validate(properties)).isEmpty();
         assertThat(properties.expiration()).isEqualTo(Duration.ofMinutes(15));
@@ -47,7 +53,8 @@ class JwtPropertiesTest {
     @Test
     @DisplayName("rejects blank and null required fields")
     void rejectsBlankAndNullFields() {
-        JwtProperties properties = new JwtProperties("", " ", "", null, null, "", "");
+        JwtProperties properties =
+                new JwtProperties("", " ", "", null, null, "", "", null, null, null, null, null, null);
 
         var violations = validator.validate(properties);
 
@@ -68,7 +75,13 @@ class JwtPropertiesTest {
                         Duration.ZERO,
                         Duration.ofDays(7),
                         "iced-latte",
-                        "iced-latte-users"))
+                        "iced-latte-users",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("jwt.expiration must be positive");
 
@@ -79,7 +92,13 @@ class JwtPropertiesTest {
                         Duration.ofMinutes(15),
                         Duration.ofSeconds(-1),
                         "iced-latte",
-                        "iced-latte-users"))
+                        "iced-latte-users",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("jwt.refresh-expiration must be positive");
     }

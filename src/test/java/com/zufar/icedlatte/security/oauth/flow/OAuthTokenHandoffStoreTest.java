@@ -85,7 +85,13 @@ class OAuthTokenHandoffStoreTest {
                 Duration.ofMinutes(15),
                 Duration.ofHours(24),
                 "iced-latte",
-                "iced-latte-client");
+                "iced-latte-client",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     private static String handoffEncryptionKey() {

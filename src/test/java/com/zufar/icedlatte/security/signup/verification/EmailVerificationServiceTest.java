@@ -308,7 +308,13 @@ class EmailVerificationServiceTest {
                 Duration.ofMinutes(30),
                 Duration.ofHours(24),
                 "iced-latte",
-                "iced-latte-users");
+                "iced-latte-users",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     private static boolean isOpaqueToken(String token) {

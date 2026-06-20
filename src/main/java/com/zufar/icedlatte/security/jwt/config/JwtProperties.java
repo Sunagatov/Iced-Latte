@@ -26,7 +26,19 @@ public record JwtProperties(
 
         @NotBlank(message = "JWT issuer cannot be blank") String issuer,
 
-        @NotBlank(message = "JWT audience cannot be blank") String audience) {
+        @NotBlank(message = "JWT audience cannot be blank") String audience,
+
+        String accessKeyId,
+
+        String refreshKeyId,
+
+        String previousSecret,
+
+        String previousRefreshSecret,
+
+        String previousAccessKeyId,
+
+        String previousRefreshKeyId) {
 
     public JwtProperties {
         if (expiration != null && (expiration.isZero() || expiration.isNegative())) {

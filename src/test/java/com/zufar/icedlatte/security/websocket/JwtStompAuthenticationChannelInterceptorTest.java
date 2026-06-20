@@ -83,6 +83,12 @@ class JwtStompAuthenticationChannelInterceptorTest {
                 java.time.Duration.ofMinutes(15),
                 java.time.Duration.ofDays(7),
                 "iced-latte",
-                "iced-latte");
+                "iced-latte",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 }

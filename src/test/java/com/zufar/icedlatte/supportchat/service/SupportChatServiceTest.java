@@ -45,7 +45,6 @@ import com.zufar.icedlatte.supportchat.exception.SupportChatAccessRestrictedExce
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatDisabledException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatEmailVerificationRequiredException;
-import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.exception.SupportChatRateLimitExceededException;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
@@ -193,8 +192,8 @@ class SupportChatServiceTest {
     }
 
     @Test
-    @DisplayName("Owner delivery exception stores failed message and returns generic support failure")
-    void sendCustomerMessage_ownerSenderThrows_marksFailedAndThrowsGenericFailure() {
+    @DisplayName("Owner delivery exception stores failed message and returns failed delivery status")
+    void sendCustomerMessage_ownerSenderThrows_marksFailedAndReturnsMessage() {
         SupportMessageEntity saved = savedCustomerMessage("Hello");
         doNothing().when(availabilityService).requireAvailable(USER);
         when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
@@ -210,10 +209,10 @@ class SupportChatServiceTest {
         when(ownerMessageSender.send(any(OwnerMessage.class)))
                 .thenThrow(new IllegalStateException("owner unavailable"));
 
-        assertThatThrownBy(() -> enabledService()
-                        .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10"))
-                .isInstanceOf(SupportChatOwnerDeliveryFailedException.class);
+        var result = enabledService()
+                .sendCustomerMessage(USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Hello", null, "203.0.113.10");
 
+        assertThat(result).isSameAs(saved);
         assertThat(saved.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
         assertThat(saved.isOperatorInspectionRequired()).isTrue();
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
@@ -313,6 +312,28 @@ class SupportChatServiceTest {
                         USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Already accepted", null, "203.0.113.10");
 
         assertThat(result).isSameAs(existing);
+        verify(messageRepository, never()).save(any());
+        verify(ownerMessageSender, never()).send(any());
+    }
+
+    @Test
+    @DisplayName("Sending with same client message ID returns existing failed message")
+    void sendCustomerMessage_existingFailedClientMessageId_returnsExistingFailedMessage() {
+        SupportMessageEntity existing = savedCustomerMessage("Already accepted");
+        existing.setDeliveryStatus(SupportMessageDeliveryStatus.FAILED);
+        existing.setOperatorInspectionRequired(true);
+        doNothing().when(availabilityService).requireAvailable(USER);
+        when(conversationRepository.findById(CONVERSATION_ID)).thenReturn(Optional.of(conversation()));
+        when(messageRepository.findByConversationIdAndClientMessageId(CONVERSATION_ID, CLIENT_MESSAGE_ID))
+                .thenReturn(Optional.of(existing));
+
+        var result = enabledService()
+                .sendCustomerMessage(
+                        USER, CONVERSATION_ID, CLIENT_MESSAGE_ID, "Already accepted", null, "203.0.113.10");
+
+        assertThat(result).isSameAs(existing);
+        assertThat(result.getDeliveryStatus()).isEqualTo(SupportMessageDeliveryStatus.FAILED);
+        assertThat(result.isOperatorInspectionRequired()).isTrue();
         verify(messageRepository, never()).save(any());
         verify(ownerMessageSender, never()).send(any());
     }

@@ -258,6 +258,13 @@ jwt:
   refresh-secret: ${APP_JWT_REFRESH_SECRET}
   # Refresh token lifetime — user stays logged in this long without re-entering credentials.
   refresh-expiration: PT24H
+  # Optional key identifiers for rotation-aware JWT headers and verification.
+  access-key-id: ${APP_JWT_ACCESS_KEY_ID:}
+  refresh-key-id: ${APP_JWT_REFRESH_KEY_ID:}
+  previous-secret: ${APP_JWT_PREVIOUS_SECRET:}
+  previous-refresh-secret: ${APP_JWT_PREVIOUS_REFRESH_SECRET:}
+  previous-access-key-id: ${APP_JWT_PREVIOUS_ACCESS_KEY_ID:}
+  previous-refresh-key-id: ${APP_JWT_PREVIOUS_REFRESH_KEY_ID:}
   # "iss" claim — identifies who created the token.
   issuer: ${APP_JWT_ISSUER:iced-latte}
   # "aud" claim — identifies the intended recipient (our frontend).
@@ -590,11 +597,9 @@ sentry:
   dsn: ${SENTRY_DSN:}
   environment: ${SENTRY_ENVIRONMENT:local}
   # Release connects Sentry issues to the exact deployed image/Git SHA.
-  release: ${SENTRY_RELEASE:iced-latte-backend@${APP_VERSION:1}}
+  release: ${SENTRY_RELEASE:iced-latte-backend@${spring.application.version}}
   # Fraction of errors to capture (1.0 = 100%).
   sample-rate: 1.0
-  # Fraction of requests to trace for performance monitoring (0.1 = 10%).
-  traces-sample-rate: 0.1
   # Fraction of traced requests to profile (CPU flame graphs).
   profiles-sample-rate: 0.1
   # Never send Personally Identifiable Information (emails, IPs) to Sentry.
@@ -609,11 +614,16 @@ sentry:
     # Breadcrumbs = context trail leading up to an error. INFO and above are captured.
     minimum-breadcrumb-level: info
   tracing:
-    # Regex of URL origins to attach trace headers to (for distributed tracing).
-    origins:
-      - ".*"
+    # Propagate trace headers only to first-party/local services, not every outbound HTTP call.
+    trace-propagation-targets:
+      - "localhost"
+      - "127.0.0.1"
+      - "^https://([a-z0-9-]+\\.)?iced-latte\\.uk(/.*)?$"
   trace-critical-path-prefixes: "/api/v1/auth/,/api/v1/payment/,/api/v1/orders/"
+  trace-critical-sample-rate: 1.0
   trace-user-facing-path-prefixes: "/api/v1/products/,/api/v1/cart/"
+  trace-user-facing-sample-rate: 0.5
+  trace-default-sample-rate: 0.1
   # These exceptions are too common/expected to report as errors.
   ignored-exceptions-for-type:
     - java.lang.IllegalArgumentException

@@ -42,7 +42,8 @@ public class JwtTokenProvider implements SupportChatWebSocketTicketIssuer {
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
-        return buildToken(claims, userDetails, jwtProperties.expiration(), jwtSigningKeys.get());
+        return buildToken(
+                claims, userDetails, jwtProperties.expiration(), jwtSigningKeys.get(), jwtSigningKeys.getKeyId());
     }
 
     public String generateRefreshToken(final UserDetails userDetails, UUID sessionId) {
@@ -53,7 +54,12 @@ public class JwtTokenProvider implements SupportChatWebSocketTicketIssuer {
         if (sessionId != null) {
             claims.put(JwtClaimNames.SESSION_ID, sessionId.toString());
         }
-        return buildToken(claims, userDetails, jwtProperties.refreshExpiration(), jwtSigningKeys.getRefresh());
+        return buildToken(
+                claims,
+                userDetails,
+                jwtProperties.refreshExpiration(),
+                jwtSigningKeys.getRefresh(),
+                jwtSigningKeys.getRefreshKeyId());
     }
 
     @Override
@@ -61,19 +67,27 @@ public class JwtTokenProvider implements SupportChatWebSocketTicketIssuer {
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimNames.JWT_ID, UUID.randomUUID().toString());
         claims.put(JwtClaimNames.TOKEN_PURPOSE, JwtClaimNames.SUPPORT_CHAT_WEBSOCKET_TICKET_PURPOSE);
-        return buildToken(claims, email, Duration.ofMinutes(2), jwtSigningKeys.get());
+        return buildToken(claims, email, Duration.ofMinutes(2), jwtSigningKeys.get(), jwtSigningKeys.getKeyId());
     }
 
     private String buildToken(
-            Map<String, Object> extraClaims, UserDetails userDetails, Duration expiration, SecretKey key) {
-        return buildToken(extraClaims, userDetails.getUsername(), expiration, key);
+            Map<String, Object> extraClaims,
+            UserDetails userDetails,
+            Duration expiration,
+            SecretKey key,
+            String keyId) {
+        return buildToken(extraClaims, userDetails.getUsername(), expiration, key, keyId);
     }
 
-    private String buildToken(Map<String, Object> extraClaims, String subject, Duration expiration, SecretKey key) {
+    private String buildToken(
+            Map<String, Object> extraClaims, String subject, Duration expiration, SecretKey key, String keyId) {
         try {
             Instant now = Instant.now();
 
             return Jwts.builder()
+                    .header()
+                    .keyId(keyId)
+                    .and()
                     .claims(extraClaims)
                     .subject(subject)
                     .issuer(jwtProperties.issuer())
