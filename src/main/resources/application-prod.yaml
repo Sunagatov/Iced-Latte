@@ -38,8 +38,9 @@ springdoc:
 # ─────────────────────────────────────────────────────────────────────────────
 sentry:
   sample-rate: 1.0
-  # For low-traffic open-source project, trace all transactions.
-  traces-sample-rate: 1.0
+  trace-critical-sample-rate: 1.0
+  trace-user-facing-sample-rate: 1.0
+  trace-default-sample-rate: 1.0
   # Profile 25% of traced transactions (CPU flame graphs).
   profiles-sample-rate: 0.25
 

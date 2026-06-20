@@ -2,6 +2,8 @@ package com.zufar.icedlatte.supportchat.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.OwnerMessageMode;
@@ -26,12 +29,14 @@ import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 class SupportChatRetentionCleanupJobTest {
 
     private final SupportMessageRepository messageRepository = mock(SupportMessageRepository.class);
+    private final SentryJobMonitor sentryJobMonitor = mock(SentryJobMonitor.class);
 
     @Test
     @DisplayName("Deletes messages older than configured retention window")
     void cleanupExpiredMessagesInternal_deletesExpiredMessages() {
         when(messageRepository.deleteByCreatedAtBefore(any())).thenReturn(3L);
-        SupportChatRetentionCleanupJob job = new SupportChatRetentionCleanupJob(properties(), messageRepository);
+        SupportChatRetentionCleanupJob job =
+                new SupportChatRetentionCleanupJob(properties(), messageRepository, sentryJobMonitor);
 
         long deletedCount = job.cleanupExpiredMessagesInternal();
 
@@ -40,6 +45,27 @@ class SupportChatRetentionCleanupJobTest {
         verify(messageRepository).deleteByCreatedAtBefore(cutoffCaptor.capture());
         assertThat(cutoffCaptor.getValue()).isBefore(OffsetDateTime.now().minusDays(89));
         assertThat(cutoffCaptor.getValue()).isAfter(OffsetDateTime.now().minusDays(91));
+    }
+
+    @Test
+    @DisplayName("Scheduled cleanup runs through Sentry monitor with the configured interval")
+    void cleanupExpiredMessages_runsThroughSentryMonitor() {
+        when(messageRepository.deleteByCreatedAtBefore(any())).thenReturn(1L);
+        doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(2)).run();
+                    return null;
+                })
+                .when(sentryJobMonitor)
+                .run(eq("support-chat-retention-cleanup"), any(), any(Runnable.class));
+        SupportChatRetentionCleanupJob job =
+                new SupportChatRetentionCleanupJob(properties(), messageRepository, sentryJobMonitor);
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                job, "retentionCleanupInterval", Duration.ofHours(24));
+
+        job.cleanupExpiredMessages();
+
+        verify(sentryJobMonitor).run(eq("support-chat-retention-cleanup"), any(), any(Runnable.class));
+        verify(messageRepository).deleteByCreatedAtBefore(any());
     }
 
     private static SupportChatProperties properties() {

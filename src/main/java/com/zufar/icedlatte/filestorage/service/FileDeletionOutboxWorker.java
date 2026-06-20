@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
@@ -21,13 +22,23 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class FileDeletionOutboxWorker {
 
+    private static final String MONITOR_SLUG = "file-deletion-outbox-worker";
+
     private final FileDeletionOutboxRepository outboxRepository;
     private final FileDeletionOutboxProperties properties;
     private final ObjectMapper objectMapper;
     private final ObjectStorage objectStorage;
+    private final SentryJobMonitor sentryJobMonitor;
 
     @Scheduled(fixedDelayString = "${file-storage.deletion-outbox.poll-interval:PT30S}")
     public void deletePendingObjects() {
+        sentryJobMonitor.run(
+                MONITOR_SLUG,
+                sentryJobMonitor.fixedDelayConfig(properties.pollInterval().toMillis()),
+                this::deletePendingObjectsInternal);
+    }
+
+    void deletePendingObjectsInternal() {
         if (!properties.enabled() || !properties.workerEnabled()) {
             return;
         }

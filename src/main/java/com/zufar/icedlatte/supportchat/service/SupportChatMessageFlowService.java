@@ -19,7 +19,6 @@ import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageEntity;
 import com.zufar.icedlatte.supportchat.exception.SupportChatConversationNotFoundException;
-import com.zufar.icedlatte.supportchat.exception.SupportChatOwnerDeliveryFailedException;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessage;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageDeliveryResult;
 import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
@@ -86,9 +85,6 @@ class SupportChatMessageFlowService {
                 conversation.getId(),
                 updatedMessage.getId(),
                 delivered);
-        if (!delivered) {
-            throw new SupportChatOwnerDeliveryFailedException();
-        }
         return updatedMessage;
     }
 
@@ -132,11 +128,7 @@ class SupportChatMessageFlowService {
 
         var existing = messageRepository.findByConversationIdAndClientMessageId(conversationId, clientMessageId);
         if (existing.isPresent()) {
-            SupportMessageEntity acceptedMessage = existing.get();
-            if (acceptedMessage.getDeliveryStatus() == FAILED) {
-                throw new SupportChatOwnerDeliveryFailedException();
-            }
-            return new PendingCustomerMessage(conversation, acceptedMessage, true);
+            return new PendingCustomerMessage(conversation, existing.get(), true);
         }
 
         SupportMessageEntity previousCustomerMessage = messageRepository

@@ -25,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.config.SecurityProblemResponseWriter;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
@@ -51,9 +50,6 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private JwtBearerTokenResolver jwtBearerTokenResolver;
-
-    @Mock
-    private ClientIpExtractor clientIpExtractor;
 
     @AfterEach
     void tearDown() {
@@ -168,7 +164,6 @@ class JwtAuthenticationFilterTest {
             MockHttpServletResponse response = new MockHttpServletResponse();
             FilterChain chain = mock(FilterChain.class);
             when(jwtAuthenticationProvider.get(request)).thenThrow(new InvalidCredentialsException());
-            when(clientIpExtractor.extract(request)).thenReturn("203.0.113.10");
 
             filter().run(request, response, chain);
 
@@ -196,7 +191,6 @@ class JwtAuthenticationFilterTest {
 
             when(jwtAuthenticationProvider.get(request)).thenReturn(authentication);
             when(currentUserProvider.getUserId()).thenThrow(new RuntimeException("boom"));
-            when(clientIpExtractor.extract(request)).thenReturn("203.0.113.10");
 
             filter().run(request, response, chain);
 
@@ -210,11 +204,7 @@ class JwtAuthenticationFilterTest {
 
     private TestableJwtAuthenticationFilter filter() {
         return new TestableJwtAuthenticationFilter(
-                jwtAuthenticationProvider,
-                currentUserProvider,
-                jwtTokenClaims,
-                jwtBearerTokenResolver,
-                clientIpExtractor);
+                jwtAuthenticationProvider, currentUserProvider, jwtTokenClaims, jwtBearerTokenResolver);
     }
 
     private static MockHttpServletRequest request(String uri) {
@@ -235,14 +225,12 @@ class JwtAuthenticationFilterTest {
                 JwtAuthenticationProvider jwtAuthenticationProvider,
                 CurrentUserProvider currentUserProvider,
                 JwtTokenClaims jwtTokenClaims,
-                JwtBearerTokenResolver jwtBearerTokenResolver,
-                ClientIpExtractor clientIpExtractor) {
+                JwtBearerTokenResolver jwtBearerTokenResolver) {
             super(
                     jwtAuthenticationProvider,
                     currentUserProvider,
                     jwtTokenClaims,
                     jwtBearerTokenResolver,
-                    clientIpExtractor,
                     new SecurityProblemResponseWriter(
                             new ObjectMapper(), new ProblemTypeUriFactory("https://errors.example.test/problems")),
                     new JwtAuthenticationFailureMapper());

@@ -13,21 +13,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RequestCompletionLoggingFilter unit tests")
 @SuppressWarnings("StaticImportCanBeUsed")
 class RequestCompletionLoggingFilterTest {
-
-    @Mock
-    private ClientIpExtractor clientIpExtractor;
 
     @InjectMocks
     private RequestCompletionLoggingFilter filter;
@@ -76,7 +70,6 @@ class RequestCompletionLoggingFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products");
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(200);
-        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
         FilterChain chain = mock(FilterChain.class);
 
         filter.doFilterInternal(request, response, chain);
@@ -91,7 +84,6 @@ class RequestCompletionLoggingFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products");
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(404);
-        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
         FilterChain chain = mock(FilterChain.class);
 
         filter.doFilterInternal(request, response, chain);
@@ -106,7 +98,6 @@ class RequestCompletionLoggingFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/products");
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(500);
-        when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
         FilterChain chain = mock(FilterChain.class);
 
         filter.doFilterInternal(request, response, chain);
@@ -124,7 +115,6 @@ class RequestCompletionLoggingFilterTest {
             MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
             MockHttpServletResponse response = new MockHttpServletResponse();
             response.setStatus(200);
-            when(clientIpExtractor.extract(request)).thenReturn("127.0.0.1");
 
             filter.doFilterInternal(request, response, chain);
         }

@@ -2,6 +2,7 @@ package com.zufar.icedlatte.review.messaging.kafka.inbox;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
@@ -32,12 +34,21 @@ class ReviewCreatedInboxProcessorTest {
     @Mock
     private AsyncReviewProcessingService processingService;
 
+    @Mock
+    private SentryJobMonitor sentryJobMonitor;
+
     private ObjectMapper objectMapper;
     private ReviewCreatedInboxProcessor processor;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper().findAndRegisterModules();
+        doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(2)).run();
+                    return null;
+                })
+                .when(sentryJobMonitor)
+                .run(any(), any(), any(Runnable.class));
         KafkaIntegrationProperties properties = new KafkaIntegrationProperties(
                 true,
                 new KafkaIntegrationProperties.Topics("iced-latte.review.created.v1"),
@@ -45,7 +56,8 @@ class ReviewCreatedInboxProcessorTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        processor = new ReviewCreatedInboxProcessor(objectMapper, properties, inboxEventRepository, processingService);
+        processor = new ReviewCreatedInboxProcessor(
+                objectMapper, properties, inboxEventRepository, processingService, sentryJobMonitor);
     }
 
     @Test
@@ -61,6 +73,7 @@ class ReviewCreatedInboxProcessorTest {
                 .reclaimStaleLocks(any(Instant.class), eq("iced-latte-review-ai"), eq("review.created"));
         verify(inboxEventRepository)
                 .claimProcessableEvents(25, "iced-latte-review-ai", "review.created", "test-inbox-worker");
+        verify(sentryJobMonitor).run(eq("review-created-inbox-processor"), any(), any(Runnable.class));
     }
 
     @Test

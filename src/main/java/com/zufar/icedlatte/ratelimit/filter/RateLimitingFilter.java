@@ -100,14 +100,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String key = "auth:ip:" + ip;
         RateLimitCategory authPre = RateLimitCategory.AUTH_PRE;
         if (RateLimitRouteClassifier.isStrictPreAuthPath(request.getRequestURI())
-                && isBlocked(request, response, key, authPre, auth, closedRateLimiter, "ip", ip)) {
+                && isBlocked(request, response, key, authPre, auth, closedRateLimiter, "ip")) {
             banTracker.recordBlock(ip);
             return;
         }
 
         key = "pre-auth:ip:" + ip;
         Bucket preAuth = properties.getPreAuth();
-        if (isBlocked(request, response, key, RateLimitCategory.PRE_AUTH, preAuth, openRateLimiter, "ip", ip)) {
+        if (isBlocked(request, response, key, RateLimitCategory.PRE_AUTH, preAuth, openRateLimiter, "ip")) {
             banTracker.recordBlock(ip);
             return;
         }
@@ -116,7 +116,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         Identity identity = resolveIdentity(request, ip);
         Bucket bucket = RateLimitBucketResolver.bucketFor(category, properties);
         key = identity.key(category);
-        if (isBlocked(request, response, key, category, bucket, openRateLimiter, identity.type(), ip)) {
+        if (isBlocked(request, response, key, category, bucket, openRateLimiter, identity.type())) {
             banTracker.recordBlock(ip);
         } else {
             filterChain.doFilter(request, response);
@@ -130,8 +130,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitCategory category,
             Bucket bucket,
             RateLimiter limiter,
-            String identityType,
-            String clientIp)
+            String identityType)
             throws IOException {
         RateLimitResult result = limiter.tryConsume(key, bucket.getMaxRequests(), bucket.getWindowDuration());
         RateLimitResponseWriter.writeRateLimitHeaders(response, result);
@@ -145,7 +144,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         meterRegistry
                 .counter("rate_limit.requests.blocked", "category", category.getValue())
                 .increment();
-        logExceeded(request, category, result, key, identityType, clientIp);
+        logExceeded(request, category, result, key, identityType);
         String problemTypeUri = problemTypeUriFactory.build(ProblemType.RATE_LIMITED);
         RateLimitResponseWriter.writeTooManyRequests(response, result, problemTypeUri);
         return true;
@@ -178,8 +177,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitCategory category,
             RateLimitResult result,
             String rateLimitKey,
-            String identityType,
-            String clientIp) {
+            String identityType) {
         long seconds = TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis());
         long retryAfterSeconds = Math.max(1, seconds);
         String categoryValue = category.getValue();
@@ -188,21 +186,21 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         boolean firstBlock = warnedKeys.getIfPresent(rateLimitKey) == null;
         if (!firstBlock) {
-            String logMessage = "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={},"
-                    + " retry_after_seconds={}";
-            log.debug(logMessage, categoryValue, identityType, clientIp, method, requestPath, retryAfterSeconds);
+            String logMessage =
+                    "rate_limit.exceeded: category={}, identity_type={}, method={}, path={}, retry_after_seconds={}";
+            log.debug(logMessage, categoryValue, identityType, method, requestPath, retryAfterSeconds);
             return;
         }
 
         warnedKeys.put(rateLimitKey, Boolean.TRUE);
-        String logMessage = "rate_limit.exceeded: category={}, identity_type={}, client_ip={}, method={}, path={},"
-                + " retry_after_seconds={}, limit={}, remaining={}";
+        String logMessage =
+                "rate_limit.exceeded: category={}, identity_type={}, method={}, path={}, retry_after_seconds={},"
+                        + " limit={}, remaining={}";
         int maxLimit = Math.max(0, result.remaining());
         log.warn(
                 logMessage,
                 categoryValue,
                 identityType,
-                clientIp,
                 method,
                 requestPath,
                 retryAfterSeconds,

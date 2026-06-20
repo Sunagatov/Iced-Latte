@@ -176,6 +176,7 @@
         <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
         <spotless-maven-plugin.version>3.5.1</spotless-maven-plugin.version>
         <palantir-java-format.version>2.91.0</palantir-java-format.version>
+        <sentry-maven-plugin.version>0.11.0</sentry-maven-plugin.version>
 
         <!-- ========== OPENAPI CONFIGURATION ========== -->
         <openapi-package>com.zufar.icedlatte.openapi</openapi-package>
@@ -939,6 +940,39 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>sentry-source-context</id>
+            <activation>
+                <property>
+                    <name>env.SENTRY_AUTH_TOKEN</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.sentry</groupId>
+                        <artifactId>sentry-maven-plugin</artifactId>
+                        <version>${sentry-maven-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>upload-sentry-source-bundle</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>uploadSourceBundle</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <org>${env.SENTRY_ORG}</org>
+                            <project>${env.SENTRY_PROJECT}</project>
+                            <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+                            <url>${env.SENTRY_BASE_URL}</url>
+                            <ignoreSourceBundleUploadFailure>false</ignoreSourceBundleUploadFailure>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Run software bill of materials generation only in CI or release builds: mvn package -P software-bill-of-materials -->
         <profile>
             <id>software-bill-of-materials</id>

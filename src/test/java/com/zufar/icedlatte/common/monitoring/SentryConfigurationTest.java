@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import io.sentry.*;
+import io.sentry.protocol.Message;
 import io.sentry.protocol.Request;
 import io.sentry.protocol.SentryTransaction;
 
@@ -51,6 +53,54 @@ class SentryConfigurationTest {
         assertThat(sanitizedRequest.getHeaders()).containsEntry("X-Trace-ID", "trace");
         assertThat(result.getTag("application")).isEqualTo("iced-latte");
         assertThat(result.getTag("version")).isEqualTo("2026.04");
+    }
+
+    @Test
+    @DisplayName("before-send callback redacts client IPs from captured log messages")
+    void beforeSendCallbackRedactsClientIpFromCapturedLogMessages() {
+        SentryConfiguration configuration = configuration();
+        SentryOptions.BeforeSendCallback callback = configuration.beforeSendCallback();
+
+        SentryEvent errorEvent = new SentryEvent();
+        errorEvent.setLevel(SentryLevel.ERROR);
+        Message message = new Message();
+        message.setMessage(
+                "http.request.completed: method=GET, path=/api/v1/orders/{orderId}, status=500, duration_ms=42,"
+                        + " client_ip=203.0.113.10, authenticated=true, outcome=SERVER_ERROR");
+        message.setFormatted(
+                "http.request.completed: method=GET, path=/api/v1/orders/{orderId}, status=500, duration_ms=42,"
+                        + " client_ip=203.0.113.10, authenticated=true, outcome=SERVER_ERROR");
+        message.setParams(List.of("203.0.113.10"));
+        errorEvent.setMessage(message);
+
+        SentryEvent result = Objects.requireNonNull(callback.execute(errorEvent, new Hint()));
+        Message sanitizedMessage = Objects.requireNonNull(result.getMessage());
+
+        assertThat(sanitizedMessage.getMessage()).contains("client_ip=[redacted]");
+        assertThat(sanitizedMessage.getMessage()).doesNotContain("203.0.113.10");
+        assertThat(sanitizedMessage.getFormatted()).contains("client_ip=[redacted]");
+        assertThat(sanitizedMessage.getFormatted()).doesNotContain("203.0.113.10");
+    }
+
+    @Test
+    @DisplayName("before-send callback fingerprints http access errors by route and status family")
+    void beforeSendCallbackFingerprintsHttpAccessErrorsByRouteAndStatusFamily() {
+        SentryConfiguration configuration = configuration();
+        SentryOptions.BeforeSendCallback callback = configuration.beforeSendCallback();
+
+        SentryEvent errorEvent = new SentryEvent();
+        errorEvent.setLevel(SentryLevel.ERROR);
+        errorEvent.setLogger("http.access");
+        Message message = new Message();
+        message.setFormatted(
+                "http.request.completed: method=GET, path=/api/v1/orders/{orderId}, status=503, duration_ms=42,"
+                        + " authenticated=true, outcome=SERVER_ERROR");
+        errorEvent.setMessage(message);
+
+        SentryEvent result = Objects.requireNonNull(callback.execute(errorEvent, new Hint()));
+
+        assertThat(result.getFingerprints())
+                .containsExactly("http.access", "GET", "/api/v1/orders/{orderId}", "5xx", "{{ default }}");
     }
 
     @Test
@@ -196,6 +246,9 @@ class SentryConfigurationTest {
         ReflectionTestUtils.setField(
                 configuration, "traceCriticalPathPrefixes", "/api/v1/auth/,/api/v1/payment/,/api/v1/orders/");
         ReflectionTestUtils.setField(configuration, "traceUserFacingPathPrefixes", "/api/v1/products/,/api/v1/cart/");
+        ReflectionTestUtils.setField(configuration, "traceCriticalSampleRate", 1.0);
+        ReflectionTestUtils.setField(configuration, "traceUserFacingSampleRate", 0.5);
+        ReflectionTestUtils.setField(configuration, "traceDefaultSampleRate", 0.1);
         return configuration;
     }
 
@@ -205,6 +258,9 @@ class SentryConfigurationTest {
         ReflectionTestUtils.setField(configuration, "applicationVersion", "2026.04");
         ReflectionTestUtils.setField(configuration, "traceCriticalPathPrefixes", "/api/v1/auth,/api/v1/payment");
         ReflectionTestUtils.setField(configuration, "traceUserFacingPathPrefixes", "/api/v1/products,/api/v1/cart");
+        ReflectionTestUtils.setField(configuration, "traceCriticalSampleRate", 1.0);
+        ReflectionTestUtils.setField(configuration, "traceUserFacingSampleRate", 0.5);
+        ReflectionTestUtils.setField(configuration, "traceDefaultSampleRate", 0.1);
         return configuration;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import com.zufar.icedlatte.review.service.ai.AsyncReviewProcessingService;
@@ -22,14 +23,24 @@ import lombok.extern.slf4j.Slf4j;
 public class ReviewCreatedInboxProcessor {
 
     private static final String REVIEW_CREATED_EVENT_TYPE = "review.created";
+    private static final String MONITOR_SLUG = "review-created-inbox-processor";
 
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;
     private final InboxEventRepository inboxEventRepository;
     private final AsyncReviewProcessingService processingService;
+    private final SentryJobMonitor sentryJobMonitor;
 
     @Scheduled(fixedDelayString = "${kafka.inbox.poll-interval:PT5S}")
     public void processPendingInboxEvents() {
+        sentryJobMonitor.run(
+                MONITOR_SLUG,
+                sentryJobMonitor.fixedDelayConfig(
+                        properties.inbox().pollInterval().toMillis()),
+                this::processPendingInboxEventsInternal);
+    }
+
+    void processPendingInboxEventsInternal() {
         KafkaIntegrationProperties.Inbox inbox = properties.inbox();
         if (!inbox.enabled() || !inbox.workerEnabled()) {
             return;

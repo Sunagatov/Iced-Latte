@@ -15,7 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
 import com.zufar.icedlatte.common.http.ApiPaths;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.security.api.CurrentUserProvider;
 import com.zufar.icedlatte.security.config.SecurityProblemResponseWriter;
 import com.zufar.icedlatte.security.jwt.exception.JwtTokenException;
@@ -36,7 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CurrentUserProvider currentUserProvider;
     private final JwtTokenClaims jwtTokenClaims;
     private final JwtBearerTokenResolver jwtBearerTokenResolver;
-    private final ClientIpExtractor clientIpExtractor;
     private final SecurityProblemResponseWriter problemResponseWriter;
     private final JwtAuthenticationFailureMapper failureMapper;
 
@@ -86,26 +84,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestId = MDC.get(RequestContextConstants.REQUEST_ID_MDC_KEY);
         String method = httpRequest.getMethod();
         String path = httpRequest.getRequestURI();
-        String clientIp = clientIpExtractor.extract(httpRequest);
 
         JwtAuthenticationFailure failure = failureMapper.map(exception);
 
         if (failure.statusCode() >= 500) {
-            String logMessage =
-                    "auth.error: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}";
-            log.error(
-                    logMessage,
-                    failure.reasonCode(),
-                    method,
-                    path,
-                    clientIp,
-                    failure.statusCode(),
-                    requestId,
-                    exception);
+            String logMessage = "auth.error: reason_code={}, method={}, path={}, status={}, request_id={}";
+            log.error(logMessage, failure.reasonCode(), method, path, failure.statusCode(), requestId, exception);
         } else {
-            String logMessage =
-                    "auth.failed: reason_code={}, method={}, path={}, client_ip={}, status={}, request_id={}";
-            log.warn(logMessage, failure.reasonCode(), method, path, clientIp, failure.statusCode(), requestId);
+            String logMessage = "auth.failed: reason_code={}, method={}, path={}, status={}, request_id={}";
+            log.warn(logMessage, failure.reasonCode(), method, path, failure.statusCode(), requestId);
             log.debug("auth.failed.details", exception);
         }
 

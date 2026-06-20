@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 
 import lombok.RequiredArgsConstructor;
@@ -26,15 +27,26 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(prefix = "kafka", name = "enabled", havingValue = "true")
 public class ReviewCreatedKafkaPublisher {
 
+    private static final String MONITOR_SLUG = "review-created-kafka-publisher";
+
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;
     private final OutboxEventRepository outboxEventRepository;
+    private final SentryJobMonitor sentryJobMonitor;
 
     private static final TypeReference<Map<String, String>> STRING_HEADERS = new TypeReference<>() {};
 
     @Scheduled(fixedDelayString = "${kafka.outbox.poll-interval:PT5S}")
     public void publishPendingOutboxEvents() {
+        sentryJobMonitor.run(
+                MONITOR_SLUG,
+                sentryJobMonitor.fixedDelayConfig(
+                        properties.outbox().pollInterval().toMillis()),
+                this::publishPendingOutboxEventsInternal);
+    }
+
+    void publishPendingOutboxEventsInternal() {
         if (!properties.outbox().enabled() || !properties.outbox().workerEnabled()) {
             return;
         }

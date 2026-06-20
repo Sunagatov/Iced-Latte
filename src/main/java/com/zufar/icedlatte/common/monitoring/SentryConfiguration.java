@@ -1,8 +1,12 @@
 package com.zufar.icedlatte.common.monitoring;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,6 +21,7 @@ import com.zufar.icedlatte.common.http.RequestPathUtils;
 import io.sentry.Breadcrumb;
 import io.sentry.SentryEvent;
 import io.sentry.SentryOptions;
+import io.sentry.protocol.Message;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -27,6 +32,9 @@ public class SentryConfiguration {
     private static final Set<String> SENSITIVE_HEADER_NAMES =
             Set.of(HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
     private static final Set<String> SENSITIVE_BREADCRUMB_KEYS = Set.of("email", "password", "phone");
+    private static final Pattern CLIENT_IP_FIELD_PATTERN = Pattern.compile("(client_ip=)([^,\\s]+)");
+    private static final String HTTP_ACCESS_LOGGER = "http.access";
+    private static final String DEFAULT_FINGERPRINT_MARKER = "{{ default }}";
 
     @Value("${spring.application.name}")
     private String applicationName;
@@ -40,6 +48,15 @@ public class SentryConfiguration {
     @Value("${sentry.trace-user-facing-path-prefixes:}")
     private String traceUserFacingPathPrefixes;
 
+    @Value("${sentry.trace-critical-sample-rate:1.0}")
+    private double traceCriticalSampleRate;
+
+    @Value("${sentry.trace-user-facing-sample-rate:0.5}")
+    private double traceUserFacingSampleRate;
+
+    @Value("${sentry.trace-default-sample-rate:0.1}")
+    private double traceDefaultSampleRate;
+
     @Bean
     public SentryOptions.BeforeSendCallback beforeSendCallback() {
         return (event, _) -> {
@@ -51,6 +68,7 @@ public class SentryConfiguration {
             }
             sanitizePii(event);
             addCustomTags(event);
+            normalizeFingerprint(event);
             return event;
         };
     }
@@ -70,15 +88,14 @@ public class SentryConfiguration {
             var transactionName = transactionContext.getName();
 
             if (containsAnyConfiguredPrefix(transactionName, traceCriticalPathPrefixes)) {
-                return 1.0;
+                return traceCriticalSampleRate;
             }
 
             if (containsAnyConfiguredPrefix(transactionName, traceUserFacingPathPrefixes)) {
-                return 0.5;
+                return traceUserFacingSampleRate;
             }
 
-            // Sample 10% of everything else
-            return 0.1;
+            return traceDefaultSampleRate;
         };
     }
 
@@ -107,6 +124,7 @@ public class SentryConfiguration {
                         .removeIf(header -> SENSITIVE_HEADER_NAMES.contains(header.toLowerCase(Locale.ROOT)));
             }
         }
+        sanitizeMessage(event.getMessage());
     }
 
     private void sanitizeBreadcrumb(Breadcrumb breadcrumb) {
@@ -119,6 +137,84 @@ public class SentryConfiguration {
     private void addCustomTags(SentryEvent event) {
         event.setTag("application", applicationName);
         event.setTag("version", applicationVersion);
+    }
+
+    private static void sanitizeMessage(Message message) {
+        if (message == null) {
+            return;
+        }
+        if (message.getMessage() != null) {
+            message.setMessage(redactClientIp(message.getMessage()));
+        }
+        if (message.getFormatted() != null) {
+            message.setFormatted(redactClientIp(message.getFormatted()));
+        }
+        if (message.getParams() != null && !message.getParams().isEmpty()) {
+            message.setParams(message.getParams().stream()
+                    .map(SentryConfiguration::redactClientIp)
+                    .toList());
+        }
+    }
+
+    private static String redactClientIp(String value) {
+        return value == null ? null : CLIENT_IP_FIELD_PATTERN.matcher(value).replaceAll("$1[redacted]");
+    }
+
+    private static void normalizeFingerprint(SentryEvent event) {
+        if (!HTTP_ACCESS_LOGGER.equals(event.getLogger())) {
+            return;
+        }
+        String formattedMessage =
+                event.getMessage() != null ? event.getMessage().getFormatted() : null;
+        String method = defaultIfBlank(extractStructuredLogValue(formattedMessage, "method"), "unknown");
+        String path = defaultIfBlank(extractStructuredLogValue(formattedMessage, "path"), extractRequestPath(event));
+        String statusFamily =
+                toStatusFamily(defaultIfBlank(extractStructuredLogValue(formattedMessage, "status"), "unknown"));
+        event.setFingerprints(List.of(HTTP_ACCESS_LOGGER, method, path, statusFamily, DEFAULT_FINGERPRINT_MARKER));
+    }
+
+    private static String extractStructuredLogValue(String formattedMessage, String key) {
+        if (formattedMessage == null || formattedMessage.isBlank()) {
+            return null;
+        }
+        String keyPrefix = key + "=";
+        int start = formattedMessage.indexOf(keyPrefix);
+        if (start < 0) {
+            return null;
+        }
+        int valueStart = start + keyPrefix.length();
+        int valueEnd = formattedMessage.indexOf(',', valueStart);
+        String rawValue = valueEnd >= 0
+                ? formattedMessage.substring(valueStart, valueEnd)
+                : formattedMessage.substring(valueStart);
+        String normalized = rawValue.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private static String extractRequestPath(SentryEvent event) {
+        if (event.getRequest() == null || event.getRequest().getUrl() == null) {
+            return "unknown";
+        }
+        try {
+            URI requestUri = new URI(event.getRequest().getUrl());
+            String path = requestUri.getPath();
+            return path == null || path.isBlank() ? "unknown" : path;
+        } catch (URISyntaxException _) {
+            return event.getRequest().getUrl();
+        }
+    }
+
+    private static String toStatusFamily(String rawStatus) {
+        try {
+            int status = Integer.parseInt(rawStatus);
+            return (status / 100) + "xx";
+        } catch (NumberFormatException _) {
+            return rawStatus;
+        }
+    }
+
+    private static String defaultIfBlank(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     private static boolean containsAnyConfiguredPrefix(String value, String rawPrefixes) {

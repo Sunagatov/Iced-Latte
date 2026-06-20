@@ -21,23 +21,18 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.http.RequestPathUtils;
-import com.zufar.icedlatte.common.util.ClientIpExtractor;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Order(2)
-@RequiredArgsConstructor
 @Slf4j(topic = "http.access")
 public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
 
     private static final String ANONYMOUS_PRINCIPAL = "anonymousUser";
 
-    public static final String OUTCOME = "http.request.completed: method={}, path={}, status={}, "
-            + "duration_ms={}, client_ip={}, authenticated={}, outcome={}";
-
-    private final ClientIpExtractor clientIpExtractor;
+    public static final String OUTCOME =
+            "http.request.completed: method={}, path={}, status={}, duration_ms={}, authenticated={}, outcome={}";
 
     @Value("${logging.slow-request-threshold-ms:1000}")
     private long slowRequestThresholdMs;
@@ -79,13 +74,12 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
                 outcome = "SERVER_ERROR";
             }
 
-            String clientIp = clientIpExtractor.extract(request);
             String method = request.getMethod();
             String path = resolvePathTemplate(request);
             boolean slow = durationMs >= slowRequestThresholdMs;
             boolean authenticated = isAuthenticated();
 
-            Object[] args = {method, path, status, durationMs, clientIp, authenticated, outcome};
+            Object[] args = {method, path, status, durationMs, authenticated, outcome};
 
             if (status >= 500) {
                 log.error(OUTCOME, args);

@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.filestorage.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -8,6 +11,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
 import com.zufar.icedlatte.filestorage.repository.FileDeletionOutboxRepository;
@@ -34,7 +39,20 @@ class FileDeletionOutboxWorkerTest {
     @Mock
     private ObjectStorage objectStorage;
 
+    @Mock
+    private SentryJobMonitor sentryJobMonitor;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() {
+        doAnswer(invocation -> {
+                    ((Runnable) invocation.getArgument(2)).run();
+                    return null;
+                })
+                .when(sentryJobMonitor)
+                .run(any(), any(), any(Runnable.class));
+    }
 
     @Test
     @DisplayName("deletes claimed object and marks event deleted")
@@ -53,11 +71,13 @@ class FileDeletionOutboxWorkerTest {
         when(outboxRepository.claimDeleteObjectEvents(25, WORKER_ID)).thenReturn(List.of(row));
         when(outboxRepository.markDeleted(rowId, WORKER_ID)).thenReturn(true);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
+        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+                .deletePendingObjects();
 
         verify(outboxRepository).reclaimStaleLocks(org.mockito.ArgumentMatchers.any());
         verify(objectStorage).delete(new FileMetadataDto(relatedObjectId, "bucket", "key"));
         verify(outboxRepository).markDeleted(rowId, WORKER_ID);
+        verify(sentryJobMonitor).run(eq("file-deletion-outbox-worker"), any(), any(Runnable.class));
     }
 
     @Test
@@ -80,7 +100,8 @@ class FileDeletionOutboxWorkerTest {
                 .when(objectStorage)
                 .delete(new FileMetadataDto(relatedObjectId, "bucket", "key"));
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
+        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+                .deletePendingObjects();
 
         verify(outboxRepository).markFailed(rowId, WORKER_ID, 2, 10, failure);
     }
@@ -90,7 +111,8 @@ class FileDeletionOutboxWorkerTest {
     void doesNothingWhenWorkerIsDisabled() {
         FileDeletionOutboxProperties properties = properties(false);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
+        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+                .deletePendingObjects();
 
         verifyNoInteractions(outboxRepository, objectStorage);
     }
@@ -101,7 +123,8 @@ class FileDeletionOutboxWorkerTest {
         FileDeletionOutboxProperties properties = properties(true);
         when(objectStorage.isConfigured()).thenReturn(false);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage).deletePendingObjects();
+        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+                .deletePendingObjects();
 
         verifyNoInteractions(outboxRepository);
     }
