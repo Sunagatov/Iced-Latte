@@ -56,6 +56,31 @@ class SentryConfigurationTest {
     }
 
     @Test
+    @DisplayName("before-send callback keeps handled error events and still drops handled warnings")
+    void beforeSendCallbackKeepsHandledErrorsOnly() {
+        SentryConfiguration configuration = configuration();
+        SentryOptions.BeforeSendCallback callback = configuration.beforeSendCallback();
+        Hint hint = new Hint();
+
+        SentryEvent handledWarningEvent = new SentryEvent();
+        handledWarningEvent.setLevel(SentryLevel.WARNING);
+        handledWarningEvent.setTag("handled", "true");
+
+        assertThat(callback.execute(handledWarningEvent, hint)).isNull();
+
+        SentryEvent handledErrorEvent = new SentryEvent();
+        handledErrorEvent.setLevel(SentryLevel.ERROR);
+        handledErrorEvent.setTag("handled", "true");
+
+        SentryEvent result = callback.execute(handledErrorEvent, hint);
+
+        assertThat(result).isSameAs(handledErrorEvent);
+        assertThat(result.getTag("handled")).isEqualTo("true");
+        assertThat(result.getTag("application")).isEqualTo("iced-latte");
+        assertThat(result.getTag("version")).isEqualTo("2026.04");
+    }
+
+    @Test
     @DisplayName("before-send callback redacts client IPs from captured log messages")
     void beforeSendCallbackRedactsClientIpFromCapturedLogMessages() {
         SentryConfiguration configuration = configuration();

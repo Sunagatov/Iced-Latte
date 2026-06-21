@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
@@ -29,6 +30,7 @@ public class FileDeletionOutboxWorker {
     private final ObjectMapper objectMapper;
     private final ObjectStorage objectStorage;
     private final SentryJobMonitor sentryJobMonitor;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @Scheduled(fixedDelayString = "${file-storage.deletion-outbox.poll-interval:PT30S}")
     public void deletePendingObjects() {
@@ -74,6 +76,15 @@ public class FileDeletionOutboxWorker {
         } catch (IOException | RuntimeException ex) {
             boolean markedFailed = outboxRepository.markFailed(
                     event.id(), properties.workerId(), event.attemptCount(), event.maxAttempts(), ex);
+            sentryHandledExceptionReporter.capture(ex, scope -> {
+                scope.setTag("component", "file-deletion-outbox");
+                scope.setTag("operation", "delete-pending-object");
+                scope.setExtra("eventId", event.eventId().toString());
+                scope.setExtra("rowId", event.id().toString());
+                scope.setExtra("workerId", properties.workerId());
+                scope.setExtra("attemptCount", Integer.toString(event.attemptCount()));
+                scope.setExtra("maxAttempts", Integer.toString(event.maxAttempts()));
+            });
             if (!markedFailed) {
                 String logMessage = "file.deletion_outbox.failure_mark_missed: eventId={}, workerId={}";
                 log.warn(logMessage, event.eventId(), properties.workerId());

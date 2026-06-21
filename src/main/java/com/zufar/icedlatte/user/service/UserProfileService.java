@@ -14,6 +14,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
@@ -43,6 +44,7 @@ public class UserProfileService implements UserAccessControlApi {
     private final FileStorageWriterApi fileStorageWriterApi;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     public UserDto getProfile(UUID userId) {
         return toProfileDto(singleUserProvider.getUserEntityById(userId));
@@ -147,11 +149,21 @@ public class UserProfileService implements UserAccessControlApi {
         try {
             eventPublisher.publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         } catch (RuntimeException ex) {
+            sentryHandledExceptionReporter.capture(ex, scope -> {
+                scope.setTag("component", "user-profile");
+                scope.setTag("operation", "session-revocation-after-delete");
+                scope.setExtra("userId", userId.toString());
+            });
             log.warn("user.profile.session_revocation_after_delete_failed: userId={}", userId, ex);
         }
         try {
             fileStorageWriterApi.deleteFile(userId);
         } catch (RuntimeException ex) {
+            sentryHandledExceptionReporter.capture(ex, scope -> {
+                scope.setTag("component", "user-profile");
+                scope.setTag("operation", "avatar-delete-after-delete");
+                scope.setExtra("userId", userId.toString());
+            });
             log.warn("user.profile.avatar_delete_after_delete_failed: userId={}", userId, ex);
         }
     }

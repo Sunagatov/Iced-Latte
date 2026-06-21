@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
@@ -30,6 +31,7 @@ public class ReviewCreatedInboxProcessor {
     private final InboxEventRepository inboxEventRepository;
     private final AsyncReviewProcessingService processingService;
     private final SentryJobMonitor sentryJobMonitor;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @Scheduled(fixedDelayString = "${kafka.inbox.poll-interval:PT5S}")
     public void processPendingInboxEvents() {
@@ -83,6 +85,16 @@ public class ReviewCreatedInboxProcessor {
             int maxAttempts = row.maxAttempts();
 
             inboxEventRepository.markFailed(rowId, workerId, consumerName, eventType, attemptCount, maxAttempts, e);
+            sentryHandledExceptionReporter.capture(e, scope -> {
+                scope.setTag("component", "review-kafka-inbox");
+                scope.setTag("operation", "process-review-created-event");
+                scope.setExtra("eventId", eventId.toString());
+                scope.setExtra("rowId", rowId.toString());
+                scope.setExtra("workerId", workerId);
+                scope.setExtra("consumerName", consumerName);
+                scope.setExtra("attemptCount", Integer.toString(attemptCount));
+                scope.setExtra("maxAttempts", Integer.toString(maxAttempts));
+            });
             log.warn("event.inbox.processing.failed: eventId={}", eventId, e);
         }
     }

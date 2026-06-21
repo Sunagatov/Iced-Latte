@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import com.zufar.icedlatte.common.monitoring.AbuseSignalRecorder;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
@@ -26,16 +27,19 @@ class SupportChatCustomerMessagePolicy {
     private final TurnstileVerifier turnstileVerifier;
     private final SupportChatAbuseGuard abuseGuard;
     private final RateLimiter rateLimiter;
+    private final AbuseSignalRecorder abuseSignalRecorder;
 
     SupportChatCustomerMessagePolicy(
             SupportChatProperties properties,
             TurnstileVerifier turnstileVerifier,
             SupportChatAbuseGuard abuseGuard,
-            @Qualifier("openRateLimiter") RateLimiter rateLimiter) {
+            @Qualifier("openRateLimiter") RateLimiter rateLimiter,
+            AbuseSignalRecorder abuseSignalRecorder) {
         this.properties = properties;
         this.turnstileVerifier = turnstileVerifier;
         this.abuseGuard = abuseGuard;
         this.rateLimiter = rateLimiter;
+        this.abuseSignalRecorder = abuseSignalRecorder;
     }
 
     void enforceCustomerMessageRules(
@@ -60,6 +64,7 @@ class SupportChatCustomerMessagePolicy {
         }
 
         abuseGuard.requireTurnstileForNextMessage(conversationId);
+        abuseSignalRecorder.record("support-chat", "duplicate_rejected");
         log.info("support_chat.customer_message.duplicate_rejected: conversationId={}", conversationId);
         throw new DuplicateSupportChatMessageException();
     }
@@ -83,6 +88,7 @@ class SupportChatCustomerMessagePolicy {
             return;
         }
         abuseGuard.requireTurnstileForNextMessage(conversationId);
+        abuseSignalRecorder.record("support-chat", "rate_limited");
         log.info("support_chat.customer_message.rate_limited: conversationId={}, keyType={}", conversationId, keyType);
         throw new SupportChatRateLimitExceededException();
     }
@@ -97,6 +103,7 @@ class SupportChatCustomerMessagePolicy {
             abuseGuard.clearTurnstileRequirement(conversationId);
         } catch (TurnstileVerificationException ex) {
             abuseGuard.requireTurnstileForNextMessage(conversationId);
+            abuseSignalRecorder.record("support-chat", "turnstile_failed");
             log.info("support_chat.turnstile.failed: conversationId={}", conversationId);
             throw ex;
         }

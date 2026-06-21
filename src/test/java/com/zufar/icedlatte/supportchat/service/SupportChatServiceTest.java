@@ -24,6 +24,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 
+import com.zufar.icedlatte.common.monitoring.AbuseSignalRecorder;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
@@ -78,6 +80,9 @@ class SupportChatServiceTest {
     private OwnerMessageSender ownerMessageSender;
 
     @Mock
+    private AbuseSignalRecorder abuseSignalRecorder;
+
+    @Mock
     private SupportChatMessagePublisher messagePublisher;
 
     @Mock
@@ -88,6 +93,9 @@ class SupportChatServiceTest {
 
     @Mock
     private PlatformTransactionManager transactionManager;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @org.junit.jupiter.api.BeforeEach
     void setUpTransactions() {
@@ -217,6 +225,7 @@ class SupportChatServiceTest {
         assertThat(saved.isOperatorInspectionRequired()).isTrue();
         verify(conversationRepository).touchLastMessageAt(CONVERSATION_ID);
         verify(messageRepository).updateDeliveryStatus(saved.getId(), SupportMessageDeliveryStatus.FAILED, true);
+        verify(sentryHandledExceptionReporter).capture(any(IllegalStateException.class), any());
     }
 
     @Test
@@ -541,10 +550,12 @@ class SupportChatServiceTest {
                         supportChatProperties,
                         turnstileVerifier,
                         new SupportChatAbuseGuard(supportChatProperties, Clock.systemUTC()),
-                        rateLimiter),
+                        rateLimiter,
+                        abuseSignalRecorder),
                 ownerMessageSender,
                 messagePublisher,
-                transactionManager);
+                transactionManager,
+                sentryHandledExceptionReporter);
     }
 
     private static SupportChatProperties properties(boolean enabled) {

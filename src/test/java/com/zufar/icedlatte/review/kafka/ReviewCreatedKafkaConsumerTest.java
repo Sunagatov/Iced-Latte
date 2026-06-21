@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.support.Acknowledgment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 import com.zufar.icedlatte.review.messaging.kafka.inbox.InboxEventRepository;
@@ -37,6 +38,9 @@ class ReviewCreatedKafkaConsumerTest {
 
     @Mock
     private Acknowledgment acknowledgment;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @Test
     @DisplayName("records consumed event in inbox and acknowledges after insert")
@@ -62,7 +66,8 @@ class ReviewCreatedKafkaConsumerTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var consumer = new ReviewCreatedKafkaConsumer(
+                objectMapper, properties, inboxEventRepository, sentryHandledExceptionReporter);
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
         when(inboxEventRepository.insertReceivedEvent(
                         eq(event),
@@ -105,7 +110,8 @@ class ReviewCreatedKafkaConsumerTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var consumer = new ReviewCreatedKafkaConsumer(
+                objectMapper, properties, inboxEventRepository, sentryHandledExceptionReporter);
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
         record.headers()
                 .add("eventId", eventId.toString().getBytes(StandardCharsets.UTF_8))
@@ -153,7 +159,8 @@ class ReviewCreatedKafkaConsumerTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var consumer = new ReviewCreatedKafkaConsumer(
+                objectMapper, properties, inboxEventRepository, sentryHandledExceptionReporter);
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
         when(inboxEventRepository.insertReceivedEvent(
                         eq(event),
@@ -185,12 +192,15 @@ class ReviewCreatedKafkaConsumerTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var consumer = new ReviewCreatedKafkaConsumer(
+                objectMapper, properties, inboxEventRepository, sentryHandledExceptionReporter);
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, "key", "{not-json");
 
         consumer.consume(record, acknowledgment);
 
         verify(acknowledgment).acknowledge();
+        verify(sentryHandledExceptionReporter)
+                .capture(any(com.fasterxml.jackson.core.JsonProcessingException.class), any());
         verify(inboxEventRepository, never())
                 .insertReceivedEvent(any(), any(), any(), anyInt(), anyLong(), any(), any(), any(), anyInt());
     }
@@ -219,12 +229,14 @@ class ReviewCreatedKafkaConsumerTest {
                 KafkaIntegrationProperties.Outbox.defaults(),
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
-        var consumer = new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository);
+        var consumer = new ReviewCreatedKafkaConsumer(
+                objectMapper, properties, inboxEventRepository, sentryHandledExceptionReporter);
         var record = new ConsumerRecord<>("iced-latte.review.created.v1", 0, 42L, productId.toString(), payload);
 
         consumer.consume(record, acknowledgment);
 
         verify(acknowledgment).acknowledge();
+        verify(sentryHandledExceptionReporter).capture(any(IllegalStateException.class), any());
         verify(inboxEventRepository, never())
                 .insertReceivedEvent(any(), any(), any(), anyInt(), anyLong(), any(), any(), any(), anyInt());
     }

@@ -12,6 +12,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.monitoring.AbuseSignalRecorder;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
@@ -49,6 +50,7 @@ public class CheckoutPaymentService {
     private final StripeSessionLineItemListConverter lineItemConverter;
     private final TurnstileVerifier turnstileVerifier;
     private final TurnstileProperties turnstileProperties;
+    private final AbuseSignalRecorder abuseSignalRecorder;
 
     public CheckoutResponseDto checkout(CreateCheckoutRequestDto request, String idempotencyKey) {
         return checkout(request, idempotencyKey, null);
@@ -103,6 +105,7 @@ public class CheckoutPaymentService {
         try {
             return txService.prepareCheckout(userId, request, idempotencyKey);
         } catch (DataIntegrityViolationException e) {
+            abuseSignalRecorder.record("checkout", "idempotency_collision");
             log.info("checkout.idempotency_collision: userId={}, key={}", userId, idempotencyKey);
             return txService.findExistingCheckout(userId, idempotencyKey).orElseThrow(() -> e);
         }

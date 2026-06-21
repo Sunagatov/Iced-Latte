@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessageDto;
 import com.zufar.icedlatte.supportchat.converter.SupportChatDtoConverter;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
@@ -27,12 +28,14 @@ class StompSupportChatMessagePublisherTest {
     private static final UUID MESSAGE_ID = UUID.randomUUID();
 
     private final SimpMessagingTemplate messagingTemplate = mock(SimpMessagingTemplate.class);
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter =
+            mock(SentryHandledExceptionReporter.class);
 
     @Test
     @DisplayName("Publishes owner reply to support chat conversation destination")
     void publishOwnerReply_validMessage_sendsMessageDtoToConversationDestination() {
-        StompSupportChatMessagePublisher publisher =
-                new StompSupportChatMessagePublisher(messagingTemplate, new SupportChatDtoConverter());
+        StompSupportChatMessagePublisher publisher = new StompSupportChatMessagePublisher(
+                messagingTemplate, new SupportChatDtoConverter(), sentryHandledExceptionReporter);
 
         publisher.publishOwnerReply(conversation(), ownerMessage());
 
@@ -50,8 +53,8 @@ class StompSupportChatMessagePublisherTest {
     @Test
     @DisplayName("Defers owner reply publish until active transaction commits")
     void publishOwnerReply_activeTransaction_sendsAfterCommit() {
-        StompSupportChatMessagePublisher publisher =
-                new StompSupportChatMessagePublisher(messagingTemplate, new SupportChatDtoConverter());
+        StompSupportChatMessagePublisher publisher = new StompSupportChatMessagePublisher(
+                messagingTemplate, new SupportChatDtoConverter(), sentryHandledExceptionReporter);
 
         TransactionSynchronizationManager.initSynchronization();
         TransactionSynchronizationManager.setActualTransactionActive(true);
@@ -74,13 +77,15 @@ class StompSupportChatMessagePublisherTest {
     @Test
     @DisplayName("Publisher failure does not leak exception")
     void publishOwnerReply_messagingTemplateThrows_swallowsException() {
-        StompSupportChatMessagePublisher publisher =
-                new StompSupportChatMessagePublisher(messagingTemplate, new SupportChatDtoConverter());
+        StompSupportChatMessagePublisher publisher = new StompSupportChatMessagePublisher(
+                messagingTemplate, new SupportChatDtoConverter(), sentryHandledExceptionReporter);
         doThrow(new IllegalStateException("broker unavailable"))
                 .when(messagingTemplate)
                 .convertAndSend(anyString(), any(Object.class));
 
         publisher.publishOwnerReply(conversation(), ownerMessage());
+
+        verify(sentryHandledExceptionReporter).capture(any(IllegalStateException.class), any());
     }
 
     private static SupportConversationEntity conversation() {

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
 import com.zufar.icedlatte.openapi.dto.AddressDto;
@@ -56,6 +57,9 @@ class UserProfileServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @InjectMocks
     private UserProfileService userProfileService;
@@ -154,6 +158,23 @@ class UserProfileServiceTest {
         verify(userRepository).delete(userEntity);
         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         verify(fileStorageWriterApi).deleteFile(userId);
+    }
+
+    @Test
+    @DisplayName("deleteProfile captures handled cleanup failures in Sentry")
+    void deleteProfileCapturesHandledCleanupFailuresInSentry() {
+        UUID userId = UUID.randomUUID();
+        UserEntity userEntity = UserEntity.builder().id(userId).build();
+        RuntimeException revocationFailure = new IllegalStateException("redis unavailable");
+        RuntimeException avatarFailure = new IllegalStateException("s3 unavailable");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+        doThrow(revocationFailure).when(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        doThrow(avatarFailure).when(fileStorageWriterApi).deleteFile(userId);
+
+        userProfileService.deleteProfile(userId);
+
+        verify(sentryHandledExceptionReporter).capture(eq(revocationFailure), any());
+        verify(sentryHandledExceptionReporter).capture(eq(avatarFailure), any());
     }
 
     @Test

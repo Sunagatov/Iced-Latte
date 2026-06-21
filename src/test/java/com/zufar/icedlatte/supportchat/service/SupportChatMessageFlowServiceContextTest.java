@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.zufar.icedlatte.common.monitoring.AbuseSignalRecorder;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
@@ -97,6 +99,16 @@ class SupportChatMessageFlowServiceContextTest {
         @Bean
         PlatformTransactionManager platformTransactionManager() {
             return mock(PlatformTransactionManager.class);
+        }
+
+        @Bean
+        SentryHandledExceptionReporter sentryHandledExceptionReporter() {
+            return mock(SentryHandledExceptionReporter.class);
+        }
+
+        @Bean
+        AbuseSignalRecorder abuseSignalRecorder() {
+            return mock(AbuseSignalRecorder.class);
         }
     }
 }

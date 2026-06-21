@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.monitoring.AbuseSignalRecorder;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
@@ -62,6 +63,9 @@ class CheckoutPaymentServiceTest {
 
     @Mock
     private TurnstileProperties turnstileProperties;
+
+    @Mock
+    private AbuseSignalRecorder abuseSignalRecorder;
 
     @InjectMocks
     private CheckoutPaymentService service;
@@ -119,6 +123,7 @@ class CheckoutPaymentServiceTest {
         verify(txService)
                 .saveStripeDetails(
                         paymentId, new StripeSessionResult("cs_test_1", "https://checkout.stripe.test/session"));
+        verify(abuseSignalRecorder).record("checkout", "idempotency_collision");
         verifyNoInteractions(turnstileVerifier);
     }
 

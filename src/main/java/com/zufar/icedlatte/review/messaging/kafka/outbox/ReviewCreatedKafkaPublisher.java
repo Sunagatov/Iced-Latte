@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 
@@ -34,6 +35,7 @@ public class ReviewCreatedKafkaPublisher {
     private final KafkaIntegrationProperties properties;
     private final OutboxEventRepository outboxEventRepository;
     private final SentryJobMonitor sentryJobMonitor;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     private static final TypeReference<Map<String, String>> STRING_HEADERS = new TypeReference<>() {};
 
@@ -87,6 +89,16 @@ public class ReviewCreatedKafkaPublisher {
         } catch (Exception e) {
             outboxEventRepository.markFailed(
                     event.id(), outbox.workerId(), event.attemptCount(), event.maxAttempts(), e);
+            sentryHandledExceptionReporter.capture(e, scope -> {
+                scope.setTag("component", "review-kafka-outbox");
+                scope.setTag("operation", "publish-review-created-event");
+                scope.setExtra("eventId", event.eventId().toString());
+                scope.setExtra("rowId", event.id().toString());
+                scope.setExtra("topic", event.topic());
+                scope.setExtra("workerId", outbox.workerId());
+                scope.setExtra("attemptCount", Integer.toString(event.attemptCount()));
+                scope.setExtra("maxAttempts", Integer.toString(event.maxAttempts()));
+            });
             log.warn("event.outbox.publish.failed: eventId={}, topic={}", event.eventId(), event.topic(), e);
         }
     }

@@ -38,6 +38,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
@@ -97,7 +98,12 @@ class ReviewKafkaContainerFlowTest {
             rawConsumer.subscribe(List.of(TOPIC));
 
             new ReviewCreatedKafkaPublisher(
-                            kafkaTemplate, objectMapper, properties, outboxEventRepository, new SentryJobMonitor())
+                            kafkaTemplate,
+                            objectMapper,
+                            properties,
+                            outboxEventRepository,
+                            new SentryJobMonitor(),
+                            new SentryHandledExceptionReporter())
                     .publishPendingOutboxEvents();
 
             ConsumerRecord<String, String> kafkaRecord =
@@ -119,7 +125,8 @@ class ReviewKafkaContainerFlowTest {
                             eq(10)))
                     .thenReturn(true);
 
-            new ReviewCreatedKafkaConsumer(objectMapper, properties, inboxEventRepository)
+            new ReviewCreatedKafkaConsumer(
+                            objectMapper, properties, inboxEventRepository, new SentryHandledExceptionReporter())
                     .consume(kafkaRecord, acknowledgment);
 
             verify(acknowledgment).acknowledge();

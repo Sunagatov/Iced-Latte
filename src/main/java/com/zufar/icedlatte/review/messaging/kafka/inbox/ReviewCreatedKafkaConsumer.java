@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
 
@@ -32,6 +33,7 @@ public class ReviewCreatedKafkaConsumer {
     private final ObjectMapper objectMapper;
     private final KafkaIntegrationProperties properties;
     private final InboxEventRepository inboxEventRepository;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     public void consume(ConsumerRecord<String, String> record, Acknowledgment acknowledgment) {
         if (!properties.inbox().enabled()) {
@@ -45,6 +47,14 @@ public class ReviewCreatedKafkaConsumer {
         try {
             event = objectMapper.readValue(record.value(), ReviewCreatedKafkaEvent.class);
         } catch (JsonProcessingException e) {
+            sentryHandledExceptionReporter.capture(e, scope -> {
+                scope.setTag("component", "review-kafka-consumer");
+                scope.setTag("operation", "consume-malformed-review-created-event");
+                scope.setExtra("topic", topic);
+                scope.setExtra("partition", Integer.toString(partition));
+                scope.setExtra("offset", Long.toString(offset));
+                scope.setExtra("key", record.key());
+            });
             String logMessage = "event.inbox.malformed: topic={}, partition={}, offset={}, exceptionClass={}";
             log.warn(logMessage, topic, partition, offset, e.getClass().getSimpleName());
             acknowledgment.acknowledge();
@@ -52,6 +62,19 @@ public class ReviewCreatedKafkaConsumer {
         }
         if (!REVIEW_CREATED_EVENT_TYPE.equals(event.eventType())
                 || event.eventVersion() != REVIEW_CREATED_EVENT_VERSION) {
+            sentryHandledExceptionReporter.capture(
+                    new IllegalStateException("Unsupported Kafka review event: type=%s version=%s"
+                            .formatted(event.eventType(), event.eventVersion())),
+                    scope -> {
+                        scope.setTag("component", "review-kafka-consumer");
+                        scope.setTag("operation", "consume-unsupported-review-created-event");
+                        scope.setExtra("eventId", event.eventId().toString());
+                        scope.setExtra("eventType", event.eventType());
+                        scope.setExtra("eventVersion", Integer.toString(event.eventVersion()));
+                        scope.setExtra("topic", topic);
+                        scope.setExtra("partition", Integer.toString(partition));
+                        scope.setExtra("offset", Long.toString(offset));
+                    });
             String logMessage =
                     "event.inbox.unsupported: eventId={}, eventType={}, eventVersion={}, topic={}, partition={}, offset={}";
             log.warn(logMessage, event.eventId(), event.eventType(), event.eventVersion(), topic, partition, offset);

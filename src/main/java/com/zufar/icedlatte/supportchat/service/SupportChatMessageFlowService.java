@@ -14,6 +14,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.security.api.dto.CurrentUserSnapshot;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
 import com.zufar.icedlatte.supportchat.entity.SupportMessageDeliveryStatus;
@@ -40,6 +41,7 @@ class SupportChatMessageFlowService {
     private final OwnerMessageSender ownerMessageSender;
     private final SupportChatMessagePublisher messagePublisher;
     private final TransactionTemplate writeTransactionTemplate;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     SupportChatMessageFlowService(
             SupportChatAvailabilityService availabilityService,
@@ -49,7 +51,8 @@ class SupportChatMessageFlowService {
             SupportChatCustomerMessagePolicy customerMessagePolicy,
             OwnerMessageSender ownerMessageSender,
             SupportChatMessagePublisher messagePublisher,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager,
+            SentryHandledExceptionReporter sentryHandledExceptionReporter) {
         this.availabilityService = availabilityService;
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
@@ -58,6 +61,7 @@ class SupportChatMessageFlowService {
         this.ownerMessageSender = ownerMessageSender;
         this.messagePublisher = messagePublisher;
         this.writeTransactionTemplate = createTransactionTemplate(transactionManager);
+        this.sentryHandledExceptionReporter = sentryHandledExceptionReporter;
     }
 
     public SupportMessageEntity sendCustomerMessage(
@@ -172,6 +176,12 @@ class SupportChatMessageFlowService {
                     new OwnerMessage(id, messageId, user.displayName(), user.email(), saved.getBody());
             return ownerMessageSender.send(ownerMessage);
         } catch (RuntimeException ex) {
+            sentryHandledExceptionReporter.capture(ex, scope -> {
+                scope.setTag("component", "support-chat");
+                scope.setTag("operation", "owner-message-delivery");
+                scope.setExtra("conversationId", id.toString());
+                scope.setExtra("messageId", messageId.toString());
+            });
             log.warn(
                     "support_chat.owner_message.delivery_failed: conversationId={}, messageId={}, exceptionClass={}",
                     id,

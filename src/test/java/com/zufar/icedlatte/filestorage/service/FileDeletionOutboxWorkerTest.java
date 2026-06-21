@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.filestorage.config.FileDeletionOutboxProperties;
@@ -41,6 +42,9 @@ class FileDeletionOutboxWorkerTest {
 
     @Mock
     private SentryJobMonitor sentryJobMonitor;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -71,7 +75,13 @@ class FileDeletionOutboxWorkerTest {
         when(outboxRepository.claimDeleteObjectEvents(25, WORKER_ID)).thenReturn(List.of(row));
         when(outboxRepository.markDeleted(rowId, WORKER_ID)).thenReturn(true);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+        new FileDeletionOutboxWorker(
+                        outboxRepository,
+                        properties,
+                        objectMapper,
+                        objectStorage,
+                        sentryJobMonitor,
+                        sentryHandledExceptionReporter)
                 .deletePendingObjects();
 
         verify(outboxRepository).reclaimStaleLocks(org.mockito.ArgumentMatchers.any());
@@ -100,10 +110,17 @@ class FileDeletionOutboxWorkerTest {
                 .when(objectStorage)
                 .delete(new FileMetadataDto(relatedObjectId, "bucket", "key"));
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+        new FileDeletionOutboxWorker(
+                        outboxRepository,
+                        properties,
+                        objectMapper,
+                        objectStorage,
+                        sentryJobMonitor,
+                        sentryHandledExceptionReporter)
                 .deletePendingObjects();
 
         verify(outboxRepository).markFailed(rowId, WORKER_ID, 2, 10, failure);
+        verify(sentryHandledExceptionReporter).capture(eq(failure), any());
     }
 
     @Test
@@ -111,7 +128,13 @@ class FileDeletionOutboxWorkerTest {
     void doesNothingWhenWorkerIsDisabled() {
         FileDeletionOutboxProperties properties = properties(false);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+        new FileDeletionOutboxWorker(
+                        outboxRepository,
+                        properties,
+                        objectMapper,
+                        objectStorage,
+                        sentryJobMonitor,
+                        sentryHandledExceptionReporter)
                 .deletePendingObjects();
 
         verifyNoInteractions(outboxRepository, objectStorage);
@@ -123,7 +146,13 @@ class FileDeletionOutboxWorkerTest {
         FileDeletionOutboxProperties properties = properties(true);
         when(objectStorage.isConfigured()).thenReturn(false);
 
-        new FileDeletionOutboxWorker(outboxRepository, properties, objectMapper, objectStorage, sentryJobMonitor)
+        new FileDeletionOutboxWorker(
+                        outboxRepository,
+                        properties,
+                        objectMapper,
+                        objectStorage,
+                        sentryJobMonitor,
+                        sentryHandledExceptionReporter)
                 .deletePendingObjects();
 
         verifyNoInteractions(outboxRepository);

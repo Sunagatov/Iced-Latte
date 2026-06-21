@@ -28,6 +28,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.outbox.OutboxEventRepository;
@@ -45,6 +46,9 @@ class ReviewCreatedKafkaPublisherTest {
 
     @Mock
     private SentryJobMonitor sentryJobMonitor;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     private ReviewCreatedKafkaPublisher publisher;
 
@@ -71,7 +75,12 @@ class ReviewCreatedKafkaPublisherTest {
                         "test-outbox-worker"),
                 KafkaIntegrationProperties.Inbox.defaults());
         publisher = new ReviewCreatedKafkaPublisher(
-                kafkaTemplate, new ObjectMapper(), properties, outboxEventRepository, sentryJobMonitor);
+                kafkaTemplate,
+                new ObjectMapper(),
+                properties,
+                outboxEventRepository,
+                sentryJobMonitor,
+                sentryHandledExceptionReporter);
     }
 
     @Test
@@ -142,6 +151,7 @@ class ReviewCreatedKafkaPublisherTest {
 
         verify(outboxEventRepository)
                 .markFailed(eq(rowId), eq("test-outbox-worker"), eq(2), eq(10), isA(Exception.class));
+        verify(sentryHandledExceptionReporter).capture(isA(Exception.class), any());
     }
 
     @Test
@@ -162,7 +172,12 @@ class ReviewCreatedKafkaPublisherTest {
                         "test-outbox-worker"),
                 KafkaIntegrationProperties.Inbox.defaults());
         var disabledPublisher = new ReviewCreatedKafkaPublisher(
-                kafkaTemplate, new ObjectMapper(), properties, outboxEventRepository, sentryJobMonitor);
+                kafkaTemplate,
+                new ObjectMapper(),
+                properties,
+                outboxEventRepository,
+                sentryJobMonitor,
+                sentryHandledExceptionReporter);
 
         disabledPublisher.publishPendingOutboxEvents();
 

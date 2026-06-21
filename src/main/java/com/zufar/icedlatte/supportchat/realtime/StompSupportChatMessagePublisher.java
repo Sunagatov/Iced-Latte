@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.openapi.dto.SupportChatMessageDto;
 import com.zufar.icedlatte.supportchat.converter.SupportChatDtoConverter;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
@@ -22,6 +23,7 @@ public class StompSupportChatMessagePublisher implements SupportChatMessagePubli
 
     private final SimpMessagingTemplate messagingTemplate;
     private final SupportChatDtoConverter dtoConverter;
+    private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     @Override
     public void publishOwnerReply(SupportConversationEntity conversation, SupportMessageEntity message) {
@@ -49,6 +51,13 @@ public class StompSupportChatMessagePublisher implements SupportChatMessagePubli
         try {
             messagingTemplate.convertAndSend(destination, payload);
         } catch (RuntimeException ex) {
+            sentryHandledExceptionReporter.capture(ex, scope -> {
+                scope.setTag("component", "support-chat");
+                scope.setTag("operation", "websocket-owner-reply-publish");
+                scope.setExtra("conversationId", conversation.getId().toString());
+                scope.setExtra("messageId", message.getId().toString());
+                scope.setExtra("destination", destination);
+            });
             String logMessage =
                     "support_chat.websocket.owner_reply.publish_failed: conversationId={}, messageId={}, exceptionClass={}";
             log.warn(

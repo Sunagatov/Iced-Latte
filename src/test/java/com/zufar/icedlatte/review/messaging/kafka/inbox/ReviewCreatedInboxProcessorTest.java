@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.review.messaging.kafka.config.KafkaIntegrationProperties;
 import com.zufar.icedlatte.review.messaging.kafka.event.ReviewCreatedKafkaEvent;
@@ -36,6 +37,9 @@ class ReviewCreatedInboxProcessorTest {
 
     @Mock
     private SentryJobMonitor sentryJobMonitor;
+
+    @Mock
+    private SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
     private ObjectMapper objectMapper;
     private ReviewCreatedInboxProcessor processor;
@@ -57,7 +61,12 @@ class ReviewCreatedInboxProcessorTest {
                 new KafkaIntegrationProperties.Inbox(
                         true, true, 25, 10, Duration.ofSeconds(5), Duration.ofMinutes(5), "test-inbox-worker"));
         processor = new ReviewCreatedInboxProcessor(
-                objectMapper, properties, inboxEventRepository, processingService, sentryJobMonitor);
+                objectMapper,
+                properties,
+                inboxEventRepository,
+                processingService,
+                sentryJobMonitor,
+                sentryHandledExceptionReporter);
     }
 
     @Test
@@ -111,6 +120,7 @@ class ReviewCreatedInboxProcessorTest {
 
         verify(inboxEventRepository)
                 .markFailed(rowId, "test-inbox-worker", "iced-latte-review-ai", "review.created", 2, 10, failure);
+        verify(sentryHandledExceptionReporter).capture(eq(failure), any());
     }
 
     private ReviewCreatedKafkaEvent reviewCreatedEvent(UUID eventId, UUID reviewId) {
