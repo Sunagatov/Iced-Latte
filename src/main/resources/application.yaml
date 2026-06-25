@@ -206,6 +206,16 @@ spring:
       # Files smaller than this are kept in memory; larger ones are written to a temp file.
       file-size-threshold: 2KB
 
+avatar:
+  upload-mode: ${AVATAR_UPLOAD_MODE:backend}
+  presigned-url-ttl: ${AVATAR_UPLOAD_PRESIGNED_URL_TTL:5m}
+  max-bytes: ${AVATAR_UPLOAD_MAX_BYTES:5242880}
+  max-pixels: ${AVATAR_UPLOAD_MAX_PIXELS:12000000}
+  processing-timeout: ${AVATAR_UPLOAD_PROCESSING_TIMEOUT:10m}
+  incoming-bucket: ${AVATAR_UPLOAD_INCOMING_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
+  processed-bucket: ${AVATAR_UPLOAD_PROCESSED_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
+  completion-queue-url: ${AVATAR_UPLOAD_COMPLETION_QUEUE_URL:}
+
 # Email feature flag & verification settings (SMTP config is above under spring.mail).
 email:
   enabled: ${EMAIL_ENABLED:false}

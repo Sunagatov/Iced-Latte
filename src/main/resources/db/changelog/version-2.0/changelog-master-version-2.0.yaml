@@ -89,4 +89,7 @@ databaseChangeLog:
       errorIfMissing: true
   - include:
       file: db/changelog/version-2.0/09.06.2026.part1.add-support-chat-operator-inspection-marker.sql
+
+  - include:
+      file: db/changelog/version-2.0/26.06.2026.part1.create-user-avatar-upload-table.sql
       errorIfMissing: true

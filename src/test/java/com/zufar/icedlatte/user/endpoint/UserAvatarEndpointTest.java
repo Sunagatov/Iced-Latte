@@ -2,8 +2,10 @@ package com.zufar.icedlatte.user.endpoint;
 
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.audit.CurrentUserIdProvider;
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
+import com.zufar.icedlatte.openapi.dto.AvatarUploadIntentResponse;
+import com.zufar.icedlatte.openapi.dto.AvatarUploadStatus;
+import com.zufar.icedlatte.openapi.dto.CreateAvatarUploadRequest;
+import com.zufar.icedlatte.user.service.AvatarUploadIntentService;
 import com.zufar.icedlatte.user.service.UserAvatarUploader;
 import com.zufar.icedlatte.user.service.UserProfileService;
 
@@ -30,6 +36,9 @@ class UserAvatarEndpointTest {
     private UserAvatarUploader userAvatarUploader;
 
     @Mock
+    private AvatarUploadIntentService avatarUploadIntentService;
+
+    @Mock
     private CurrentUserIdProvider currentUserIdProvider;
 
     @Mock
@@ -42,7 +51,12 @@ class UserAvatarEndpointTest {
     void setUp() {
         httpServletRequest = new MockHttpServletRequest();
         endpoint = new UserAvatarEndpoint(
-                userProfileService, userAvatarUploader, currentUserIdProvider, httpServletRequest, clientIpExtractor);
+                userProfileService,
+                userAvatarUploader,
+                avatarUploadIntentService,
+                currentUserIdProvider,
+                httpServletRequest,
+                clientIpExtractor);
     }
 
     @Test
@@ -56,6 +70,27 @@ class UserAvatarEndpointTest {
         endpoint.uploadUserAvatar(file, "turnstile-token");
 
         verify(userAvatarUploader).uploadUserAvatar(userId, file, "turnstile-token", "203.0.113.10");
+    }
+
+    @Test
+    @DisplayName("Delegates avatar upload intent creation with current user and idempotency key")
+    void createAvatarUpload_delegatesWithCurrentUserAndIdempotencyKey() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        var request = new CreateAvatarUploadRequest(CreateAvatarUploadRequest.ContentTypeEnum.IMAGE_PNG, 1024L)
+                .turnstileToken("turnstile-token");
+        var response = new AvatarUploadIntentResponse(
+                uploadId, AvatarUploadStatus.PENDING_UPLOAD, Instant.now().atOffset(java.time.ZoneOffset.UTC));
+        when(currentUserIdProvider.getUserId()).thenReturn(userId);
+        when(clientIpExtractor.extract(httpServletRequest)).thenReturn("203.0.113.10");
+        when(avatarUploadIntentService.createUploadIntent(userId, request, "avatar-key-1", "203.0.113.10"))
+                .thenReturn(response);
+
+        var result = endpoint.createAvatarUpload("avatar-key-1", request);
+
+        Assertions.assertThat(result.getBody()).isSameAs(response);
+        verify(avatarUploadIntentService).createUploadIntent(userId, request, "avatar-key-1", "203.0.113.10");
+        verifyNoInteractions(userAvatarUploader);
     }
 
     private static MultipartFile avatarFile() {

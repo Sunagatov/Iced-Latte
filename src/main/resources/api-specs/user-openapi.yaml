@@ -410,6 +410,95 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/users/avatar/uploads:
+    post:
+      tags:
+        - "User Avatar"
+      summary: "Create avatar upload intent"
+      description: "Create a short-lived avatar upload intent for direct storage upload. Disabled unless presigned avatar upload mode is configured."
+      operationId: "createAvatarUpload"
+      parameters:
+        - name: "Idempotency-Key"
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAvatarUploadRequest"
+      responses:
+        "200":
+          description: "Avatar upload intent created."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvatarUploadIntentResponse"
+        "400":
+          description: "Invalid request or expired idempotency retry."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: "Presigned avatar upload is not configured."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/users/avatar/uploads/{uploadId}:
+    get:
+      tags:
+        - "User Avatar"
+      summary: "Get avatar upload status"
+      description: "Get the current status for an avatar upload owned by the authenticated user."
+      operationId: "getAvatarUpload"
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: "Avatar upload status."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvatarUploadStatusResponse"
+        "401":
+          description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Upload not found."
+        "500":
+          description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -433,6 +522,100 @@ components:
           type: "string"
           maxLength: 2048
           description: "Cloudflare Turnstile verification token. Required when avatar upload bot protection is enabled."
+
+    CreateAvatarUploadRequest:
+      title: CreateAvatarUploadRequest
+      type: object
+      required:
+        - contentType
+        - sizeBytes
+      properties:
+        contentType:
+          type: string
+          enum:
+            - image/jpeg
+            - image/png
+            - image/webp
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+        turnstileToken:
+          type: string
+          maxLength: 2048
+          description: "Cloudflare Turnstile verification token. Required when avatar upload bot protection is enabled."
+
+    AvatarUploadStatus:
+      type: string
+      enum:
+        - PENDING_UPLOAD
+        - UPLOADED
+        - PROCESSING
+        - READY
+        - FAILED
+        - EXPIRED
+        - SUPERSEDED
+
+    AvatarUploadTargetResponse:
+      type: object
+      nullable: true
+      properties:
+        method:
+          type: string
+          enum:
+            - POST
+            - PUT
+        url:
+          type: string
+          format: uri
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+
+    AvatarUploadIntentResponse:
+      type: object
+      required:
+        - uploadId
+        - status
+        - expiresAt
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/AvatarUploadStatus"
+        upload:
+          $ref: "#/components/schemas/AvatarUploadTargetResponse"
+        expiresAt:
+          type: string
+          format: date-time
+
+    AvatarUploadStatusResponse:
+      type: object
+      required:
+        - uploadId
+        - status
+        - expiresAt
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/AvatarUploadStatus"
+        avatarLink:
+          type: string
+          nullable: true
+        failureCode:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
 
     UpdateUserAccountRequest:
       type: "object"
