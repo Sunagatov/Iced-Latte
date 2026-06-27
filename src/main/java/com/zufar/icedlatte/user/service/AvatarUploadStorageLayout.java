@@ -21,10 +21,6 @@ public final class AvatarUploadStorageLayout {
         return "avatars/processed/%s/%s/".formatted(userId, uploadId);
     }
 
-    public static String processedObjectKey(UUID userId, UUID uploadId, String fileName) {
-        return processedPrefix(userId, uploadId) + fileName;
-    }
-
     public static Map<String, String> sourceMetadata(UUID userId, UUID uploadId, String requestedContentType) {
         return sourceMetadata(userId.toString(), uploadId.toString(), requestedContentType);
     }

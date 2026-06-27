@@ -1,12 +1,14 @@
 package com.zufar.icedlatte.user.service;
 
+import org.jspecify.annotations.Nullable;
+
 public record AvatarUploadCompletionCommand(
-        AvatarUploadSourceObject sourceObject,
-        String processedBucket,
-        String processedKey,
-        String contentType,
-        Integer width,
-        Integer height,
-        Long originalSizeBytes,
-        Long processedSizeBytes,
-        String sha256) {}
+        @Nullable AvatarUploadSourceObject sourceObject,
+        @Nullable String processedBucket,
+        @Nullable String processedKey,
+        @Nullable String contentType,
+        @Nullable Integer width,
+        @Nullable Integer height,
+        @Nullable Long originalSizeBytes,
+        @Nullable Long processedSizeBytes,
+        @Nullable String sha256) {}

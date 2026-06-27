@@ -7,7 +7,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 
 public record AvatarUploadCompletionPayload(
         String eventType,
-        Integer version,
+        @Nullable Integer version,
         String userId,
         String uploadId,
         String status,

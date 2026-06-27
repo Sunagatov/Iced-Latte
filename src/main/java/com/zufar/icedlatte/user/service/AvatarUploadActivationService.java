@@ -28,6 +28,7 @@ public class AvatarUploadActivationService {
     private final FileStorageWriterApi fileStorageWriterApi;
     private final Clock clock;
 
+    @SuppressWarnings("unused")
     public AvatarUploadActivationService(
             UserAvatarUploadRepository repository, FileStorageWriterApi fileStorageWriterApi) {
         this(repository, fileStorageWriterApi, Clock.systemUTC());

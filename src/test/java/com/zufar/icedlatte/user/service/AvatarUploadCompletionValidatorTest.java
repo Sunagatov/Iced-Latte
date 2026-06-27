@@ -45,7 +45,7 @@ class AvatarUploadCompletionValidatorTest {
     @Test
     @DisplayName("rejects completion without processed object bucket")
     void validateRejectsMissingProcessedBucket() {
-        assertThatThrownBy(() -> validator.validate(command("", processedKey(), "image/webp", 384, 384, 1024L, 512L)))
+        assertThatThrownBy(() -> validator.validate(command("", processedKey(), "image/webp", 384)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Avatar upload completion processedBucket is required.");
     }
@@ -53,8 +53,7 @@ class AvatarUploadCompletionValidatorTest {
     @Test
     @DisplayName("rejects completion with unexpected processed bucket")
     void validateRejectsUnexpectedProcessedBucket() {
-        assertThatThrownBy(() -> validator.validate(
-                        command("other-bucket", processedKey(), "image/webp", 384, 384, 1024L, 512L)))
+        assertThatThrownBy(() -> validator.validate(command("other-bucket", processedKey(), "image/webp", 384)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Avatar upload completion processedBucket is invalid.");
     }
@@ -66,10 +65,7 @@ class AvatarUploadCompletionValidatorTest {
                         "iced-latte-users",
                         "avatars/processed/%s/%s/avatar.webp".formatted(UUID.randomUUID(), UPLOAD_ID),
                         "image/webp",
-                        384,
-                        384,
-                        1024L,
-                        512L)))
+                        384)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Avatar upload completion processedKey does not match source metadata.");
     }
@@ -77,16 +73,14 @@ class AvatarUploadCompletionValidatorTest {
     @Test
     @DisplayName("rejects unsupported processed content type")
     void validateRejectsUnsupportedContentType() {
-        assertThatThrownBy(() -> validator.validate(
-                        command("iced-latte-users", processedKey(), "image/gif", 384, 384, 1024L, 512L)))
+        assertThatThrownBy(() -> validator.validate(command("iced-latte-users", processedKey(), "image/gif", 384)))
                 .isInstanceOf(InvalidAvatarFileTypeException.class);
     }
 
     @Test
     @DisplayName("rejects non-positive image dimensions")
     void validateRejectsNonPositiveDimensions() {
-        assertThatThrownBy(() -> validator.validate(
-                        command("iced-latte-users", processedKey(), "image/webp", 0, 384, 1024L, 512L)))
+        assertThatThrownBy(() -> validator.validate(command("iced-latte-users", processedKey(), "image/webp", 0)))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Avatar upload completion width must be positive.");
     }
@@ -111,27 +105,13 @@ class AvatarUploadCompletionValidatorTest {
     }
 
     private static AvatarUploadCompletionCommand command() {
-        return command("iced-latte-users", processedKey(), "image/webp", 384, 384, 1024L, 512L);
+        return command("iced-latte-users", processedKey(), "image/webp", 384);
     }
 
     private static AvatarUploadCompletionCommand command(
-            String processedBucket,
-            String processedKey,
-            String contentType,
-            Integer width,
-            Integer height,
-            Long originalSizeBytes,
-            Long processedSizeBytes) {
+            String processedBucket, String processedKey, String contentType, Integer width) {
         return new AvatarUploadCompletionCommand(
-                sourceObject(),
-                processedBucket,
-                processedKey,
-                contentType,
-                width,
-                height,
-                originalSizeBytes,
-                processedSizeBytes,
-                "A".repeat(64));
+                sourceObject(), processedBucket, processedKey, contentType, width, 384, 1024L, 512L, "A".repeat(64));
     }
 
     private static AvatarUploadSourceObject sourceObject() {

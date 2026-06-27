@@ -3,9 +3,10 @@ package com.zufar.icedlatte.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.URL;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -39,7 +40,8 @@ class AwsAvatarUploadPresignerTest {
         PresignedPutObjectRequest presignedRequest = mock(PresignedPutObjectRequest.class);
         when(s3Presigner.presignPutObject(org.mockito.ArgumentMatchers.any(PutObjectPresignRequest.class)))
                 .thenReturn(presignedRequest);
-        when(presignedRequest.url()).thenReturn(new URL("https://uploads.example.test/avatar"));
+        when(presignedRequest.url())
+                .thenReturn(URI.create("https://uploads.example.test/avatar").toURL());
         when(presignedRequest.signedHeaders())
                 .thenReturn(Map.of(
                         "content-type", List.of("image/png"),
@@ -66,7 +68,7 @@ class AwsAvatarUploadPresignerTest {
         assertThat(response.getFields()).isEmpty();
 
         ArgumentCaptor<PutObjectPresignRequest> captor = ArgumentCaptor.forClass(PutObjectPresignRequest.class);
-        org.mockito.Mockito.verify(s3Presigner).presignPutObject(captor.capture());
+        verify(s3Presigner).presignPutObject(captor.capture());
         PutObjectRequest putObjectRequest = captor.getValue().putObjectRequest();
         assertThat(captor.getValue().signatureDuration()).isEqualTo(Duration.ofMinutes(5));
         assertThat(putObjectRequest.bucket()).isEqualTo("iced-latte-users");

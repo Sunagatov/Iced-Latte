@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.service;
 
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -19,17 +20,17 @@ public class AvatarUploadCompletionValidator {
     private final AvatarUploadSourceObjectValidator sourceObjectValidator;
     private final AvatarUploadProperties properties;
 
-    public AvatarUploadCompletion validate(AvatarUploadCompletionCommand command) {
+    public AvatarUploadCompletion validate(@Nullable AvatarUploadCompletionCommand command) {
         if (command == null) {
             throw new BadRequestException("Avatar upload completion is required.");
         }
 
         ValidAvatarUploadSourceObject source = sourceObjectValidator.validate(command.sourceObject());
-        validateRequiredText(command.processedBucket(), "processedBucket");
-        validateProcessedBucket(command.processedBucket());
-        validateRequiredText(command.processedKey(), "processedKey");
-        validateContentType(command.contentType());
-        validateProcessedKey(source, command.processedKey());
+        String processedBucket = validateRequiredText(command.processedBucket(), "processedBucket");
+        validateProcessedBucket(processedBucket);
+        String processedKey = validateRequiredText(command.processedKey(), "processedKey");
+        String contentType = validateContentType(command.contentType());
+        validateProcessedKey(source, processedKey);
         int width = positiveInt(command.width(), "width");
         int height = positiveInt(command.height(), "height");
         long originalSizeBytes = positiveLong(command.originalSizeBytes(), "originalSizeBytes");
@@ -38,9 +39,9 @@ public class AvatarUploadCompletionValidator {
 
         return new AvatarUploadCompletion(
                 source,
-                command.processedBucket(),
-                command.processedKey(),
-                command.contentType(),
+                processedBucket,
+                processedKey,
+                contentType,
                 width,
                 height,
                 originalSizeBytes,
@@ -48,11 +49,12 @@ public class AvatarUploadCompletionValidator {
                 sha256);
     }
 
-    private void validateContentType(String contentType) {
-        validateRequiredText(contentType, "contentType");
-        if (!AvatarContentTypes.ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new InvalidAvatarFileTypeException(contentType, AvatarContentTypes.ALLOWED_CONTENT_TYPES);
+    private String validateContentType(@Nullable String contentType) {
+        String validatedContentType = validateRequiredText(contentType, "contentType");
+        if (!AvatarContentTypes.ALLOWED_CONTENT_TYPES.contains(validatedContentType)) {
+            throw new InvalidAvatarFileTypeException(validatedContentType, AvatarContentTypes.ALLOWED_CONTENT_TYPES);
         }
+        return validatedContentType;
     }
 
     private void validateProcessedKey(ValidAvatarUploadSourceObject source, String processedKey) {
@@ -68,35 +70,37 @@ public class AvatarUploadCompletionValidator {
         }
     }
 
-    private int positiveInt(Integer value, String fieldName) {
+    private int positiveInt(@Nullable Integer value, String fieldName) {
         if (value == null || value < 1) {
             throw new BadRequestException("Avatar upload completion " + fieldName + " must be positive.");
         }
         return value;
     }
 
-    private long positiveLong(Long value, String fieldName) {
+    private long positiveLong(@Nullable Long value, String fieldName) {
         if (value == null || value < 1) {
             throw new BadRequestException("Avatar upload completion " + fieldName + " must be positive.");
         }
         return value;
     }
 
-    private String validateSha256(String sha256) {
-        validateRequiredText(sha256, "sha256");
-        if (sha256.length() != SHA256_HEX_LENGTH || !sha256.chars().allMatch(this::isHexDigit)) {
+    private String validateSha256(@Nullable String sha256) {
+        String validatedSha256 = validateRequiredText(sha256, "sha256");
+        if (validatedSha256.length() != SHA256_HEX_LENGTH
+                || !validatedSha256.chars().allMatch(this::isHexDigit)) {
             throw new BadRequestException("Avatar upload completion sha256 is invalid.");
         }
-        return sha256.toLowerCase(Locale.ROOT);
+        return validatedSha256.toLowerCase(Locale.ROOT);
     }
 
     private boolean isHexDigit(int value) {
         return (value >= '0' && value <= '9') || (value >= 'a' && value <= 'f') || (value >= 'A' && value <= 'F');
     }
 
-    private void validateRequiredText(String value, String fieldName) {
+    private String validateRequiredText(@Nullable String value, String fieldName) {
         if (!StringUtils.hasText(value)) {
             throw new BadRequestException("Avatar upload completion " + fieldName + " is required.");
         }
+        return value;
     }
 }

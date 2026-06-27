@@ -2,4 +2,9 @@ package com.zufar.icedlatte.user.service;
 
 import java.util.Map;
 
-public record AvatarUploadSourceObject(String bucket, String key, Map<String, String> metadata) {}
+import org.jspecify.annotations.Nullable;
+
+public record AvatarUploadSourceObject(
+        @Nullable String bucket,
+        @Nullable String key,
+        @Nullable Map<String, String> metadata) {}

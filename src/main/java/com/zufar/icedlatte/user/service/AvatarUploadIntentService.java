@@ -1,5 +1,12 @@
 package com.zufar.icedlatte.user.service;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.stereotype.Service;
+
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
@@ -14,14 +21,9 @@ import com.zufar.icedlatte.user.entity.UserAvatarUpload;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 import com.zufar.icedlatte.user.exception.UserAvatarUploadException;
 import com.zufar.icedlatte.user.repository.UserAvatarUploadRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -38,7 +40,10 @@ public class AvatarUploadIntentService {
     private final TurnstileProperties turnstileProperties;
 
     public AvatarUploadIntentResponse createUploadIntent(
-            UUID userId, CreateAvatarUploadRequest request, String idempotencyKey, @Nullable String remoteIp) {
+            UUID userId,
+            @Nullable CreateAvatarUploadRequest request,
+            @Nullable String idempotencyKey,
+            @Nullable String remoteIp) {
         if (properties.uploadMode() != AvatarUploadMode.PRESIGNED) {
             log.info("avatar.upload_intent.rejected: reason=backend_mode, userId={}", userId);
             throw new UserAvatarUploadException(userId, "avatar-upload-intent");
@@ -48,12 +53,12 @@ public class AvatarUploadIntentService {
             log.info("avatar.upload_intent.rejected: reason=presigner_unavailable, userId={}", userId);
             throw new UserAvatarUploadException(userId, "avatar-upload-intent");
         }
-        validateIdempotencyKey(idempotencyKey);
-        validateRequest(userId, request);
-        verifyTurnstile(request.getTurnstileToken(), remoteIp);
+        String validatedIdempotencyKey = validateIdempotencyKey(idempotencyKey);
+        CreateAvatarUploadRequest validatedRequest = validateRequest(userId, request);
+        verifyTurnstile(validatedRequest.getTurnstileToken(), remoteIp);
 
         UserAvatarUpload upload = lifecycleService.createPendingUpload(
-                userId, contentType(request), request.getSizeBytes(), idempotencyKey);
+                userId, contentType(validatedRequest), validatedRequest.getSizeBytes(), validatedIdempotencyKey);
         return new AvatarUploadIntentResponse(
                         upload.getId(), status(upload), upload.getExpiresAt().atOffset(java.time.ZoneOffset.UTC))
                 .upload(presigner.presign(upload));
@@ -70,16 +75,17 @@ public class AvatarUploadIntentService {
                         .failureCode(upload.getFailureCode()));
     }
 
-    private void validateIdempotencyKey(String idempotencyKey) {
+    private String validateIdempotencyKey(@Nullable String idempotencyKey) {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new BadRequestException("Idempotency-Key header is required and must not be blank.");
         }
         if (idempotencyKey.length() > MAX_IDEMPOTENCY_KEY_LENGTH) {
             throw new BadRequestException("Idempotency-Key must be at most 100 characters.");
         }
+        return idempotencyKey;
     }
 
-    private void validateRequest(UUID userId, CreateAvatarUploadRequest request) {
+    private CreateAvatarUploadRequest validateRequest(UUID userId, @Nullable CreateAvatarUploadRequest request) {
         if (request == null || request.getContentType() == null || request.getSizeBytes() == null) {
             throw new BadRequestException("Avatar upload contentType and sizeBytes are required.");
         }
@@ -94,6 +100,7 @@ public class AvatarUploadIntentService {
             log.warn("avatar.upload_intent.rejected: reason=file_too_large, userId={}", userId);
             throw new BadRequestException("Avatar upload must be at most " + properties.maxBytes() + " bytes.");
         }
+        return request;
     }
 
     private void verifyTurnstile(@Nullable String turnstileToken, @Nullable String remoteIp) {

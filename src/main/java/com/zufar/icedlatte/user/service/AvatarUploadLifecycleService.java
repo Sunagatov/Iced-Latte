@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class AvatarUploadLifecycleService {
     private final Clock clock;
     private final Supplier<UUID> uploadIdSupplier;
 
+    @SuppressWarnings("unused")
     public AvatarUploadLifecycleService(UserAvatarUploadRepository repository, AvatarUploadProperties properties) {
         this(repository, properties, Clock.systemUTC(), UUID::randomUUID);
     }
@@ -88,7 +90,7 @@ public class AvatarUploadLifecycleService {
 
     private Optional<UserAvatarUpload> markProcessing(UserAvatarUpload upload, AvatarUploadProcessingResult result) {
         ValidAvatarUploadSourceObject source = result.source();
-        if (!matchesSource(upload, source)) {
+        if (sourceMismatch(upload, source)) {
             log.warn("avatar.upload_processing.ignored: reason=source_mismatch, uploadId={}", source.uploadId());
             return Optional.empty();
         }
@@ -142,7 +144,7 @@ public class AvatarUploadLifecycleService {
 
     private Optional<UserAvatarUpload> markReady(UserAvatarUpload upload, AvatarUploadCompletion completion) {
         ValidAvatarUploadSourceObject source = completion.source();
-        if (!matchesSource(upload, source)) {
+        if (sourceMismatch(upload, source)) {
             log.warn("avatar.upload_ready.ignored: reason=source_mismatch, uploadId={}", source.uploadId());
             return Optional.empty();
         }
@@ -171,13 +173,13 @@ public class AvatarUploadLifecycleService {
         return Optional.of(repository.save(upload));
     }
 
-    private boolean matchesSource(UserAvatarUpload upload, ValidAvatarUploadSourceObject source) {
-        return upload.getUserId().equals(source.userId())
-                && upload.getOriginalBucket().equals(source.bucket())
-                && upload.getOriginalKey().equals(source.key());
+    private boolean sourceMismatch(UserAvatarUpload upload, ValidAvatarUploadSourceObject source) {
+        return !upload.getUserId().equals(source.userId())
+                || !upload.getOriginalBucket().equals(source.bucket())
+                || !upload.getOriginalKey().equals(source.key());
     }
 
-    private String truncate(String value, int maxLength) {
+    private String truncate(@Nullable String value, int maxLength) {
         if (value == null) {
             return "";
         }

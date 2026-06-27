@@ -19,7 +19,7 @@ final class AvatarImageInspectorTestFixtures {
         return bytes;
     }
 
-    static byte[] jpeg(int width, int height) {
+    static byte[] jpeg384x192() {
         byte[] bytes = new byte[21];
         bytes[0] = (byte) 0xFF;
         bytes[1] = (byte) 0xD8;
@@ -28,14 +28,14 @@ final class AvatarImageInspectorTestFixtures {
         bytes[4] = 0;
         bytes[5] = 17;
         bytes[6] = 8;
-        bytes[7] = (byte) (height >>> 8);
-        bytes[8] = (byte) height;
-        bytes[9] = (byte) (width >>> 8);
-        bytes[10] = (byte) width;
+        bytes[7] = 0;
+        bytes[8] = (byte) 192;
+        bytes[9] = 0x01;
+        bytes[10] = (byte) 128;
         return bytes;
     }
 
-    static byte[] webpVp8x(int width, int height) {
+    static byte[] webpVp8x128x96() {
         byte[] bytes = new byte[30];
         bytes[0] = 0x52;
         bytes[1] = 0x49;
@@ -50,8 +50,8 @@ final class AvatarImageInspectorTestFixtures {
         bytes[14] = 0x38;
         bytes[15] = 0x58;
         bytes[16] = 10;
-        putLittleEndian24(bytes, 24, width - 1);
-        putLittleEndian24(bytes, 27, height - 1);
+        putLittleEndian24(bytes, 24, 127);
+        putLittleEndian24(bytes, 27, 95);
         return bytes;
     }
 

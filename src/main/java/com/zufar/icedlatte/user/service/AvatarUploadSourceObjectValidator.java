@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.service;
 import java.util.Map;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -18,7 +19,7 @@ public class AvatarUploadSourceObjectValidator {
 
     private final AvatarUploadProperties properties;
 
-    public ValidAvatarUploadSourceObject validate(AvatarUploadSourceObject object) {
+    public ValidAvatarUploadSourceObject validate(@Nullable AvatarUploadSourceObject object) {
         if (object == null || !StringUtils.hasText(object.bucket()) || !StringUtils.hasText(object.key())) {
             throw new BadRequestException("Avatar upload source object bucket and key are required.");
         }

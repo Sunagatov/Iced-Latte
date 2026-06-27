@@ -30,7 +30,7 @@ class AvatarImageInspectorTest {
     @DisplayName("inspects JPEG avatar bytes")
     void inspectJpegAvatarBytes() {
         AvatarImageInspection result = inspector.inspect(
-                AvatarImageInspectorTestFixtures.jpeg(384, 192), "image/jpeg", 5_242_880L, 12_000_000L);
+                AvatarImageInspectorTestFixtures.jpeg384x192(), "image/jpeg", 5_242_880L, 12_000_000L);
 
         assertThat(result.contentType()).isEqualTo("image/jpeg");
         assertThat(result.width()).isEqualTo(384);
@@ -41,7 +41,7 @@ class AvatarImageInspectorTest {
     @DisplayName("inspects WebP avatar bytes")
     void inspectWebpAvatarBytes() {
         AvatarImageInspection result = inspector.inspect(
-                AvatarImageInspectorTestFixtures.webpVp8x(128, 96), "image/webp", 5_242_880L, 12_000_000L);
+                AvatarImageInspectorTestFixtures.webpVp8x128x96(), "image/webp", 5_242_880L, 12_000_000L);
 
         assertThat(result.contentType()).isEqualTo("image/webp");
         assertThat(result.width()).isEqualTo(128);

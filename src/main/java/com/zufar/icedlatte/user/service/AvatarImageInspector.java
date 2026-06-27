@@ -2,6 +2,7 @@ package com.zufar.icedlatte.user.service;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
@@ -10,7 +11,8 @@ import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
 @Component
 public class AvatarImageInspector {
 
-    public AvatarImageInspection inspect(byte[] bytes, String requestedContentType, long maxBytes, long maxPixels) {
+    public AvatarImageInspection inspect(
+            byte @Nullable [] bytes, String requestedContentType, long maxBytes, long maxPixels) {
         if (bytes == null || bytes.length == 0) {
             throw new BadRequestException("Avatar upload image bytes are invalid.");
         }
@@ -87,7 +89,7 @@ public class AvatarImageInspector {
         if (bytes.length < 30) {
             return Optional.empty();
         }
-        String chunkType = ascii(bytes, 12, 4);
+        String chunkType = webpChunkType(bytes);
         return switch (chunkType) {
             case "VP8X" -> dimensions(littleEndian24(bytes, 24) + 1, littleEndian24(bytes, 27) + 1);
             case "VP8L" -> webpLosslessDimensions(bytes);
@@ -164,9 +166,9 @@ public class AvatarImageInspector {
         return u8(bytes, offset) | (u8(bytes, offset + 1) << 8) | (u8(bytes, offset + 2) << 16);
     }
 
-    private String ascii(byte[] bytes, int offset, int length) {
-        StringBuilder value = new StringBuilder(length);
-        for (int index = offset; index < offset + length; index++) {
+    private String webpChunkType(byte[] bytes) {
+        StringBuilder value = new StringBuilder(4);
+        for (int index = 12; index < 16; index++) {
             value.append((char) u8(bytes, index));
         }
         return value.toString();

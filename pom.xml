@@ -151,6 +151,9 @@
         <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>
         <opentelemetry-semconv.version>1.41.1</opentelemetry-semconv.version>
         <sentry.version>8.37.1</sentry.version>
+        <sentry.org/>
+        <sentry.project/>
+        <sentry.base-url/>
 
         <!-- ========== ARCHITECTURE TESTING VERSIONS ========== -->
         <spring-modulith.version>2.0.6</spring-modulith.version>
@@ -973,10 +976,10 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <org>${env.SENTRY_ORG}</org>
-                            <project>${env.SENTRY_PROJECT}</project>
+                            <org>${sentry.org}</org>
+                            <project>${sentry.project}</project>
                             <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
-                            <url>${env.SENTRY_BASE_URL}</url>
+                            <url>${sentry.base-url}</url>
                             <ignoreSourceBundleUploadFailure>false</ignoreSourceBundleUploadFailure>
                         </configuration>
                     </plugin>
