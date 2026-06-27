@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
@@ -51,6 +52,9 @@ class UserProfileServiceTest {
 
     @Mock
     private FileStorageWriterApi fileStorageWriterApi;
+
+    @Mock
+    private AvatarUploadLifecycleService avatarUploadLifecycleService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -206,7 +210,18 @@ class UserProfileServiceTest {
 
         userProfileService.deleteAvatar(userId);
 
+        verify(avatarUploadLifecycleService).invalidateUserUploadsAfterAvatarDelete(userId);
         verify(fileStorageWriterApi).deleteFile(userId);
+    }
+
+    @Test
+    @DisplayName("deleteAvatar is transactional to keep invalidation and deletion consistent")
+    void deleteAvatarIsTransactional() throws NoSuchMethodException {
+        Transactional transactional = UserProfileService.class
+                .getDeclaredMethod("deleteAvatar", UUID.class)
+                .getAnnotation(Transactional.class);
+
+        assertThat(transactional).isNotNull();
     }
 
     @Nested

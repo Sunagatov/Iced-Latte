@@ -58,6 +58,16 @@ public class FileStorageService implements FileStorageApi {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void recordExisting(FileMetadataDto fileMetadataDto) {
+        requireStorageEnabledForUpload(fileMetadataDto.fileName());
+        List<FileMetadataDto> existingMetadata = findAllMetadata(fileMetadataDto.relatedObjectId());
+        fileMetadataRepository.deleteByRelatedObjectId(fileMetadataDto.relatedObjectId());
+        fileMetadataRepository.save(fileMetadataDtoConverter.toEntity(fileMetadataDto));
+        enqueueReplacedObjects(existingMetadata, fileMetadataDto);
+    }
+
+    @Override
     public void storeDirectory(String bucketName, String directoryPath) throws IOException {
         requireStorageEnabledForUpload(directoryPath);
         objectStorage.uploadDirectory(bucketName, directoryPath);

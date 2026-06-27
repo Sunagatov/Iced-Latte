@@ -256,6 +256,16 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>cloudfront</artifactId>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
         <!-- ========== DATABASE ========== -->
         <dependency>

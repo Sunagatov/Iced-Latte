@@ -36,20 +36,23 @@ class AvatarContentTypes {
 
     static Optional<String> detect(MultipartFile file) {
         try (InputStream in = file.getInputStream()) {
-            byte[] header = in.readNBytes(12);
-            if (isJpeg(header)) {
-                return Optional.of("image/jpeg");
-            }
-            if (isPng(header)) {
-                return Optional.of("image/png");
-            }
-            if (isWebp(header)) {
-                return Optional.of("image/webp");
-            }
-            return Optional.empty();
+            return detect(in.readNBytes(12));
         } catch (IOException ex) {
             return Optional.empty();
         }
+    }
+
+    static Optional<String> detect(byte[] bytes) {
+        if (isJpeg(bytes)) {
+            return Optional.of("image/jpeg");
+        }
+        if (isPng(bytes)) {
+            return Optional.of("image/png");
+        }
+        if (isWebp(bytes)) {
+            return Optional.of("image/webp");
+        }
+        return Optional.empty();
     }
 
     private static boolean isJpeg(byte[] header) {

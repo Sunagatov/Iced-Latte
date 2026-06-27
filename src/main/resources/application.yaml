@@ -215,6 +215,12 @@ avatar:
   incoming-bucket: ${AVATAR_UPLOAD_INCOMING_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
   processed-bucket: ${AVATAR_UPLOAD_PROCESSED_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
   completion-queue-url: ${AVATAR_UPLOAD_COMPLETION_QUEUE_URL:}
+  completion-queue:
+    enabled: ${AVATAR_UPLOAD_COMPLETION_QUEUE_ENABLED:false}
+    poll-interval: ${AVATAR_UPLOAD_COMPLETION_QUEUE_POLL_INTERVAL:PT5S}
+    max-messages: ${AVATAR_UPLOAD_COMPLETION_QUEUE_MAX_MESSAGES:5}
+    visibility-timeout: ${AVATAR_UPLOAD_COMPLETION_QUEUE_VISIBILITY_TIMEOUT:PT30S}
+    wait-time: ${AVATAR_UPLOAD_COMPLETION_QUEUE_WAIT_TIME:PT1S}
 
 # Email feature flag & verification settings (SMTP config is above under spring.mail).
 email:

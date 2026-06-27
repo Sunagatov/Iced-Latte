@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -14,11 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadStatus;
+import com.zufar.icedlatte.openapi.dto.AvatarUploadTargetResponse;
 import com.zufar.icedlatte.openapi.dto.CreateAvatarUploadRequest;
 import com.zufar.icedlatte.user.config.AvatarUploadMode;
 import com.zufar.icedlatte.user.config.AvatarUploadProperties;
@@ -40,6 +43,12 @@ class AvatarUploadIntentServiceTest {
     @Mock
     private TurnstileVerifier turnstileVerifier;
 
+    @Mock
+    private ObjectProvider<AvatarUploadPresigner> presignerProvider;
+
+    @Mock
+    private AvatarUploadPresigner presigner;
+
     @Test
     @DisplayName("fails closed in backend mode without creating lifecycle row")
     void createUploadIntentFailsClosedInBackendMode() {
@@ -49,17 +58,20 @@ class AvatarUploadIntentServiceTest {
         assertThatThrownBy(() -> service.createUploadIntent(
                         userId,
                         new CreateAvatarUploadRequest(CreateAvatarUploadRequest.ContentTypeEnum.IMAGE_PNG, 1024L),
-                        "avatar-key-1",
+                        "",
                         null))
                 .isInstanceOf(UserAvatarUploadException.class);
 
+        verifyNoInteractions(presignerProvider);
         verifyNoInteractions(lifecycleService);
+        verifyNoInteractions(turnstileVerifier);
     }
 
     @Test
     @DisplayName("rejects blank idempotency key before lifecycle creation")
     void createUploadIntentRejectsBlankIdempotencyKey() {
         AvatarUploadIntentService service = service(AvatarUploadMode.PRESIGNED);
+        when(presignerProvider.getIfAvailable()).thenReturn(presigner);
 
         assertThatThrownBy(() -> service.createUploadIntent(
                         UUID.randomUUID(),
@@ -68,6 +80,37 @@ class AvatarUploadIntentServiceTest {
                         null))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Idempotency-Key header is required and must not be blank.");
+
+        verifyNoInteractions(lifecycleService);
+    }
+
+    @Test
+    @DisplayName("rejects incomplete upload request before lifecycle creation")
+    void createUploadIntentRejectsIncompleteRequest() {
+        AvatarUploadIntentService service = service(AvatarUploadMode.PRESIGNED);
+        when(presignerProvider.getIfAvailable()).thenReturn(presigner);
+
+        assertThatThrownBy(() -> service.createUploadIntent(
+                        UUID.randomUUID(), new CreateAvatarUploadRequest(), "avatar-key-1", null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload contentType and sizeBytes are required.");
+
+        verifyNoInteractions(lifecycleService);
+    }
+
+    @Test
+    @DisplayName("rejects non-positive upload size before lifecycle creation")
+    void createUploadIntentRejectsNonPositiveSize() {
+        AvatarUploadIntentService service = service(AvatarUploadMode.PRESIGNED);
+        when(presignerProvider.getIfAvailable()).thenReturn(presigner);
+
+        assertThatThrownBy(() -> service.createUploadIntent(
+                        UUID.randomUUID(),
+                        new CreateAvatarUploadRequest(CreateAvatarUploadRequest.ContentTypeEnum.IMAGE_PNG, 0L),
+                        "avatar-key-1",
+                        null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload sizeBytes must be positive.");
 
         verifyNoInteractions(lifecycleService);
     }
@@ -92,15 +135,38 @@ class AvatarUploadIntentServiceTest {
                 .active(false)
                 .build();
         AvatarUploadIntentService service = service(AvatarUploadMode.PRESIGNED);
+        var target = new AvatarUploadTargetResponse()
+                .method(AvatarUploadTargetResponse.MethodEnum.PUT)
+                .url(URI.create("https://uploads.example.test/avatar"));
+        when(presignerProvider.getIfAvailable()).thenReturn(presigner);
         when(lifecycleService.createPendingUpload(userId, "image/png", 1024L, "avatar-key-1"))
                 .thenReturn(upload);
+        when(presigner.presign(upload)).thenReturn(target);
 
         var response = service.createUploadIntent(userId, request, "avatar-key-1", null);
 
         assertThat(response.getUploadId()).isEqualTo(uploadId);
         assertThat(response.getStatus()).isEqualTo(AvatarUploadStatus.PENDING_UPLOAD);
-        assertThat(response.getUpload().isPresent()).isFalse();
+        assertThat(response.getUpload().isPresent()).isTrue();
+        assertThat(response.getUpload().get()).isEqualTo(target);
         assertThat(response.getExpiresAt()).isEqualTo(upload.getExpiresAt().atOffset(java.time.ZoneOffset.UTC));
+    }
+
+    @Test
+    @DisplayName("fails closed in presigned mode when upload presigner is unavailable")
+    void createUploadIntentFailsClosedWhenPresignerUnavailable() {
+        AvatarUploadIntentService service = service(AvatarUploadMode.PRESIGNED);
+        when(presignerProvider.getIfAvailable()).thenReturn(null);
+
+        assertThatThrownBy(() -> service.createUploadIntent(
+                        UUID.randomUUID(),
+                        new CreateAvatarUploadRequest(CreateAvatarUploadRequest.ContentTypeEnum.IMAGE_PNG, 1024L),
+                        "",
+                        null))
+                .isInstanceOf(UserAvatarUploadException.class);
+
+        verifyNoInteractions(lifecycleService);
+        verifyNoInteractions(turnstileVerifier);
     }
 
     @Test
@@ -131,6 +197,7 @@ class AvatarUploadIntentServiceTest {
                 properties(mode),
                 lifecycleService,
                 repository,
+                presignerProvider,
                 turnstileVerifier,
                 new TurnstileProperties(
                         false,

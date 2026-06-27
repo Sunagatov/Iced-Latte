@@ -116,8 +116,278 @@ class AvatarUploadLifecycleServiceTest {
         verify(repository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("marks pending upload as processing after source object and image validation")
+    void markProcessingRecordsValidatedSourceObjectAndImage() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload pending = upload(userId, uploadId, UserAvatarUploadStatus.PENDING_UPLOAD);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(pending));
+        when(repository.save(pending)).thenReturn(pending);
+
+        Optional<UserAvatarUpload> result = service.markProcessing(processingResult(userId, uploadId));
+
+        assertThat(result).containsSame(pending);
+        assertThat(pending.getStatus()).isEqualTo(UserAvatarUploadStatus.PROCESSING);
+        assertThat(pending.getUploadedAt()).isEqualTo(NOW);
+        assertThat(pending.getImageWidth()).isEqualTo(96);
+        assertThat(pending.getImageHeight()).isEqualTo(64);
+        assertThat(pending.getOriginalSizeBytes()).isEqualTo(24L);
+        verify(repository).save(pending);
+    }
+
+    @Test
+    @DisplayName("does not rewrite duplicate processing event")
+    void markProcessingIgnoresDuplicateProcessingEvent() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload processing = upload(userId, uploadId, UserAvatarUploadStatus.PROCESSING);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(processing));
+
+        Optional<UserAvatarUpload> result = service.markProcessing(processingResult(userId, uploadId));
+
+        assertThat(result).containsSame(processing);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ignores processing event when source object does not match upload row")
+    void markProcessingIgnoresMismatchedSourceObject() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload pending = upload(userId, uploadId, UserAvatarUploadStatus.PENDING_UPLOAD);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(pending));
+
+        Optional<UserAvatarUpload> result = service.markProcessing(processingResult(UUID.randomUUID(), uploadId));
+
+        assertThat(result).isEmpty();
+        assertThat(pending.getStatus()).isEqualTo(UserAvatarUploadStatus.PENDING_UPLOAD);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("expires upload when processing event arrives after upload expiry")
+    void markProcessingExpiresExpiredUpload() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload pending = upload(userId, uploadId, UserAvatarUploadStatus.PENDING_UPLOAD);
+        pending.setExpiresAt(NOW.minusSeconds(1));
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(pending));
+        when(repository.save(pending)).thenReturn(pending);
+
+        Optional<UserAvatarUpload> result = service.markProcessing(processingResult(userId, uploadId));
+
+        assertThat(result).isEmpty();
+        assertThat(pending.getStatus()).isEqualTo(UserAvatarUploadStatus.EXPIRED);
+        verify(repository).save(pending);
+    }
+
+    @Test
+    @DisplayName("marks upload as failed with bounded failure details")
+    void markFailedRecordsFailureDetails() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload processing = upload(userId, uploadId, UserAvatarUploadStatus.PROCESSING);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(processing));
+        when(repository.save(processing)).thenReturn(processing);
+
+        Optional<UserAvatarUpload> result = service.markFailed(
+                uploadId, "INVALID_IMAGE_TOO_LONG_FOR_COLUMN_AND_SHOULD_BE_TRUNCATED_EXTRA_LONG", "x".repeat(600));
+
+        assertThat(result).containsSame(processing);
+        assertThat(processing.getStatus()).isEqualTo(UserAvatarUploadStatus.FAILED);
+        assertThat(processing.getProcessedAt()).isEqualTo(NOW);
+        assertThat(processing.getFailureCode()).hasSize(64).startsWith("INVALID_IMAGE");
+        assertThat(processing.getFailureMessage()).hasSize(512);
+        verify(repository).save(processing);
+    }
+
+    @Test
+    @DisplayName("does not rewrite terminal failed upload")
+    void markFailedIgnoresTerminalUpload() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload failed = upload(userId, uploadId, UserAvatarUploadStatus.FAILED);
+        failed.setFailureCode("INVALID_IMAGE");
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(failed));
+
+        Optional<UserAvatarUpload> result = service.markFailed(uploadId, "DECODE_FAILED", "decode failed");
+
+        assertThat(result).containsSame(failed);
+        assertThat(failed.getFailureCode()).isEqualTo("INVALID_IMAGE");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("marks processing upload as ready with processed object metadata")
+    void markReadyRecordsProcessedObjectMetadata() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload processing = upload(userId, uploadId, UserAvatarUploadStatus.PROCESSING);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(processing));
+        when(repository.save(processing)).thenReturn(processing);
+
+        Optional<UserAvatarUpload> result = service.markReady(completion(userId, uploadId));
+
+        assertThat(result).containsSame(processing);
+        assertThat(processing.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
+        assertThat(processing.getProcessedBucket()).isEqualTo("iced-latte-users");
+        assertThat(processing.getProcessedKey())
+                .isEqualTo("avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId));
+        assertThat(processing.getContentType()).isEqualTo("image/webp");
+        assertThat(processing.getOriginalSizeBytes()).isEqualTo(1024L);
+        assertThat(processing.getProcessedSizeBytes()).isEqualTo(512L);
+        assertThat(processing.getImageWidth()).isEqualTo(384);
+        assertThat(processing.getImageHeight()).isEqualTo(384);
+        assertThat(processing.getSha256()).isEqualTo("0".repeat(64));
+        assertThat(processing.getProcessedAt()).isEqualTo(NOW);
+        assertThat(processing.isActive()).isFalse();
+        verify(repository).save(processing);
+    }
+
+    @Test
+    @DisplayName("does not rewrite duplicate ready event")
+    void markReadyIgnoresDuplicateReadyEvent() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload ready = upload(userId, uploadId, UserAvatarUploadStatus.READY);
+        ready.setProcessedKey("avatars/processed/existing/avatar.webp");
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(ready));
+
+        Optional<UserAvatarUpload> result = service.markReady(completion(userId, uploadId));
+
+        assertThat(result).containsSame(ready);
+        assertThat(ready.getProcessedKey()).isEqualTo("avatars/processed/existing/avatar.webp");
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ignores ready event when source object does not match upload row")
+    void markReadyIgnoresMismatchedSourceObject() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload processing = upload(userId, uploadId, UserAvatarUploadStatus.PROCESSING);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(processing));
+
+        Optional<UserAvatarUpload> result = service.markReady(completion(UUID.randomUUID(), uploadId));
+
+        assertThat(result).isEmpty();
+        assertThat(processing.getStatus()).isEqualTo(UserAvatarUploadStatus.PROCESSING);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("marks pending upload as ready when completion is the first backend-visible event")
+    void markReadyRecordsPendingUploadCompletion() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload pending = upload(userId, uploadId, UserAvatarUploadStatus.PENDING_UPLOAD);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(pending));
+        when(repository.save(pending)).thenReturn(pending);
+
+        Optional<UserAvatarUpload> result = service.markReady(completion(userId, uploadId));
+
+        assertThat(result).containsSame(pending);
+        assertThat(pending.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
+        assertThat(pending.getProcessedKey())
+                .isEqualTo("avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId));
+        verify(repository).save(pending);
+    }
+
+    @Test
+    @DisplayName("ignores ready event for terminal upload")
+    void markReadyIgnoresTerminalUpload() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        UserAvatarUpload failed = upload(userId, uploadId, UserAvatarUploadStatus.FAILED);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findById(uploadId)).thenReturn(Optional.of(failed));
+
+        Optional<UserAvatarUpload> result = service.markReady(completion(userId, uploadId));
+
+        assertThat(result).isEmpty();
+        assertThat(failed.getStatus()).isEqualTo(UserAvatarUploadStatus.FAILED);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("invalidates unfinished and ready uploads after avatar delete")
+    void invalidateUserUploadsAfterAvatarDeleteSupersedesNonTerminalUploads() {
+        UUID userId = UUID.randomUUID();
+        UserAvatarUpload pending = upload(userId, UUID.randomUUID(), UserAvatarUploadStatus.PENDING_UPLOAD);
+        UserAvatarUpload processing = upload(userId, UUID.randomUUID(), UserAvatarUploadStatus.PROCESSING);
+        UserAvatarUpload ready = upload(userId, UUID.randomUUID(), UserAvatarUploadStatus.READY);
+        ready.setActive(true);
+        AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
+        when(repository.findByUserIdAndStatusIn(eq(userId), any()))
+                .thenReturn(java.util.List.of(pending, processing, ready));
+
+        service.invalidateUserUploadsAfterAvatarDelete(userId);
+
+        assertThat(java.util.List.of(pending, processing, ready)).allSatisfy(upload -> {
+            assertThat(upload.getStatus()).isEqualTo(UserAvatarUploadStatus.SUPERSEDED);
+            assertThat(upload.isActive()).isFalse();
+            assertThat(upload.getSupersededAt()).isEqualTo(NOW);
+        });
+        verify(repository).saveAll(java.util.List.of(pending, processing, ready));
+    }
+
     private static AvatarUploadLifecycleService service(UserAvatarUploadRepository repository, UUID uploadId) {
         return new AvatarUploadLifecycleService(repository, properties(), CLOCK, () -> uploadId);
+    }
+
+    private static UserAvatarUpload upload(UUID userId, UUID uploadId, UserAvatarUploadStatus status) {
+        return UserAvatarUpload.builder()
+                .id(uploadId)
+                .userId(userId)
+                .status(status)
+                .originalBucket("iced-latte-users")
+                .originalKey("avatars/incoming/%s/%s/source".formatted(userId, uploadId))
+                .contentType("image/png")
+                .originalSizeBytes(1024L)
+                .createdAt(NOW.minusSeconds(30))
+                .expiresAt(NOW.plusSeconds(30))
+                .active(false)
+                .build();
+    }
+
+    private static AvatarUploadProcessingResult processingResult(UUID userId, UUID uploadId) {
+        return new AvatarUploadProcessingResult(
+                new ValidAvatarUploadSourceObject(
+                        "iced-latte-users",
+                        "avatars/incoming/%s/%s/source".formatted(userId, uploadId),
+                        userId,
+                        uploadId,
+                        "image/png"),
+                new AvatarImageInspection("image/png", 96, 64, 24L));
+    }
+
+    private static AvatarUploadCompletion completion(UUID userId, UUID uploadId) {
+        return new AvatarUploadCompletion(
+                new ValidAvatarUploadSourceObject(
+                        "iced-latte-users",
+                        "avatars/incoming/%s/%s/source".formatted(userId, uploadId),
+                        userId,
+                        uploadId,
+                        "image/png"),
+                "iced-latte-users",
+                "avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId),
+                "image/webp",
+                384,
+                384,
+                1024L,
+                512L,
+                "0".repeat(64));
     }
 
     private static AvatarUploadProperties properties() {

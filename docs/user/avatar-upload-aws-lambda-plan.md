@@ -122,6 +122,11 @@ AVATAR_UPLOAD_PROCESSING_TIMEOUT=PT10M
 AVATAR_UPLOAD_INCOMING_BUCKET=iced-latte-users
 AVATAR_UPLOAD_PROCESSED_BUCKET=iced-latte-users
 AVATAR_UPLOAD_COMPLETION_QUEUE_URL=https://sqs...
+AVATAR_UPLOAD_COMPLETION_QUEUE_ENABLED=false
+AVATAR_UPLOAD_COMPLETION_QUEUE_POLL_INTERVAL=PT5S
+AVATAR_UPLOAD_COMPLETION_QUEUE_MAX_MESSAGES=5
+AVATAR_UPLOAD_COMPLETION_QUEUE_VISIBILITY_TIMEOUT=PT30S
+AVATAR_UPLOAD_COMPLETION_QUEUE_WAIT_TIME=PT1S
 ```
 
 Keep these as avatar-owned properties instead of reusing generic file-storage
@@ -463,11 +468,16 @@ Example completion message:
   "userId": "3e5934d2-6e97-4e42-9a75-fc2adcc53f3a",
   "uploadId": "8c85a55b-5f8e-40ec-b66e-6e941d0d7d59",
   "status": "READY",
+  "sourceBucket": "iced-latte-users",
+  "sourceKey": "avatars/incoming/3e5934d2-6e97-4e42-9a75-fc2adcc53f3a/8c85a55b-5f8e-40ec-b66e-6e941d0d7d59/source",
+  "requestedContentType": "image/png",
   "processedBucket": "iced-latte-users",
   "processedKey": "avatars/processed/3e5934d2-6e97-4e42-9a75-fc2adcc53f3a/8c85a55b-5f8e-40ec-b66e-6e941d0d7d59/avatar-384.webp",
   "contentType": "image/webp",
   "width": 384,
   "height": 384,
+  "originalSizeBytes": 2048,
+  "processedSizeBytes": 512,
   "sha256": "..."
 }
 ```
@@ -597,6 +607,8 @@ Backend source should own:
 - upload mode config shape
 - upload intent API and OpenAPI contract
 - user-owned avatar lifecycle model
+- shared avatar storage-key and completion-payload contract used by the backend
+  consumer and future worker implementation
 - SQS completion consumer
 - local/backend upload strategy
 - local fake/stub implementation for presigned mode tests when useful
@@ -742,6 +754,8 @@ Recommended defaults before coding:
 
 - Add Vault-owned AWS IaC.
 - Add private S3 bucket/prefixes and narrow CORS.
+- Reuse the source-owned avatar storage layout and completion payload contract
+  so backend and worker emit/consume the same message shape.
 - Implement Lambda image processor.
 - Add SQS completion queue and DLQ.
 - Add backend SQS dependency/config only if using direct backend consumption.

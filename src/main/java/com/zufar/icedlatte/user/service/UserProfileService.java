@@ -42,6 +42,7 @@ public class UserProfileService implements UserAccessControlApi {
     private final UserDtoConverter userDtoConverter;
     private final FileUrlResolverApi fileUrlResolverApi;
     private final FileStorageWriterApi fileStorageWriterApi;
+    private final AvatarUploadLifecycleService avatarUploadLifecycleService;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
     private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
@@ -109,7 +110,9 @@ public class UserProfileService implements UserAccessControlApi {
         return fileUrlResolverApi.findFileUrl(userId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteAvatar(UUID userId) {
+        avatarUploadLifecycleService.invalidateUserUploadsAfterAvatarDelete(userId);
         fileStorageWriterApi.deleteFile(userId);
     }
 

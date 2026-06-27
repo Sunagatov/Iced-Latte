@@ -151,6 +151,59 @@ public class FileStorageServiceTest {
     }
 
     @Test
+    @DisplayName("recordExisting replaces metadata without uploading object")
+    void recordExistingReplacesMetadataWithoutUploadingObject() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata oldEntity = fileMetadataEntity(relatedObjectId);
+        FileMetadataDto oldMetadata = new FileMetadataDto(relatedObjectId, "bucket", "old-key");
+        FileMetadataDto newMetadata = new FileMetadataDto(relatedObjectId, "bucket", "new-key");
+        FileMetadata newEntity = new FileMetadata();
+        when(objectStorage.isConfigured()).thenReturn(true);
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(oldEntity));
+        when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(oldMetadata);
+        when(fileMetadataDtoConverter.toEntity(newMetadata)).thenReturn(newEntity);
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(10);
+
+        fileStorageService.recordExisting(newMetadata);
+
+        verify(objectStorage, never()).upload(any(), any(), any());
+        verify(fileMetadataRepository).deleteByRelatedObjectId(relatedObjectId);
+        verify(fileMetadataRepository).save(newEntity);
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(oldMetadata, 10);
+    }
+
+    @Test
+    @DisplayName("recordExisting does not record deletion when metadata points at same object")
+    void recordExistingDoesNotRecordDeletionForSameObject() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadata oldEntity = fileMetadataEntity(relatedObjectId);
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(objectStorage.isConfigured()).thenReturn(true);
+        when(fileMetadataRepository.findByRelatedObjectIdIn(List.of(relatedObjectId)))
+                .thenReturn(List.of(oldEntity));
+        when(fileMetadataDtoConverter.toDto(oldEntity)).thenReturn(metadata);
+        when(fileMetadataDtoConverter.toEntity(metadata)).thenReturn(new FileMetadata());
+
+        fileStorageService.recordExisting(metadata);
+
+        verify(fileDeletionOutboxRepository, never()).insertDeleteObjectEvent(any(), anyInt());
+    }
+
+    @Test
+    @DisplayName("recordExisting rejects metadata writes when object storage is disabled")
+    void recordExistingRejectsWritesWhenObjectStorageIsDisabled() {
+        UUID relatedObjectId = UUID.randomUUID();
+        FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "key");
+        when(objectStorage.isConfigured()).thenReturn(false);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> fileStorageService.recordExisting(metadata))
+                .isInstanceOf(FileUploadException.class);
+
+        verifyNoInteractions(fileMetadataRepository, fileDeletionOutboxRepository);
+    }
+
+    @Test
     @DisplayName("storeDirectory delegates to object storage")
     void storeDirectoryDelegates() throws IOException {
         when(objectStorage.isConfigured()).thenReturn(true);

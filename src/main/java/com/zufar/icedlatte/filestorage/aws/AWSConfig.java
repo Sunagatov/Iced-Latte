@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.cloudfront.CloudFrontClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.sqs.SqsClient;
 
 @Slf4j
 @Configuration
@@ -77,6 +78,17 @@ public class AWSConfig {
         return CloudFrontClient.builder()
                 .credentialsProvider(buildCredentials())
                 .region(Region.AWS_GLOBAL)
+                .httpClientBuilder(buildHttpClient())
+                .overrideConfiguration(buildOverrideConfiguration())
+                .build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "true")
+    public SqsClient sqsClient() {
+        return SqsClient.builder()
+                .credentialsProvider(buildCredentials())
+                .region(Region.of(awsProperties.region()))
                 .httpClientBuilder(buildHttpClient())
                 .overrideConfiguration(buildOverrideConfiguration())
                 .build();

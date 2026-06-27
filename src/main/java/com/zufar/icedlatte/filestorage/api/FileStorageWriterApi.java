@@ -12,5 +12,7 @@ public interface FileStorageWriterApi {
 
     void store(MultipartFile file, FileMetadataDto fileMetadataDto);
 
+    void recordExisting(FileMetadataDto fileMetadataDto);
+
     void deleteFile(UUID relatedObjectId);
 }
