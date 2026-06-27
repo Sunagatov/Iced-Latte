@@ -60,6 +60,7 @@ public class AvatarUploadLifecycleService {
     }
 
     @Transactional
+    @SuppressWarnings("unused")
     public Optional<UserAvatarUpload> markProcessing(AvatarUploadProcessingResult result) {
         ValidAvatarUploadSourceObject source = result.source();
         return repository.findById(source.uploadId()).flatMap(upload -> markProcessing(upload, result));

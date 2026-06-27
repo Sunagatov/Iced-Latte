@@ -12,9 +12,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AvatarUploadCompletionQueueMessageParser {
 
-    private static final String EVENT_TYPE = "AvatarProcessed";
-    private static final int VERSION = 1;
-
     private final ObjectMapper objectMapper;
 
     public AvatarUploadCompletionQueueMessage parse(String body) {
@@ -28,10 +25,10 @@ public class AvatarUploadCompletionQueueMessageParser {
     }
 
     private void validateEnvelope(AvatarUploadCompletionPayload payload) {
-        if (!EVENT_TYPE.equals(payload.eventType())) {
+        if (!AvatarUploadCompletionPayload.EVENT_TYPE.equals(payload.eventType())) {
             throw new BadRequestException("Avatar upload completion message eventType is unsupported.");
         }
-        if (payload.version() == null || payload.version() != VERSION) {
+        if (payload.version() == null || payload.version() != AvatarUploadCompletionPayload.VERSION) {
             throw new BadRequestException("Avatar upload completion message version is unsupported.");
         }
     }

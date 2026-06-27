@@ -6,11 +6,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("unused")
 public class AvatarUploadProcessor {
 
     private final AvatarUploadSourceObjectValidator sourceObjectValidator;
     private final AvatarImageInspector imageInspector;
 
+    @SuppressWarnings("unused")
     public AvatarUploadProcessingResult process(
             AvatarUploadSourceObject sourceObject, byte[] imageBytes, long maxBytes, long maxPixels) {
         ValidAvatarUploadSourceObject source = sourceObjectValidator.validate(sourceObject);
