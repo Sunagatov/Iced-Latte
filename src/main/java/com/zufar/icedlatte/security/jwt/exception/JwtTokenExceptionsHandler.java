@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.zufar.icedlatte.common.exception.ProblemType;
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,17 @@ public class JwtTokenExceptionsHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ProblemDetail handleJwtTokenBlacklistedException(final JwtTokenBlacklistedException exception) {
         log.debug("auth.refresh.rejected: reason=token_invalidated, status=401");
+        return problemDetailFactory.build(
+                ProblemType.SESSION_EXPIRED,
+                "Session expired",
+                HttpStatus.UNAUTHORIZED,
+                "Session expired. Please sign in again.");
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ProblemDetail handleExpiredJwtException(final ExpiredJwtException exception) {
+        log.debug("auth.rejected: reason=token_expired, status=401");
         return problemDetailFactory.build(
                 ProblemType.SESSION_EXPIRED,
                 "Session expired",

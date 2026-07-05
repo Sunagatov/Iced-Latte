@@ -3,6 +3,52 @@
 This plan describes a production-only AWS Lambda avatar pipeline while keeping
 the current local/backend upload flow intact for contributors.
 
+## Current Backend Status
+
+As of June 28, 2026, the backend Phase 2 work is partially implemented in this
+repo.
+
+Already in place:
+
+- upload-mode split between `backend` and `presigned`
+- upload-intent endpoint and backend-owned lifecycle table/service layer
+- idempotent upload-cancel endpoint for abandoned presigned uploads
+- new upload intents proactively supersede older non-active in-flight uploads
+- immutable avatar storage layout for incoming and processed objects
+- presigner boundary that stays disabled unless AWS mode is explicitly enabled
+- SQS completion payload/parser/handler path
+- backend SQS poller gated behind avatar mode, queue flag, and AWS flag
+- activation logic that keeps a newer upload from being overwritten by a stale
+  completion
+- delete-path invalidation so late completions cannot restore a deleted avatar
+- avatar lifecycle cleanup now enqueues source-object deletion for cancelled,
+  failed, superseded, ready, and expired presigned uploads
+- retention cleanup job expires stale upload rows on a schedule and reuses the
+  deletion outbox path for abandoned source objects
+- focused unit coverage for duplicate, stale, failed, expired, and late
+  completion cases
+- frontend mode gating in the sibling frontend repo so localhost keeps the
+  current multipart upload flow while `presigned` can use upload intent + direct
+  storage upload + status polling
+- frontend abort handling can now best-effort cancel an in-flight presigned
+  upload intent in the backend lifecycle
+
+Still not done in this repo:
+
+- Vault-owned AWS infrastructure and runtime wiring
+- Lambda implementation and deployment workflow
+
+Still not done across the full rollout:
+
+- final frontend production rollout for presigned mode plus any later UX
+  refinements beyond the current progress, processing, retry, cancel, and
+  remove-photo controls
+- Vault/frontend production env rollout for enabling `NEXT_PUBLIC_AVATAR_UPLOAD_MODE=presigned`
+
+This document keeps the full target design, but the rollout checklist below
+should be read as a mix of completed backend-contract work and still-pending
+infra/frontend phases.
+
 ## Current Flow
 
 The current avatar upload path is synchronous and backend-owned:
@@ -690,6 +736,7 @@ the AWS pipeline should use boundaries instead of real AWS:
 - unit-test duplicate and stale completion handling
 - unit-test idempotent upload-intent creation
 - unit-test delete followed by late completion
+- unit-test invalid queue payload rejection and poison-message deletion
 - integration-test existing `POST /api/v1/users/avatar` behavior unchanged
 - contract-test OpenAPI generated frontend client shape
 - run frontend `npm run api:generate` / `npm run api:check` when API specs
@@ -711,6 +758,16 @@ Phase 2 is ready to hand to Vault/AWS work only when:
 - OpenAPI generation is clean in the backend
 - frontend Orval generation is updated and checked when the API contract changes
 - no AWS credentials, presigned URLs, or secret values are logged
+
+Backend-repo snapshot on June 28, 2026:
+
+- Done: local backend startup remains AWS-optional
+- Done: upload intent fails closed outside explicit presigned mode
+- Done: lifecycle/state-transition tests cover duplicate, stale, expired,
+  failed, and delete-vs-late cases
+- Done: backend SQS poller is mode/flag gated
+- Pending here or in sibling repos: frontend client regeneration and AWS/Vault
+  runtime rollout
 
 ## Open Decisions
 
@@ -736,19 +793,17 @@ Recommended defaults before coding:
 
 ### Phase 2: Backend Contracts
 
-- Add upload intent OpenAPI contract.
-- Add `user_avatar_upload` migration and user-owned service classes.
-- Add backend strategy selection for `backend` vs `presigned`.
-- Keep SQS/Lambda integration out of the default local profile.
-- Add key-generation and state-transition tests.
-- Add tests for stale completion, duplicate completion, expired upload, and
-  failed processing.
-- Add tests for `Idempotency-Key` retry behavior and delete-vs-late-completion
-  behavior.
-- Keep the presigned implementation stubbed or disabled until Vault AWS
-  resources exist.
-- Regenerate backend OpenAPI code and frontend Orval client when the contract is
-  ready.
+- Done: add upload intent OpenAPI contract.
+- Done: add `user_avatar_upload` migration and user-owned service classes.
+- Done: add backend strategy selection for `backend` vs `presigned`.
+- Done: keep SQS/Lambda integration out of the default local profile.
+- Done: add key-generation and state-transition tests.
+- Done: add tests for stale completion, duplicate completion, expired upload,
+  failed processing, and delete-vs-late-completion behavior.
+- Done: keep the presigned implementation disabled unless explicit AWS/presigned
+  config is present.
+- Pending: regenerate backend OpenAPI code and frontend Orval client in the
+  frontend repo when the API contract handoff is finalized.
 
 ### Phase 3: AWS Worker
 

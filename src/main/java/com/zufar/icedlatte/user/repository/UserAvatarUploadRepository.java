@@ -12,6 +12,9 @@ import com.zufar.icedlatte.user.entity.UserAvatarUploadStatus;
 
 public interface UserAvatarUploadRepository extends JpaRepository<UserAvatarUpload, UUID> {
 
+    java.util.Collection<UserAvatarUpload> findByStatusInAndExpiresAtBefore(
+            java.util.Collection<UserAvatarUploadStatus> statuses, Instant expiresAt);
+
     Optional<UserAvatarUpload> findByUserIdAndClientIdempotencyKey(UUID userId, String clientIdempotencyKey);
 
     Optional<UserAvatarUpload> findByUserIdAndActiveTrue(UUID userId);

@@ -11,6 +11,8 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadIntentResponse;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadStatus;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadStatusResponse;
@@ -35,6 +37,7 @@ public class AvatarUploadIntentService {
     private final AvatarUploadProperties properties;
     private final AvatarUploadLifecycleService lifecycleService;
     private final UserAvatarUploadRepository repository;
+    private final FileUrlResolverApi fileUrlResolverApi;
     private final ObjectProvider<AvatarUploadPresigner> presignerProvider;
     private final TurnstileVerifier turnstileVerifier;
     private final TurnstileProperties turnstileProperties;
@@ -72,7 +75,12 @@ public class AvatarUploadIntentService {
                                 upload.getId(),
                                 status(upload),
                                 upload.getExpiresAt().atOffset(java.time.ZoneOffset.UTC))
+                        .avatarLink(readyAvatarLink(upload))
                         .failureCode(upload.getFailureCode()));
+    }
+
+    public void cancelUpload(UUID userId, UUID uploadId) {
+        lifecycleService.cancelUpload(userId, uploadId);
     }
 
     private String validateIdempotencyKey(@Nullable String idempotencyKey) {
@@ -115,5 +123,20 @@ public class AvatarUploadIntentService {
 
     private AvatarUploadStatus status(UserAvatarUpload upload) {
         return AvatarUploadStatus.fromValue(upload.getStatus().name());
+    }
+
+    private @Nullable String readyAvatarLink(UserAvatarUpload upload) {
+        if (upload.getStatus() != com.zufar.icedlatte.user.entity.UserAvatarUploadStatus.READY) {
+            return null;
+        }
+        if (upload.getProcessedBucket() == null
+                || upload.getProcessedBucket().isBlank()
+                || upload.getProcessedKey() == null
+                || upload.getProcessedKey().isBlank()) {
+            return null;
+        }
+        return fileUrlResolverApi
+                .findFileUrl(new FileMetadataDto(upload.getId(), upload.getProcessedBucket(), upload.getProcessedKey()))
+                .orElse(null);
     }
 }

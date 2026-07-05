@@ -47,7 +47,10 @@ public interface UserDtoConverter {
     @AfterMapping
     default void updateAddress(@MappingTarget UserEntity entity, UpdateUserAccountRequest request) {
         AddressDto dto = request.getAddress();
-        if (dto == null || isEmptyAddress(dto)) {
+        if (dto == null) {
+            return;
+        }
+        if (isEmptyAddress(dto)) {
             entity.setAddress(null);
             return;
         }

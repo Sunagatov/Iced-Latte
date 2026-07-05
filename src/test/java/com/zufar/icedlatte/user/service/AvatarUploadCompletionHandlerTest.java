@@ -100,6 +100,36 @@ class AvatarUploadCompletionHandlerTest {
                 .hasMessage("Avatar upload failure is required.");
     }
 
+    @Test
+    @DisplayName("rejects blank failure code")
+    void failRejectsBlankFailureCode() {
+        AvatarUploadFailureCommand command = new AvatarUploadFailureCommand(sourceObject(), " ", "bad image");
+        ValidAvatarUploadSourceObject source = new ValidAvatarUploadSourceObject(
+                "iced-latte-users", sourceObject().key(), USER_ID, UPLOAD_ID, "image/png");
+        when(sourceObjectValidator.validate(command.sourceObject())).thenReturn(source);
+
+        assertThatThrownBy(() -> handler().fail(command))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload failure failureCode is required.");
+
+        verifyNoInteractions(lifecycleService, activationService);
+    }
+
+    @Test
+    @DisplayName("rejects blank failure message")
+    void failRejectsBlankFailureMessage() {
+        AvatarUploadFailureCommand command = new AvatarUploadFailureCommand(sourceObject(), "DECODE_FAILED", " ");
+        ValidAvatarUploadSourceObject source = new ValidAvatarUploadSourceObject(
+                "iced-latte-users", sourceObject().key(), USER_ID, UPLOAD_ID, "image/png");
+        when(sourceObjectValidator.validate(command.sourceObject())).thenReturn(source);
+
+        assertThatThrownBy(() -> handler().fail(command))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload failure failureMessage is required.");
+
+        verifyNoInteractions(lifecycleService, activationService);
+    }
+
     private AvatarUploadCompletionHandler handler() {
         return new AvatarUploadCompletionHandler(
                 completionValidator, sourceObjectValidator, lifecycleService, activationService);

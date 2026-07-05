@@ -29,11 +29,15 @@ public record AvatarUploadCompletionPayload(
     static final int VERSION = 1;
 
     AvatarUploadCompletionQueueMessage toQueueMessage() {
+        String normalizedStatus = requireText(status, "status");
         AvatarUploadSourceObject sourceObject = new AvatarUploadSourceObject(
-                sourceBucket,
-                sourceKey,
-                AvatarUploadStorageLayout.sourceMetadata(userId, uploadId, requestedContentType));
-        return switch (status) {
+                requireText(sourceBucket, "sourceBucket"),
+                requireText(sourceKey, "sourceKey"),
+                AvatarUploadStorageLayout.sourceMetadata(
+                        requireText(userId, "userId"),
+                        requireText(uploadId, "uploadId"),
+                        requireText(requestedContentType, "requestedContentType")));
+        return switch (normalizedStatus) {
             case "READY" ->
                 AvatarUploadCompletionQueueMessage.ready(new AvatarUploadCompletionCommand(
                         sourceObject,

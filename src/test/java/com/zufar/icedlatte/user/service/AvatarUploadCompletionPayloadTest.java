@@ -72,6 +72,140 @@ class AvatarUploadCompletionPayloadTest {
                 .hasMessage("Avatar upload completion message status is unsupported.");
     }
 
+    @Test
+    @DisplayName("rejects ready payload without processed object fields")
+    void toQueueMessageRejectsReadyPayloadWithoutProcessedFields() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                UPLOAD_ID.toString(),
+                "READY",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                null,
+                null,
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(payload::toQueueMessage)
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload completion message processedBucket is required.");
+    }
+
+    @Test
+    @DisplayName("rejects failed payload without failure fields")
+    void toQueueMessageRejectsFailedPayloadWithoutFailureFields() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                UPLOAD_ID.toString(),
+                "FAILED",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        assertThatThrownBy(payload::toQueueMessage)
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload completion message failureCode is required.");
+    }
+
+    @Test
+    @DisplayName("rejects payload without user id before building source metadata")
+    void toQueueMessageRejectsMissingUserId() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                null,
+                UPLOAD_ID.toString(),
+                "READY",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp",
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(payload::toQueueMessage).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("rejects payload without upload id before building source metadata")
+    void toQueueMessageRejectsMissingUploadId() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                null,
+                "READY",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp",
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(payload::toQueueMessage).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("rejects payload without requested content type before building source metadata")
+    void toQueueMessageRejectsMissingRequestedContentType() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                UPLOAD_ID.toString(),
+                "READY",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                null,
+                "iced-latte-users",
+                AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp",
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(payload::toQueueMessage).isInstanceOf(BadRequestException.class);
+    }
+
     static AvatarUploadCompletionPayload readyPayload() {
         return new AvatarUploadCompletionPayload(
                 AvatarUploadCompletionPayload.EVENT_TYPE,

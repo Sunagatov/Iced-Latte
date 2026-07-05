@@ -62,10 +62,17 @@ class JwtAuthenticationFilterTest {
     class ShouldNotFilter {
 
         @Test
-        @DisplayName("skips refresh and oauth endpoints")
-        void skipsRefreshAndOAuthEndpoints() {
+        @DisplayName("skips public auth endpoints and oauth callbacks")
+        void skipsPublicAuthEndpointsAndOAuthCallbacks() {
             TestableJwtAuthenticationFilter filter = filter();
 
+            assertThat(filter.shouldSkip(request("/api/v1/auth/authenticate"))).isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/register"))).isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/confirm"))).isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/password/forgot")))
+                    .isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/password/change")))
+                    .isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/refresh"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/google/callback")))
@@ -73,7 +80,19 @@ class JwtAuthenticationFilterTest {
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/github"))).isTrue();
             assertThat(filter.shouldSkip(request("/api/v1/auth/oauth/github/callback")))
                     .isTrue();
+            assertThat(filter.shouldSkip(request("/api/v1/auth/logout"))).isFalse();
             assertThat(filter.shouldSkip(request("/api/v1/products"))).isFalse();
+        }
+
+        @Test
+        @DisplayName("uses the servlet path when the app runs under a context path")
+        void usesServletPathWhenAppRunsUnderContextPath() {
+            TestableJwtAuthenticationFilter filter = filter();
+            MockHttpServletRequest request = request("/app/api/v1/auth/refresh");
+            request.setContextPath("/app");
+            request.setServletPath("/api/v1/auth/refresh");
+
+            assertThat(filter.shouldSkip(request)).isTrue();
         }
     }
 

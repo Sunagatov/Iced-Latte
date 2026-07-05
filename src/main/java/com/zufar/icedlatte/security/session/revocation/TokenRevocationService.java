@@ -8,6 +8,7 @@ import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
 import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
 import com.zufar.icedlatte.security.session.management.AuthSessionService;
 import com.zufar.icedlatte.security.signin.exception.AbsentBearerHeaderException;
 
@@ -21,18 +22,24 @@ public class TokenRevocationService {
 
     private final JwtTokenBlacklist jwtTokenBlacklist;
     private final JwtBearerTokenResolver jwtBearerTokenResolver;
+    private final JwtTokenClaims jwtTokenClaims;
     private final AuthSessionService authSessionService;
 
     public void revokeTokens(String refreshTokenHeader, HttpServletRequest request) {
-        resolveRefreshToken(refreshTokenHeader, request).ifPresent(this::revokeRefreshToken);
-        revokeAccessToken(request);
+        java.util.Optional<String> accessToken = resolveAccessToken(request);
+        resolveRefreshToken(refreshTokenHeader)
+                .ifPresentOrElse(this::revokeRefreshToken, () -> revokeSessionFromAccessToken(accessToken));
+        accessToken.ifPresent(this::blacklistAccessToken);
     }
 
-    private java.util.Optional<String> resolveRefreshToken(String refreshTokenHeader, HttpServletRequest request) {
+    private java.util.Optional<String> resolveRefreshToken(String refreshTokenHeader) {
         if (StringUtils.hasText(refreshTokenHeader)) {
             return java.util.Optional.of(refreshTokenHeader);
         }
+        return java.util.Optional.empty();
+    }
 
+    private java.util.Optional<String> resolveAccessToken(HttpServletRequest request) {
         try {
             return java.util.Optional.of(jwtBearerTokenResolver.extract(request));
         } catch (AbsentBearerHeaderException _) {
@@ -45,14 +52,15 @@ public class TokenRevocationService {
         jwtTokenBlacklist.blacklistRefreshToken(refreshToken);
     }
 
-    private void revokeAccessToken(HttpServletRequest request) {
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!StringUtils.hasText(authHeader)) {
-            return;
-        }
+    private void revokeSessionFromAccessToken(java.util.Optional<String> accessToken) {
+        accessToken
+                .flatMap(jwtTokenClaims::extractAccessTokenSessionId)
+                .ifPresent(authSessionService::revokeBySessionId);
+    }
 
+    private void blacklistAccessToken(String accessToken) {
         try {
-            jwtTokenBlacklist.blacklist(jwtBearerTokenResolver.extract(authHeader));
+            jwtTokenBlacklist.blacklist(accessToken);
         } catch (AbsentBearerHeaderException ex) {
             log.debug("auth.logout.token_error: header={} reason={}", HttpHeaders.AUTHORIZATION, ex.getMessage());
         }

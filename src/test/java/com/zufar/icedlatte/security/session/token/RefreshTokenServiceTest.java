@@ -2,6 +2,7 @@ package com.zufar.icedlatte.security.session.token;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -188,6 +189,20 @@ class RefreshTokenServiceTest {
 
             verify(authSessionService).revokeAllForCompromisedUserBySessionId(sessionId);
             verifyNoInteractions(userDetailsService, sessionTokenService);
+        }
+
+        @Test
+        @DisplayName("rejects already-blacklisted managed refresh tokens without marking sessions compromised")
+        void rejectsAlreadyBlacklistedManagedRefreshTokensWithoutCompromiseHandling() {
+            String rawToken = "managed-refresh-token";
+            JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("Session expired");
+
+            when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
+            doThrow(failure).when(jwtTokenBlacklist).validateNotBlacklisted(rawToken);
+
+            assertThatThrownBy(() -> service.refresh(request, REQUEST_METADATA)).isSameAs(failure);
+
+            verifyNoInteractions(authSessionService, userDetailsService, sessionTokenService);
         }
     }
 

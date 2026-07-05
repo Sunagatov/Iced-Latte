@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.security.jwt.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+
+import io.jsonwebtoken.ExpiredJwtException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtTokenExceptionsHandler Tests")
@@ -51,6 +54,23 @@ class JwtTokenExceptionsHandlerTest {
                 .thenReturn(expected);
 
         ProblemDetail result = jwtTokenExceptionsHandler.handleJwtTokenBlacklistedException(exception);
+
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("Should return UNAUTHORIZED when ExpiredJwtException is thrown")
+    void shouldReturnUnauthorizedWhenExpiredJwtExceptionThrown() {
+        ExpiredJwtException exception = mock(ExpiredJwtException.class);
+        ProblemDetail expected = ProblemDetail.forStatus(401);
+        when(problemDetailFactory.build(
+                        "session-expired",
+                        "Session expired",
+                        HttpStatus.UNAUTHORIZED,
+                        "Session expired. Please sign in again."))
+                .thenReturn(expected);
+
+        ProblemDetail result = jwtTokenExceptionsHandler.handleExpiredJwtException(exception);
 
         assertThat(result).isEqualTo(expected);
     }

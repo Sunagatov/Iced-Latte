@@ -68,6 +68,13 @@ public class FileStorageService implements FileStorageApi {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void enqueueDeleteObject(FileMetadataDto fileMetadataDto) {
+        int maxAttempts = fileDeletionOutboxProperties.maxAttempts();
+        fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts);
+    }
+
+    @Override
     public void storeDirectory(String bucketName, String directoryPath) throws IOException {
         requireStorageEnabledForUpload(directoryPath);
         objectStorage.uploadDirectory(bucketName, directoryPath);
@@ -77,6 +84,12 @@ public class FileStorageService implements FileStorageApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
     public Optional<String> findFileUrl(UUID relatedObjectId) {
         return findMetadata(relatedObjectId).flatMap(objectStorage::getUrl);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)
+    public Optional<String> findFileUrl(FileMetadataDto fileMetadataDto) {
+        return objectStorage.getUrl(fileMetadataDto);
     }
 
     @Override

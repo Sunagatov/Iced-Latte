@@ -31,6 +31,7 @@ public class SecurityRouteAuthorization {
     private static final String AUTH_OAUTH_CALLBACK_PATTERN = ApiPaths.AUTH_OAUTH + "/*/callback";
 
     private static final String[] AUTHENTICATED_URL_PATTERNS = {
+        AUTH_LOGOUT_URL,
         ApiPaths.AUTH_SESSIONS_PATTERN,
         ApiPaths.AUTH_LOGOUT_ALL,
         ApiPaths.CART_PATTERN,
@@ -45,7 +46,6 @@ public class SecurityRouteAuthorization {
         AUTH_CONFIRM_URL,
         ApiPaths.AUTH_AUTHENTICATE,
         ApiPaths.AUTH_REFRESH,
-        AUTH_LOGOUT_URL,
         AUTH_PASSWORD_FORGOT_URL,
         AUTH_PASSWORD_CHANGE_URL,
         AUTH_OAUTH_TOKEN_URL,

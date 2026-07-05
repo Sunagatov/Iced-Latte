@@ -87,6 +87,74 @@ class AvatarUploadCompletionQueueMessageParserTest {
                 .hasMessage("Avatar upload completion message version is unsupported.");
     }
 
+    @Test
+    @DisplayName("rejects unsupported completion event type")
+    void parseRejectsUnsupportedEventType() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                "OtherEvent",
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                UPLOAD_ID.toString(),
+                "READY",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp",
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(() -> parser.parse(writeJson(payload)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload completion message eventType is unsupported.");
+    }
+
+    @Test
+    @DisplayName("rejects invalid completion message JSON")
+    void parseRejectsInvalidJson() {
+        assertThatThrownBy(() -> parser.parse("{not-json"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Avatar upload completion message JSON is invalid.");
+    }
+
+    @Test
+    @DisplayName("rejects JSON null payload")
+    void parseRejectsJsonNullPayload() {
+        assertThatThrownBy(() -> parser.parse("null")).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("rejects payload with missing status")
+    void parseRejectsPayloadWithoutStatus() {
+        AvatarUploadCompletionPayload payload = new AvatarUploadCompletionPayload(
+                AvatarUploadCompletionPayload.EVENT_TYPE,
+                AvatarUploadCompletionPayload.VERSION,
+                USER_ID.toString(),
+                UPLOAD_ID.toString(),
+                null,
+                "iced-latte-users",
+                AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID),
+                "image/png",
+                "iced-latte-users",
+                AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp",
+                "image/webp",
+                384,
+                384,
+                2048L,
+                512L,
+                "a".repeat(64),
+                null,
+                null);
+
+        assertThatThrownBy(() -> parser.parse(writeJson(payload))).isInstanceOf(BadRequestException.class);
+    }
+
     private String readyPayload() {
         return writeJson(AvatarUploadCompletionPayloadTest.readyPayload());
     }

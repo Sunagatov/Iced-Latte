@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
@@ -43,7 +42,6 @@ public class OAuthLoginService {
     private final PasswordEncoder passwordEncoder;
     private final SessionTokenService sessionTokenService;
 
-    @Transactional
     public AuthenticationTokens handle(
             OAuthProvider provider, String authorizationCode, AuthSessionRequestMetadata requestMetadata) {
         OAuthProviderClient client = providerClientRegistry
@@ -92,7 +90,7 @@ public class OAuthLoginService {
         Optional<UserAuthenticationSnapshot> existingUser = userAuthenticationApi.findUserAuthenticationByEmail(email);
         UserAuthenticationSnapshot user = existingUser.orElseGet(() -> createUser(provider, profile, email));
         try {
-            oAuthIdentityRepository.save(OAuthIdentityEntity.builder()
+            oAuthIdentityRepository.saveAndFlush(OAuthIdentityEntity.builder()
                     .provider(provider)
                     .providerSubject(providerSubject)
                     .email(email)

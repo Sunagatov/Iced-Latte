@@ -96,7 +96,7 @@ class OAuthLoginServiceTest {
         AuthenticationTokens response = handle();
         assertThat(response.accessToken()).isEqualTo("access-token");
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
-        verify(oAuthIdentityRepository).save(savedIdentities.capture());
+        verify(oAuthIdentityRepository).saveAndFlush(savedIdentities.capture());
         OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
         assertThat(savedIdentity.getProvider()).isEqualTo(OAuthProvider.GOOGLE);
         assertThat(savedIdentity.getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
@@ -113,7 +113,7 @@ class OAuthLoginServiceTest {
         stubToken();
         handle();
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
-        verify(oAuthIdentityRepository).save(savedIdentities.capture());
+        verify(oAuthIdentityRepository).saveAndFlush(savedIdentities.capture());
         OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
         assertThat(savedIdentity.getProviderSubject()).isEqualTo("google-subject");
         assertThat(savedIdentity.getEmail()).isEqualTo("existing@example.com");
@@ -136,7 +136,7 @@ class OAuthLoginServiceTest {
                 .registerOAuthUser(eq("New"), eq("User"), eq(NEW_EMAIL), eq("encoded-random-password"));
         verify(sessionTokenService).issueForNewSession(any(), eq(REQUEST_METADATA));
         ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
-        verify(oAuthIdentityRepository).save(savedIdentities.capture());
+        verify(oAuthIdentityRepository).saveAndFlush(savedIdentities.capture());
         assertThat(savedIdentities.getValue().getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
         assertThat(savedIdentities.getValue().getUserId()).isEqualTo(newUser.userId());
     }
@@ -157,7 +157,7 @@ class OAuthLoginServiceTest {
         when(userAuthenticationApi.findUserAuthenticationByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any(String.class))).thenReturn("encoded-random-password");
         when(userRegistrationApi.registerOAuthUser(any(), any(), any(), any())).thenReturn(existingUser);
-        when(oAuthIdentityRepository.save(any(OAuthIdentityEntity.class)))
+        when(oAuthIdentityRepository.saveAndFlush(any(OAuthIdentityEntity.class)))
                 .thenThrow(new DataIntegrityViolationException("duplicate identity"));
         when(userAuthenticationApi.findUserAuthenticationById(existingUser.userId()))
                 .thenReturn(Optional.of(existingUser));

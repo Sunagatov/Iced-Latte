@@ -1,7 +1,6 @@
 package com.zufar.icedlatte.security.endpoint;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,8 +58,13 @@ class LogoutEndpointIntegrationTest extends AuthenticatedUserIntegrationSupport 
         given(authenticatedJsonSpec(AUTH_BASE_PATH, firstSession.accessToken()))
                 .get("/sessions")
                 .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("", hasSize(0));
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
+    }
+
+    @Test
+    @DisplayName("Should reject anonymous logout")
+    void shouldRejectAnonymousLogout() {
+        given(jsonSpec(AUTH_BASE_PATH)).post("/logout").then().statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     private AuthenticatedUser authenticate(String email, String password) {

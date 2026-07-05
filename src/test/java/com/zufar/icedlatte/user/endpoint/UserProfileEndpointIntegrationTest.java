@@ -110,6 +110,57 @@ class UserProfileEndpointIntegrationTest extends AuthenticatedUserIntegrationSup
     }
 
     @Test
+    @DisplayName("Should preserve existing address when profile update omits address")
+    void shouldPreserveExistingAddressWhenProfileUpdateOmitsAddress() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+
+        String initialUpdateBody = """
+                {
+                  "firstName": "Updated",
+                  "lastName": "Customer",
+                  "birthDate": "1994-04-16",
+                  "phoneNumber": "+447400000001",
+                  "address": {
+                    "country": "United Kingdom",
+                    "city": "London",
+                    "line": "221B Baker Street",
+                    "postcode": "NW1 6XE"
+                  }
+                }
+                """;
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(initialUpdateBody)
+                .put()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("address.country", equalTo("United Kingdom"));
+
+        String updateWithoutAddressBody = """
+                {
+                  "firstName": "Address",
+                  "lastName": "Preserved",
+                  "birthDate": "1990-01-02",
+                  "phoneNumber": "+447400000099"
+                }
+                """;
+
+        given(authenticatedJsonSpec(BASE_PATH, user.accessToken()))
+                .body(updateWithoutAddressBody)
+                .put()
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("firstName", equalTo("Address"))
+                .body("lastName", equalTo("Preserved"))
+                .body("birthDate", equalTo("1990-01-02"))
+                .body("phoneNumber", equalTo("+447400000099"))
+                .body("address.country", equalTo("United Kingdom"))
+                .body("address.city", equalTo("London"))
+                .body("address.line", equalTo("221B Baker Street"))
+                .body("address.postcode", equalTo("NW1 6XE"));
+    }
+
+    @Test
     @DisplayName("Should change password and authenticate only with the new password")
     void shouldChangePasswordAndAuthenticateOnlyWithTheNewPassword() {
         AuthenticatedUser user = registerAndAuthenticateUser();

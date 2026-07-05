@@ -204,6 +204,18 @@ public class FileStorageServiceTest {
     }
 
     @Test
+    @DisplayName("enqueueDeleteObject records deletion event without touching metadata")
+    void enqueueDeleteObjectRecordsDeletionEvent() {
+        FileMetadataDto metadata = new FileMetadataDto(UUID.randomUUID(), "bucket", "key");
+        when(fileDeletionOutboxProperties.maxAttempts()).thenReturn(7);
+
+        fileStorageService.enqueueDeleteObject(metadata);
+
+        verify(fileDeletionOutboxRepository).insertDeleteObjectEvent(metadata, 7);
+        verifyNoInteractions(objectStorage, fileMetadataRepository, fileMetadataDtoConverter);
+    }
+
+    @Test
     @DisplayName("storeDirectory delegates to object storage")
     void storeDirectoryDelegates() throws IOException {
         when(objectStorage.isConfigured()).thenReturn(true);
@@ -253,6 +265,17 @@ public class FileStorageServiceTest {
 
             assertThat(fileStorageService.findFileUrl(relatedObjectId)).isEmpty();
             verifyNoInteractions(objectStorage);
+        }
+
+        @Test
+        @DisplayName("resolves URL directly from exact metadata")
+        void resolvesUrlDirectlyFromExactMetadata() {
+            UUID relatedObjectId = UUID.randomUUID();
+            FileMetadataDto metadata = new FileMetadataDto(relatedObjectId, "bucket", "processed/key.webp");
+            when(objectStorage.getUrl(metadata)).thenReturn(Optional.of("https://cdn.example.com/processed/key.webp"));
+
+            assertThat(fileStorageService.findFileUrl(metadata)).contains("https://cdn.example.com/processed/key.webp");
+            verifyNoInteractions(fileMetadataRepository);
         }
     }
 

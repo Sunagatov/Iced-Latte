@@ -17,6 +17,9 @@ public class AvatarUploadCompletionQueueMessageParser {
     public AvatarUploadCompletionQueueMessage parse(String body) {
         try {
             AvatarUploadCompletionPayload payload = objectMapper.readValue(body, AvatarUploadCompletionPayload.class);
+            if (payload == null) {
+                throw new BadRequestException("Avatar upload completion message JSON is invalid.");
+            }
             validateEnvelope(payload);
             return payload.toQueueMessage();
         } catch (JsonProcessingException ex) {

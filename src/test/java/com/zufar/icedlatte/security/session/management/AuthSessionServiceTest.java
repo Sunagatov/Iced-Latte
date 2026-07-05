@@ -168,6 +168,32 @@ class AuthSessionServiceTest {
     }
 
     @Test
+    @DisplayName("validateActiveSession accepts an active session owned by the user")
+    void validateActiveSessionAcceptsOwnedActiveSession() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(sessionRepository.existsActiveSession(eq(sessionId), eq(userId), any(OffsetDateTime.class)))
+                .thenReturn(true);
+
+        service.validateActiveSession(sessionId, userId);
+
+        verify(sessionRepository).existsActiveSession(eq(sessionId), eq(userId), any(OffsetDateTime.class));
+    }
+
+    @Test
+    @DisplayName("validateActiveSession rejects missing revoked or foreign session")
+    void validateActiveSessionRejectsMissingRevokedOrForeignSession() {
+        UUID sessionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(sessionRepository.existsActiveSession(eq(sessionId), eq(userId), any(OffsetDateTime.class)))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> service.validateActiveSession(sessionId, userId))
+                .isInstanceOf(JwtTokenBlacklistedException.class)
+                .hasMessageContaining("revoked");
+    }
+
+    @Test
     @DisplayName("findActiveByHash throws when previous token hash found (replay attack)")
     void findActiveByHashThrowsOnReplayAttack() {
         AuthSessionEntity compromised = AuthSessionEntity.builder()

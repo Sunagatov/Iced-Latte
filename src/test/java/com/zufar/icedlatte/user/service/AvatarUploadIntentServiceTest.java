@@ -20,6 +20,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
+import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadStatus;
 import com.zufar.icedlatte.openapi.dto.AvatarUploadTargetResponse;
 import com.zufar.icedlatte.openapi.dto.CreateAvatarUploadRequest;
@@ -48,6 +50,9 @@ class AvatarUploadIntentServiceTest {
 
     @Mock
     private AvatarUploadPresigner presigner;
+
+    @Mock
+    private FileUrlResolverApi fileUrlResolverApi;
 
     @Test
     @DisplayName("fails closed in backend mode without creating lifecycle row")
@@ -192,11 +197,46 @@ class AvatarUploadIntentServiceTest {
         assertThat(service.findUploadStatus(UUID.randomUUID(), uploadId)).isEmpty();
     }
 
+    @Test
+    @DisplayName("includes avatar link for ready upload status when current avatar URL exists")
+    void findUploadStatusIncludesAvatarLinkForReadyUpload() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        var upload = UserAvatarUpload.builder()
+                .id(uploadId)
+                .userId(userId)
+                .status(UserAvatarUploadStatus.READY)
+                .contentType("image/png")
+                .originalBucket("iced-latte-users")
+                .originalKey("avatars/incoming/%s/%s/source".formatted(userId, uploadId))
+                .processedBucket("iced-latte-users")
+                .processedKey("avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId))
+                .createdAt(Instant.parse("2026-06-26T10:15:30Z"))
+                .expiresAt(Instant.parse("2026-06-26T10:20:30Z"))
+                .active(false)
+                .build();
+        AvatarUploadIntentService service = service(AvatarUploadMode.BACKEND);
+        when(repository.findById(uploadId)).thenReturn(Optional.of(upload));
+        when(fileUrlResolverApi.findFileUrl(new FileMetadataDto(
+                        uploadId,
+                        "iced-latte-users",
+                        "avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId))))
+                .thenReturn(Optional.of("https://cdn.example.com/avatar-specific.webp"));
+
+        var response = service.findUploadStatus(userId, uploadId);
+
+        assertThat(response).isPresent();
+        assertThat(response.orElseThrow().getAvatarLink().isPresent()).isTrue();
+        assertThat(response.orElseThrow().getAvatarLink().get())
+                .isEqualTo("https://cdn.example.com/avatar-specific.webp");
+    }
+
     private AvatarUploadIntentService service(AvatarUploadMode mode) {
         return new AvatarUploadIntentService(
                 properties(mode),
                 lifecycleService,
                 repository,
+                fileUrlResolverApi,
                 presignerProvider,
                 turnstileVerifier,
                 new TurnstileProperties(

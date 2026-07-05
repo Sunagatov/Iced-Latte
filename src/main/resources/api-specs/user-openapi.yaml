@@ -133,7 +133,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
               examples:
                 invalidPassword:
-                  value: { "message": "Password must be at least 8 characters long and contain at least one letter, one digit, and may include special characters @$!%*?&." }
+                  value: { "message": "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit." }
         "401":
           description: "Unauthorized access or invalid old password."
           content:
@@ -492,6 +492,34 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: "Upload not found."
+        "500":
+          description: "Internal Server Error."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - "User Avatar"
+      summary: "Cancel avatar upload"
+      description: "Cancel the authenticated user's in-flight or pending avatar upload intent. Idempotent and safe to retry."
+      operationId: "cancelAvatarUpload"
+      parameters:
+        - name: "uploadId"
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: "Avatar upload canceled or already absent."
+        "401":
+          description: "Unauthorized access. Authentication required."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: "Internal Server Error."
           content:

@@ -2,15 +2,21 @@ package com.zufar.icedlatte.user.service;
 
 import java.time.Clock;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
+import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.user.config.AvatarUploadProperties;
 import com.zufar.icedlatte.user.entity.UserAvatarUpload;
 import com.zufar.icedlatte.user.entity.UserAvatarUploadStatus;
@@ -26,23 +32,32 @@ public class AvatarUploadLifecycleService {
     private static final int FAILURE_MESSAGE_MAX_LENGTH = 512;
     private static final EnumSet<UserAvatarUploadStatus> DELETE_INVALIDATED_STATUSES = EnumSet.of(
             UserAvatarUploadStatus.PENDING_UPLOAD, UserAvatarUploadStatus.PROCESSING, UserAvatarUploadStatus.READY);
+    private static final EnumSet<UserAvatarUploadStatus> EXPIRABLE_STATUSES =
+            EnumSet.of(UserAvatarUploadStatus.PENDING_UPLOAD, UserAvatarUploadStatus.PROCESSING);
 
     private final UserAvatarUploadRepository repository;
+    private final FileStorageWriterApi fileStorageWriterApi;
     private final AvatarUploadProperties properties;
     private final Clock clock;
     private final Supplier<UUID> uploadIdSupplier;
 
+    @Autowired
     @SuppressWarnings("unused")
-    public AvatarUploadLifecycleService(UserAvatarUploadRepository repository, AvatarUploadProperties properties) {
-        this(repository, properties, Clock.systemUTC(), UUID::randomUUID);
+    public AvatarUploadLifecycleService(
+            UserAvatarUploadRepository repository,
+            FileStorageWriterApi fileStorageWriterApi,
+            AvatarUploadProperties properties) {
+        this(repository, fileStorageWriterApi, properties, Clock.systemUTC(), UUID::randomUUID);
     }
 
     AvatarUploadLifecycleService(
             UserAvatarUploadRepository repository,
+            FileStorageWriterApi fileStorageWriterApi,
             AvatarUploadProperties properties,
             Clock clock,
             Supplier<UUID> uploadIdSupplier) {
         this.repository = repository;
+        this.fileStorageWriterApi = fileStorageWriterApi;
         this.properties = properties;
         this.clock = clock;
         this.uploadIdSupplier = uploadIdSupplier;
@@ -54,9 +69,20 @@ public class AvatarUploadLifecycleService {
         var now = clock.instant();
         return repository
                 .findByUserIdAndClientIdempotencyKey(userId, idempotencyKey)
-                .map(existing -> existing.reusableAt(now) ? existing : rejectExpiredIntent(userId))
-                .orElseGet(() ->
-                        repository.save(newPendingUpload(userId, contentType, originalSizeBytes, idempotencyKey)));
+                .map(existing -> {
+                    if (!existing.reusableAt(now)) {
+                        return rejectExpiredIntent(userId);
+                    }
+                    if (!sameIntentRequest(existing, contentType, originalSizeBytes)) {
+                        throw new BadRequestException(
+                                "Idempotency-Key cannot be reused with different avatar upload request data.");
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    supersedeOlderInflightUploads(userId, now);
+                    return repository.save(newPendingUpload(userId, contentType, originalSizeBytes, idempotencyKey));
+                });
     }
 
     @Transactional
@@ -78,15 +104,89 @@ public class AvatarUploadLifecycleService {
     }
 
     @Transactional
+    public Optional<UserAvatarUpload> cancelUpload(UUID userId, UUID uploadId) {
+        return repository
+                .findById(uploadId)
+                .filter(upload -> upload.getUserId().equals(userId))
+                .flatMap(this::cancelUpload);
+    }
+
+    @Transactional
     public void invalidateUserUploadsAfterAvatarDelete(UUID userId) {
         var uploads = repository.findByUserIdAndStatusIn(userId, DELETE_INVALIDATED_STATUSES);
         var now = clock.instant();
         uploads.forEach(upload -> {
+            boolean wasActive = upload.isActive();
             upload.setActive(false);
             upload.setStatus(UserAvatarUploadStatus.SUPERSEDED);
             upload.setSupersededAt(now);
+            enqueueSourceObjectDeletion(upload);
+            if (!wasActive) {
+                enqueueProcessedObjectDeletion(upload);
+            }
         });
         repository.saveAll(uploads);
+    }
+
+    @Transactional
+    public long expireStaleUploads(java.time.Instant now) {
+        List<UserAvatarUpload> uploadsToExpire =
+                repository.findByStatusInAndExpiresAtBefore(EXPIRABLE_STATUSES, now).stream()
+                        .filter(upload -> upload.getStatus() != UserAvatarUploadStatus.EXPIRED)
+                        .toList();
+
+        if (uploadsToExpire.isEmpty()) {
+            return 0L;
+        }
+
+        uploadsToExpire.forEach(upload -> {
+            upload.setActive(false);
+            upload.setStatus(UserAvatarUploadStatus.EXPIRED);
+            enqueueSourceObjectDeletion(upload);
+        });
+        repository.saveAll(uploadsToExpire);
+        return uploadsToExpire.size();
+    }
+
+    private Optional<UserAvatarUpload> cancelUpload(UserAvatarUpload upload) {
+        if (upload.isActive()) {
+            log.info("avatar.upload_cancel.ignored: reason=active_avatar, uploadId={}", upload.getId());
+            return Optional.empty();
+        }
+        if (!DELETE_INVALIDATED_STATUSES.contains(upload.getStatus())) {
+            log.info(
+                    "avatar.upload_cancel.ignored: reason=status, uploadId={}, status={}",
+                    upload.getId(),
+                    upload.getStatus());
+            return Optional.empty();
+        }
+
+        upload.setActive(false);
+        upload.setStatus(UserAvatarUploadStatus.SUPERSEDED);
+        upload.setSupersededAt(clock.instant());
+        enqueueSourceObjectDeletion(upload);
+        enqueueProcessedObjectDeletion(upload);
+        return Optional.of(repository.save(upload));
+    }
+
+    private void supersedeOlderInflightUploads(UUID userId, java.time.Instant now) {
+        List<UserAvatarUpload> uploadsToSupersede =
+                repository.findByUserIdAndStatusIn(userId, DELETE_INVALIDATED_STATUSES).stream()
+                        .filter(upload -> !upload.isActive())
+                        .toList();
+
+        if (uploadsToSupersede.isEmpty()) {
+            return;
+        }
+
+        uploadsToSupersede.forEach(upload -> {
+            upload.setActive(false);
+            upload.setStatus(UserAvatarUploadStatus.SUPERSEDED);
+            upload.setSupersededAt(now);
+            enqueueSourceObjectDeletion(upload);
+            enqueueProcessedObjectDeletion(upload);
+        });
+        repository.saveAll(uploadsToSupersede);
     }
 
     private Optional<UserAvatarUpload> markProcessing(UserAvatarUpload upload, AvatarUploadProcessingResult result) {
@@ -109,6 +209,7 @@ public class AvatarUploadLifecycleService {
         var now = clock.instant();
         if (!upload.getExpiresAt().isAfter(now)) {
             upload.setStatus(UserAvatarUploadStatus.EXPIRED);
+            enqueueSourceObjectDeletion(upload);
             repository.save(upload);
             return Optional.empty();
         }
@@ -140,6 +241,7 @@ public class AvatarUploadLifecycleService {
         upload.setProcessedAt(clock.instant());
         upload.setFailureCode(truncate(failureCode, FAILURE_CODE_MAX_LENGTH));
         upload.setFailureMessage(truncate(failureMessage, FAILURE_MESSAGE_MAX_LENGTH));
+        enqueueSourceObjectDeletion(upload);
         return repository.save(upload);
     }
 
@@ -171,7 +273,28 @@ public class AvatarUploadLifecycleService {
         upload.setImageHeight(completion.height());
         upload.setSha256(completion.sha256());
         upload.setProcessedAt(clock.instant());
+        enqueueSourceObjectDeletion(upload);
         return Optional.of(repository.save(upload));
+    }
+
+    private void enqueueSourceObjectDeletion(UserAvatarUpload upload) {
+        if (!StringUtils.hasText(upload.getOriginalBucket()) || !StringUtils.hasText(upload.getOriginalKey())) {
+            return;
+        }
+        fileStorageWriterApi.enqueueDeleteObject(
+                new FileMetadataDto(upload.getId(), upload.getOriginalBucket(), upload.getOriginalKey()));
+    }
+
+    private void enqueueProcessedObjectDeletion(UserAvatarUpload upload) {
+        if (!StringUtils.hasText(upload.getProcessedBucket()) || !StringUtils.hasText(upload.getProcessedKey())) {
+            return;
+        }
+        if (upload.getProcessedBucket().equals(upload.getOriginalBucket())
+                && upload.getProcessedKey().equals(upload.getOriginalKey())) {
+            return;
+        }
+        fileStorageWriterApi.enqueueDeleteObject(
+                new FileMetadataDto(upload.getId(), upload.getProcessedBucket(), upload.getProcessedKey()));
     }
 
     private boolean sourceMismatch(UserAvatarUpload upload, ValidAvatarUploadSourceObject source) {
@@ -185,6 +308,11 @@ public class AvatarUploadLifecycleService {
             return "";
         }
         return value.length() <= maxLength ? value : value.substring(0, maxLength);
+    }
+
+    private boolean sameIntentRequest(UserAvatarUpload existing, String contentType, long originalSizeBytes) {
+        return Objects.equals(existing.getContentType(), contentType)
+                && Objects.equals(existing.getOriginalSizeBytes(), originalSizeBytes);
     }
 
     private UserAvatarUpload rejectExpiredIntent(UUID userId) {

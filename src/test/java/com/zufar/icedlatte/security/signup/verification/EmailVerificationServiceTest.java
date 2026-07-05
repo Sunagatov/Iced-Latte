@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -230,8 +229,12 @@ class EmailVerificationServiceTest {
         EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", " User@Example.COM ", "Password1!");
-        when(store.get(argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com"))))
-                .thenReturn(Optional.empty());
+        when(store.putIfAbsent(
+                        argThat(key ->
+                                key != null && key.startsWith("email:rate:") && !key.endsWith("user@example.com")),
+                        any(),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(true);
         when(store.putIfAbsent(
                         argThat(key -> key.startsWith("email:token:email_verification:")),
                         argThat(value -> !value.contains("user@example.com")
@@ -246,12 +249,13 @@ class EmailVerificationServiceTest {
 
         assertThat(request.getEmail()).isEqualTo(" User@Example.COM ");
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(store).putIfAbsent(keyCaptor.capture(), any(), eq(Duration.ofMinutes(15)));
-        assertThat(keyCaptor.getValue())
-                .startsWith("email:token:email_verification:")
-                .doesNotEndWith(token);
+        verify(store, times(2)).putIfAbsent(keyCaptor.capture(), any(), eq(Duration.ofMinutes(15)));
+        assertThat(keyCaptor.getAllValues())
+                .anySatisfy(key -> assertThat(key)
+                        .startsWith("email:token:email_verification:")
+                        .doesNotEndWith(token));
         verify(store)
-                .put(
+                .putIfAbsent(
                         argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")),
                         any(),
                         eq(Duration.ofMinutes(15)));
@@ -264,7 +268,11 @@ class EmailVerificationServiceTest {
         EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
         UserRegistrationRequest request =
                 new UserRegistrationRequest("Ada", "Lovelace", "user@example.com", "Password1!");
-        when(store.get(argThat(key -> key.startsWith("email:rate:")))).thenReturn(Optional.empty());
+        when(store.putIfAbsent(
+                        argThat(key -> key != null && key.startsWith("email:rate:")),
+                        any(),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(true);
         when(store.putIfAbsent(
                         argThat(key -> key.startsWith("email:token:password_reset:")),
                         any(),
@@ -280,10 +288,33 @@ class EmailVerificationServiceTest {
                         any(),
                         eq(Duration.ofMinutes(15)));
         verify(store)
-                .put(
+                .putIfAbsent(
                         argThat(key -> key.startsWith("email:rate:") && !key.endsWith("user@example.com")),
                         any(),
                         eq(Duration.ofMinutes(15)));
+    }
+
+    @Test
+    @DisplayName("cleans up reserved cooldown when token allocation fails")
+    void cleansUpReservedCooldownWhenTokenAllocationFails() {
+        ExpiringKeyValueStore store = mock(ExpiringKeyValueStore.class);
+        EmailTokenService serviceWithMockStore = tokenServiceWithStore(store);
+        when(store.putIfAbsent(
+                        argThat(key -> key != null && key.startsWith("email:rate:password_reset:")),
+                        any(),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(true);
+        when(store.putIfAbsent(
+                        argThat(key -> key.startsWith("email:token:password_reset:")),
+                        any(),
+                        eq(Duration.ofMinutes(15))))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> serviceWithMockStore.generatePasswordResetToken("user@example.com"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("allocate unique email token");
+
+        verify(store).remove(argThat(key -> key.startsWith("email:rate:password_reset:")));
     }
 
     private EmailTokenService tokenServiceWithStore(ExpiringKeyValueStore store) {

@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.converter;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,57 @@ class UserDtoConverterTest {
         assertEquals("Paris", existingAddress.getCity());
         assertEquals("10 Rue de Rivoli", existingAddress.getLine());
         assertEquals("75001", existingAddress.getPostcode());
+    }
+
+    @Test
+    @DisplayName("updateEntity should preserve existing address when request omits address")
+    void updateEntityShouldPreserveExistingAddressWhenAddressIsOmitted() {
+        Address existingAddress = Address.builder()
+                .country("United Kingdom")
+                .city("London")
+                .line("221B Baker Street")
+                .postcode("NW1 6XE")
+                .build();
+        UserEntity entity = UserEntity.builder()
+                .firstName("Old")
+                .lastName("Name")
+                .address(existingAddress)
+                .build();
+        UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+        request.setFirstName("New");
+        request.setLastName("Name");
+        request.setAddress(null);
+
+        userDtoConverter.updateEntity(entity, request);
+
+        assertEquals(existingAddress, entity.getAddress());
+        assertEquals("United Kingdom", entity.getAddress().getCountry());
+        assertEquals("London", entity.getAddress().getCity());
+        assertEquals("221B Baker Street", entity.getAddress().getLine());
+        assertEquals("NW1 6XE", entity.getAddress().getPostcode());
+    }
+
+    @Test
+    @DisplayName("updateEntity should clear address when request sends an empty address object")
+    void updateEntityShouldClearAddressWhenRequestSendsEmptyAddressObject() {
+        UserEntity entity = UserEntity.builder()
+                .firstName("Old")
+                .lastName("Name")
+                .address(Address.builder()
+                        .country("United Kingdom")
+                        .city("London")
+                        .line("221B Baker Street")
+                        .postcode("NW1 6XE")
+                        .build())
+                .build();
+        UpdateUserAccountRequest request = new UpdateUserAccountRequest();
+        request.setFirstName("New");
+        request.setLastName("Name");
+        request.setAddress(new AddressDto());
+
+        userDtoConverter.updateEntity(entity, request);
+
+        assertNull(entity.getAddress());
     }
 
     @Test

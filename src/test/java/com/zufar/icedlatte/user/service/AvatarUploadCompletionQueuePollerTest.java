@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.user.config.AvatarUploadCompletionQueueProperties;
 import com.zufar.icedlatte.user.config.AvatarUploadProperties;
 
@@ -89,6 +90,28 @@ class AvatarUploadCompletionQueuePollerTest {
         poller(sqsClient, parser, handler).poll();
 
         verify(sqsClient, never()).deleteMessage(any(DeleteMessageRequest.class));
+    }
+
+    @Test
+    @DisplayName("deletes invalid message from SQS so poison payload does not loop forever")
+    void pollDeletesInvalidMessage() {
+        SqsClient sqsClient = mock(SqsClient.class);
+        AvatarUploadCompletionQueueMessageParser parser = mock(AvatarUploadCompletionQueueMessageParser.class);
+        AvatarUploadCompletionHandler handler = mock(AvatarUploadCompletionHandler.class);
+        Message message = Message.builder()
+                .messageId("message-1")
+                .receiptHandle("receipt-1")
+                .body("{\"status\":\"BROKEN\"}")
+                .build();
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(ReceiveMessageResponse.builder().messages(message).build());
+        when(parser.parse(message.body()))
+                .thenThrow(new BadRequestException("Avatar upload completion message version is unsupported."));
+
+        poller(sqsClient, parser, handler).poll();
+
+        verifyNoInteractions(handler);
+        verify(sqsClient).deleteMessage(deleteRequest());
     }
 
     @Test

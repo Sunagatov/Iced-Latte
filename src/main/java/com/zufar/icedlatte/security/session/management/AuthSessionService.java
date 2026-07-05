@@ -66,6 +66,17 @@ public class AuthSessionService {
         });
     }
 
+    @Transactional
+    public void revokeBySessionId(UUID sessionId) {
+        sessionRepository
+                .findByIdForUpdate(sessionId)
+                .filter(this::isActiveSession)
+                .ifPresent(session -> {
+                    revokeSession(session);
+                    log.info("auth.session.revoked: sessionId={}", maskSessionId(session.getId()));
+                });
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId) {
         sessionRepository.revokeAllByUserId(userId, now());
@@ -118,6 +129,13 @@ public class AuthSessionService {
             throw new JwtTokenBlacklistedException("Refresh token has expired");
         }
         return session;
+    }
+
+    public void validateActiveSession(UUID sessionId, UUID userId) {
+        boolean active = sessionRepository.existsActiveSession(sessionId, userId, now());
+        if (!active) {
+            throw new JwtTokenBlacklistedException("Session has been revoked");
+        }
     }
 
     private void handleReplayAttempt(AuthSessionEntity session) {

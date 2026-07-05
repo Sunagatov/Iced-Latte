@@ -35,6 +35,14 @@ public interface AuthSessionRepository extends JpaRepository<AuthSessionEntity, 
             + "AND s.expiresAt > :now")
     List<AuthSessionEntity> findActiveSessions(@Param("userId") UUID userId, @Param("now") OffsetDateTime now);
 
+    @Query("SELECT COUNT(s) > 0 FROM AuthSessionEntity s " + "WHERE s.id = :sessionId "
+            + "AND s.userId = :userId "
+            + "AND s.revokedAt IS NULL "
+            + "AND s.compromised = false "
+            + "AND s.expiresAt > :now")
+    boolean existsActiveSession(
+            @Param("sessionId") UUID sessionId, @Param("userId") UUID userId, @Param("now") OffsetDateTime now);
+
     @Modifying
     @Query("UPDATE AuthSessionEntity s SET s.revokedAt = :now " + "WHERE s.userId = :userId "
             + "AND s.revokedAt IS NULL "

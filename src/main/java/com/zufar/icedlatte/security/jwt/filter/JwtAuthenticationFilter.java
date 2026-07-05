@@ -11,6 +11,7 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.zufar.icedlatte.common.correlation.RequestContextConstants;
@@ -40,8 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        return ApiPaths.AUTH_REFRESH.equals(uri) || uri.startsWith(ApiPaths.AUTH_OAUTH + "/");
+        String path = requestPath(request);
+        return ApiPaths.AUTH_AUTHENTICATE.equals(path)
+                || (ApiPaths.AUTH + "/register").equals(path)
+                || (ApiPaths.AUTH + "/confirm").equals(path)
+                || (ApiPaths.AUTH + "/password/forgot").equals(path)
+                || (ApiPaths.AUTH + "/password/change").equals(path)
+                || ApiPaths.AUTH_REFRESH.equals(path)
+                || path.startsWith(ApiPaths.AUTH_OAUTH + "/");
     }
 
     @Override
@@ -110,5 +117,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.clearContext();
         MDC.remove(RequestContextConstants.USER_ID_MDC_KEY);
         MDC.remove(RequestContextConstants.SESSION_ID_MDC_KEY);
+    }
+
+    private String requestPath(HttpServletRequest request) {
+        if (StringUtils.hasText(request.getServletPath())) {
+            return request.getServletPath();
+        }
+        String requestUri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (StringUtils.hasText(contextPath) && requestUri.startsWith(contextPath)) {
+            return requestUri.substring(contextPath.length());
+        }
+        return requestUri;
     }
 }

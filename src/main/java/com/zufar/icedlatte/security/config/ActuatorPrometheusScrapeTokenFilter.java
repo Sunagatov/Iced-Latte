@@ -34,7 +34,7 @@ public class ActuatorPrometheusScrapeTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return !PROMETHEUS_PATH.equals(request.getRequestURI()) || !StringUtils.hasText(scrapeToken);
+        return !PROMETHEUS_PATH.equals(requestPath(request)) || !StringUtils.hasText(scrapeToken);
     }
 
     @Override
@@ -70,5 +70,17 @@ public class ActuatorPrometheusScrapeTokenFilter extends OncePerRequestFilter {
         byte[] suppliedBytes = suppliedToken.getBytes(StandardCharsets.UTF_8);
         byte[] expectedBytes = expectedToken.getBytes(StandardCharsets.UTF_8);
         return MessageDigest.isEqual(suppliedBytes, expectedBytes);
+    }
+
+    private String requestPath(HttpServletRequest request) {
+        if (StringUtils.hasText(request.getServletPath())) {
+            return request.getServletPath();
+        }
+        String requestUri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (StringUtils.hasText(contextPath) && requestUri.startsWith(contextPath)) {
+            return requestUri.substring(contextPath.length());
+        }
+        return requestUri;
     }
 }

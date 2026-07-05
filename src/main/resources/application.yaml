@@ -215,6 +215,8 @@ avatar:
   incoming-bucket: ${AVATAR_UPLOAD_INCOMING_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
   processed-bucket: ${AVATAR_UPLOAD_PROCESSED_BUCKET:${AWS_USER_BUCKET:iced-latte-users}}
   completion-queue-url: ${AVATAR_UPLOAD_COMPLETION_QUEUE_URL:}
+  retention-cleanup-enabled: ${AVATAR_UPLOAD_RETENTION_CLEANUP_ENABLED:true}
+  retention-cleanup-interval: ${AVATAR_UPLOAD_RETENTION_CLEANUP_INTERVAL:PT30M}
   completion-queue:
     enabled: ${AVATAR_UPLOAD_COMPLETION_QUEUE_ENABLED:false}
     poll-interval: ${AVATAR_UPLOAD_COMPLETION_QUEUE_POLL_INTERVAL:PT5S}

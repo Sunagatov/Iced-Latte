@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.springframework.http.MediaType;
@@ -68,7 +69,7 @@ public class UserAvatarEndpoint implements UserAvatarApi {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
     public ResponseEntity<AvatarUploadIntentResponse> createAvatarUpload(
-            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @NotNull @Size(min = 1, max = 100) @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateAvatarUploadRequest request) {
         var userId = currentUserId();
         var response = avatarUploadIntentService.createUploadIntent(userId, request, idempotencyKey, clientIp());
@@ -85,6 +86,15 @@ public class UserAvatarEndpoint implements UserAvatarApi {
                 .findUploadStatus(userId, uploadId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Override
+    @DeleteMapping(path = AVATAR_UPLOADS_URL + "/{uploadId}")
+    public ResponseEntity<Void> cancelAvatarUpload(@PathVariable UUID uploadId) {
+        var userId = currentUserId();
+        avatarUploadIntentService.cancelUpload(userId, uploadId);
+        log.info("user.avatar.upload_cancelled: userId={}, uploadId={}", userId, uploadId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

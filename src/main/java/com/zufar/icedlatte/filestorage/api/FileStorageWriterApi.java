@@ -14,5 +14,7 @@ public interface FileStorageWriterApi {
 
     void recordExisting(FileMetadataDto fileMetadataDto);
 
+    void enqueueDeleteObject(FileMetadataDto fileMetadataDto);
+
     void deleteFile(UUID relatedObjectId);
 }

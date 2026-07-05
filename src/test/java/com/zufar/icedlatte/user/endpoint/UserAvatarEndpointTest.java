@@ -93,6 +93,19 @@ class UserAvatarEndpointTest {
         verifyNoInteractions(userAvatarUploader);
     }
 
+    @Test
+    @DisplayName("Delegates avatar upload cancellation with current user")
+    void cancelAvatarUpload_delegatesWithCurrentUser() {
+        UUID userId = UUID.randomUUID();
+        UUID uploadId = UUID.randomUUID();
+        when(currentUserIdProvider.getUserId()).thenReturn(userId);
+
+        var result = endpoint.cancelAvatarUpload(uploadId);
+
+        Assertions.assertThat(result.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(avatarUploadIntentService).cancelUpload(userId, uploadId);
+    }
+
     private static MultipartFile avatarFile() {
         return new MockMultipartFile("file", "avatar.png", "image/png", new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47});
     }
