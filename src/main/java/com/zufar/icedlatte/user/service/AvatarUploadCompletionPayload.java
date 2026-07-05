@@ -6,14 +6,14 @@ import org.springframework.util.StringUtils;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 
 public record AvatarUploadCompletionPayload(
-        String eventType,
+        @Nullable String eventType,
         @Nullable Integer version,
-        String userId,
-        String uploadId,
-        String status,
-        String sourceBucket,
-        String sourceKey,
-        String requestedContentType,
+        @Nullable String userId,
+        @Nullable String uploadId,
+        @Nullable String status,
+        @Nullable String sourceBucket,
+        @Nullable String sourceKey,
+        @Nullable String requestedContentType,
         @Nullable String processedBucket,
         @Nullable String processedKey,
         @Nullable String contentType,

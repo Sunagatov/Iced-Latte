@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.service;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.exception.BadRequestException;
 
@@ -16,10 +17,11 @@ public class AvatarUploadCompletionQueueMessageParser {
 
     public AvatarUploadCompletionQueueMessage parse(String body) {
         try {
-            AvatarUploadCompletionPayload payload = objectMapper.readValue(body, AvatarUploadCompletionPayload.class);
-            if (payload == null) {
+            JsonNode payloadNode = objectMapper.readTree(body);
+            if (payloadNode == null || payloadNode.isNull()) {
                 throw new BadRequestException("Avatar upload completion message JSON is invalid.");
             }
+            AvatarUploadCompletionPayload payload = objectMapper.treeToValue(payloadNode, AvatarUploadCompletionPayload.class);
             validateEnvelope(payload);
             return payload.toQueueMessage();
         } catch (JsonProcessingException ex) {

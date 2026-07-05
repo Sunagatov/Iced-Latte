@@ -3,6 +3,7 @@ package com.zufar.icedlatte.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -23,9 +24,11 @@ class AvatarUploadCompletionPayloadTest {
 
         assertThat(message.ready()).isTrue();
         AvatarUploadCompletionCommand command = message.completionCommand();
-        assertThat(command.sourceObject().bucket()).isEqualTo("iced-latte-users");
-        assertThat(command.sourceObject().key()).isEqualTo(AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID));
-        assertThat(command.sourceObject().metadata())
+        AvatarUploadSourceObject sourceObject = Objects.requireNonNull(command.sourceObject());
+        assertThat(Objects.requireNonNull(sourceObject.bucket())).isEqualTo("iced-latte-users");
+        assertThat(Objects.requireNonNull(sourceObject.key()))
+                .isEqualTo(AvatarUploadStorageLayout.incomingKey(USER_ID, UPLOAD_ID));
+        assertThat(Objects.requireNonNull(sourceObject.metadata()))
                 .containsAllEntriesOf(AvatarUploadStorageLayout.sourceMetadata(USER_ID, UPLOAD_ID, "image/png"));
         assertThat(command.processedKey())
                 .isEqualTo(AvatarUploadStorageLayout.processedPrefix(USER_ID, UPLOAD_ID) + "avatar-384.webp");
@@ -38,7 +41,8 @@ class AvatarUploadCompletionPayloadTest {
 
         assertThat(message.ready()).isFalse();
         AvatarUploadFailureCommand command = message.failureCommand();
-        assertThat(command.sourceObject().metadata())
+        AvatarUploadSourceObject sourceObject = Objects.requireNonNull(command.sourceObject());
+        assertThat(Objects.requireNonNull(sourceObject.metadata()))
                 .containsAllEntriesOf(AvatarUploadStorageLayout.sourceMetadata(USER_ID, UPLOAD_ID, "image/png"));
         assertThat(command.failureCode()).isEqualTo("DECODE_FAILED");
         assertThat(command.failureMessage()).isEqualTo("Cannot decode image");
