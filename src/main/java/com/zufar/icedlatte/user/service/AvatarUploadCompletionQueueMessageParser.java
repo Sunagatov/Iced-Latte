@@ -21,7 +21,8 @@ public class AvatarUploadCompletionQueueMessageParser {
             if (payloadNode == null || payloadNode.isNull()) {
                 throw new BadRequestException("Avatar upload completion message JSON is invalid.");
             }
-            AvatarUploadCompletionPayload payload = objectMapper.treeToValue(payloadNode, AvatarUploadCompletionPayload.class);
+            AvatarUploadCompletionPayload payload =
+                    objectMapper.treeToValue(payloadNode, AvatarUploadCompletionPayload.class);
             validateEnvelope(payload);
             return payload.toQueueMessage();
         } catch (JsonProcessingException ex) {

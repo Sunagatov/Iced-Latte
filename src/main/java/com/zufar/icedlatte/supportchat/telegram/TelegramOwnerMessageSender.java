@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.entity.SupportConversationEntity;
@@ -14,13 +16,11 @@ import com.zufar.icedlatte.supportchat.owner.OwnerMessageSender;
 import com.zufar.icedlatte.supportchat.repository.SupportConversationRepository;
 import com.zufar.icedlatte.supportchat.repository.SupportMessageRepository;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "support-chat.owner-message-mode", havingValue = "TELEGRAM")
-@RequiredArgsConstructor
 class TelegramOwnerMessageSender implements OwnerMessageSender {
 
     private final SupportChatProperties properties;
@@ -28,6 +28,22 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
     private final SupportMessageRepository messageRepository;
     private final TelegramBotClient telegramBotClient;
     private final TelegramOwnerMessageFormatter formatter;
+    private final TransactionTemplate transactionTemplate;
+
+    public TelegramOwnerMessageSender(
+            SupportChatProperties properties,
+            SupportConversationRepository conversationRepository,
+            SupportMessageRepository messageRepository,
+            TelegramBotClient telegramBotClient,
+            TelegramOwnerMessageFormatter formatter,
+            PlatformTransactionManager transactionManager) {
+        this.properties = properties;
+        this.conversationRepository = conversationRepository;
+        this.messageRepository = messageRepository;
+        this.telegramBotClient = telegramBotClient;
+        this.formatter = formatter;
+        this.transactionTemplate = createTransactionTemplate(transactionManager);
+    }
 
     @Override
     public OwnerMessageDeliveryResult send(OwnerMessage message) {
@@ -59,8 +75,7 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
             Optional<TelegramForumTopic> topic = telegramBotClient.createForumTopic(topicName);
             if (topic.isPresent()) {
                 long telegramMessageThreadId = topic.get().messageThreadId();
-                conversation.setTelegramMessageThreadId(telegramMessageThreadId);
-                conversationRepository.save(conversation);
+                saveThreadCorrelation(conversation, telegramMessageThreadId);
                 OwnerMessageDeliveryResult topicDelivery =
                         sendToExistingTopic(messageId, telegramMessageThreadId, text);
                 if (!topicDelivery.delivered()) {
@@ -90,15 +105,36 @@ class TelegramOwnerMessageSender implements OwnerMessageSender {
         }
         long telegramMessageId = sent.get().messageId();
         storeTelegramMessageId(messageId, telegramMessageId);
-        conversation.setTelegramFallbackMessageId(telegramMessageId);
-        conversationRepository.save(conversation);
+        saveFallbackCorrelation(conversation, telegramMessageId);
         return OwnerMessageDeliveryResult.deliveredResult(telegramMessageId);
     }
 
     private void storeTelegramMessageId(UUID messageId, long telegramMessageId) {
-        int updatedRows = messageRepository.updateTelegramMessageId(messageId, telegramMessageId);
-        if (updatedRows != 1) {
-            throw new IllegalStateException("Support chat telegram message correlation was not updated");
-        }
+        transactionTemplate.executeWithoutResult(_ -> {
+            int updatedRows = messageRepository.updateTelegramMessageId(messageId, telegramMessageId);
+            if (updatedRows != 1) {
+                throw new IllegalStateException("Support chat telegram message correlation was not updated");
+            }
+        });
+    }
+
+    private void saveThreadCorrelation(SupportConversationEntity conversation, long telegramMessageThreadId) {
+        transactionTemplate.executeWithoutResult(_ -> {
+            conversation.setTelegramMessageThreadId(telegramMessageThreadId);
+            conversationRepository.save(conversation);
+        });
+    }
+
+    private void saveFallbackCorrelation(SupportConversationEntity conversation, long telegramMessageId) {
+        transactionTemplate.executeWithoutResult(_ -> {
+            conversation.setTelegramFallbackMessageId(telegramMessageId);
+            conversationRepository.save(conversation);
+        });
+    }
+
+    private static TransactionTemplate createTransactionTemplate(PlatformTransactionManager transactionManager) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setReadOnly(false);
+        return transactionTemplate;
     }
 }

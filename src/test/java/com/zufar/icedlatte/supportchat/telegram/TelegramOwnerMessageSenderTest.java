@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties;
 import com.zufar.icedlatte.supportchat.config.SupportChatProperties.Bucket;
@@ -34,8 +36,13 @@ class TelegramOwnerMessageSenderTest {
 
     private final SupportConversationRepository conversationRepository = mock(SupportConversationRepository.class);
     private final SupportMessageRepository messageRepository = mock(SupportMessageRepository.class);
+    private final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
     private final FakeTelegramBotClient telegramBotClient = new FakeTelegramBotClient();
     private final TelegramOwnerMessageFormatter formatter = new TelegramOwnerMessageFormatter();
+
+    TelegramOwnerMessageSenderTest() {
+        lenient().when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    }
 
     @Test
     @DisplayName("Existing Telegram topic is reused")
@@ -56,6 +63,7 @@ class TelegramOwnerMessageSenderTest {
                 .contains("Reply in this topic or reply to this bot message.")
                 .doesNotContain("User ID:");
         verify(conversationRepository, never()).save(any());
+        verify(transactionManager).commit(any());
     }
 
     @Test
@@ -76,6 +84,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(telegramBotClient.sendMessageCalls).isEqualTo(2);
         assertThat(telegramBotClient.lastThreadId).isNull();
         verify(conversationRepository).save(conversation);
+        verify(transactionManager, times(2)).commit(any());
     }
 
     @Test
@@ -92,6 +101,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(456L);
         assertThat(telegramBotClient.lastThreadId).isEqualTo(456L);
         verify(conversationRepository).save(conversation);
+        verify(transactionManager, times(2)).commit(any());
     }
 
     @Test
@@ -110,6 +120,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(789L);
         assertThat(telegramBotClient.lastThreadId).isNull();
         verify(conversationRepository).save(conversation);
+        verify(transactionManager, times(2)).commit(any());
     }
 
     @Test
@@ -127,6 +138,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(101L);
         assertThat(telegramBotClient.lastThreadId).isNull();
         verify(conversationRepository).save(conversation);
+        verify(transactionManager, times(2)).commit(any());
     }
 
     @Test
@@ -145,6 +157,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramFallbackMessageId()).isEqualTo(790L);
         assertThat(telegramBotClient.sendMessageCalls).isEqualTo(2);
         verify(conversationRepository, times(2)).save(conversation);
+        verify(transactionManager, times(3)).commit(any());
     }
 
     @Test
@@ -178,6 +191,7 @@ class TelegramOwnerMessageSenderTest {
         assertThat(conversation.getTelegramMessageThreadId()).isEqualTo(456L);
         assertThat(conversation.getTelegramFallbackMessageId()).isNull();
         verify(conversationRepository).save(conversation);
+        verify(transactionManager).commit(any());
     }
 
     @Test
@@ -212,7 +226,8 @@ class TelegramOwnerMessageSenderTest {
                 conversationRepository,
                 messageRepository,
                 telegramBotClient,
-                formatter);
+                formatter,
+                transactionManager);
     }
 
     private static SupportConversationEntity conversation() {

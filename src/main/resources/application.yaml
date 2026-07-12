@@ -604,6 +604,12 @@ support-chat:
       max-requests: 60
       window-duration: 1m
 
+app:
+  scheduling:
+    pool-size: ${APP_SCHEDULING_POOL_SIZE:4}
+    thread-name-prefix: ${APP_SCHEDULING_THREAD_NAME_PREFIX:iced-latte-scheduler-}
+    await-termination: ${APP_SCHEDULING_AWAIT_TERMINATION:PT30S}
+
 # ─────────────────────────────────────────────────────────────────────────────
 # ⑧ OBSERVABILITY (Sentry + Actuator/Metrics + Tracing)
 # ─────────────────────────────────────────────────────────────────────────────

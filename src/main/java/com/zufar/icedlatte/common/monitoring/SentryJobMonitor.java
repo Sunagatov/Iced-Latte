@@ -1,15 +1,19 @@
 package com.zufar.icedlatte.common.monitoring;
 
-import java.util.concurrent.TimeUnit;
-
+import io.sentry.CheckIn;
+import io.sentry.CheckInStatus;
+import io.sentry.MonitorConfig;
+import io.sentry.MonitorSchedule;
+import io.sentry.MonitorScheduleUnit;
+import io.sentry.Sentry;
+import io.sentry.protocol.SentryId;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import io.sentry.*;
-import io.sentry.protocol.SentryId;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -55,7 +59,7 @@ public class SentryJobMonitor {
         long intervalMinutes = Math.max(1, TimeUnit.MILLISECONDS.toMinutes(fixedDelayMs));
         MonitorConfig monitorConfig = new MonitorConfig(
                 MonitorSchedule.interval(Math.toIntExact(intervalMinutes), MonitorScheduleUnit.MINUTE));
-        monitorConfig.setCheckinMargin(5L);
+        monitorConfig.setCheckinMargin(recommendedCheckinMarginMinutes(intervalMinutes));
         monitorConfig.setMaxRuntime(Math.max(5L, intervalMinutes));
         monitorConfig.setFailureIssueThreshold(1L);
         monitorConfig.setRecoveryThreshold(1L);
@@ -112,5 +116,10 @@ public class SentryJobMonitor {
 
     private double durationSeconds(long startedAt) {
         return (System.nanoTime() - startedAt) / 1_000_000_000.0;
+    }
+
+    private long recommendedCheckinMarginMinutes(long intervalMinutes) {
+        long quarterIntervalMinutes = Math.max(1L, intervalMinutes / 4L);
+        return Math.clamp(quarterIntervalMinutes, 5L, 30L);
     }
 }

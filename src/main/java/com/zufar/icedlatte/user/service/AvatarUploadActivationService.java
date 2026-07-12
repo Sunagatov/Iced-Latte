@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -29,6 +30,7 @@ public class AvatarUploadActivationService {
     private final Clock clock;
 
     @SuppressWarnings("unused")
+    @Autowired
     public AvatarUploadActivationService(
             UserAvatarUploadRepository repository, FileStorageWriterApi fileStorageWriterApi) {
         this(repository, fileStorageWriterApi, Clock.systemUTC());

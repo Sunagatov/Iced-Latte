@@ -66,6 +66,16 @@ class SentryJobMonitorTest {
 
         assertThat(config.getSchedule().getValue()).isEqualTo("60");
         assertThat(config.getSchedule().getUnit()).isEqualTo(MonitorScheduleUnit.MINUTE.apiName());
+        assertThat(config.getCheckinMargin()).isEqualTo(15L);
+    }
+
+    @Test
+    @DisplayName("keeps a minimum check-in margin for short fixed-delay jobs")
+    void keepsMinimumCheckinMarginForShortFixedDelayJobs() {
+        SentryJobMonitor monitor = new SentryJobMonitor();
+
+        var config = monitor.fixedDelayConfig(5_000);
+
         assertThat(config.getCheckinMargin()).isEqualTo(5L);
     }
 }
