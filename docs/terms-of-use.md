@@ -1,9 +1,9 @@
 # Terms of Use
 
 **Effective date:** May 3, 2026
-**Last updated:** June 4, 2026
+**Last updated:** July 12, 2026
 
-Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), an open-source specialty coffee marketplace project. By accessing or using the platform you agree to these Terms of Use. If you do not agree, please do not use the platform.
+Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), a source-available specialty coffee marketplace project. By accessing or using the platform you agree to these Terms of Use. If you do not agree, please do not use the platform.
 
 ---
 
@@ -11,13 +11,22 @@ Welcome to **Iced Latte** ([https://iced-latte.uk](https://iced-latte.uk)), an o
 
 Iced Latte is a non-profit, community-driven project created and maintained by **Zufar Sunagatov**. It serves as a learning sandbox for engineers and as a live demonstration of modern software engineering practices. The platform is not a real commercial store — no real coffee is sold, and no real payments are processed in the demo environment.
 
-## 2. Repository License
+## 2. Repository License & Restricted Use
 
-The repository source code and related repository material are licensed under the **Apache License 2.0** in the repository `LICENSE` file.
+The repository source code and related repository material are licensed under the **Iced Latte Personal Evaluation License 2026** in the repository `LICENSE` file.
 
-That license allows open-source use, modification, distribution, private use, and commercial use subject to its terms.
+That license grants only limited personal local evaluation rights. In summary, you may inspect the code, clone it, run it locally, and make private local modifications for your own learning and evaluation.
 
-The Apache License 2.0 does not grant rights to use the Iced Latte name, logo, domain, visual identity, or other brand assets in a way that suggests official endorsement, partnership, or ownership without explicit written permission.
+Without the author's prior written permission, signed by the author and legally verified as required by the author, you may **not**:
+
+- use the repository material for commercial purposes;
+- deploy, host, publish, or run the project on any remote or network-accessible server;
+- redistribute the repository, public forks, mirrors, builds, images, sublicenses, or derivatives;
+- use the project in courses, bootcamps, workshops, tutorials, classrooms, or training materials;
+- use or present the project in articles, blog posts, newsletters, videos, livestreams, podcasts, talks, case studies, or similar public content;
+- use the project as a template, reference implementation, architecture showcase, or code-style showcase beyond your own private local evaluation.
+
+To request permission for any of the above uses, contact: **zufar.sunagatov@gmail.com**
 
 ## 3. User Accounts
 
@@ -86,9 +95,9 @@ To the maximum extent permitted by applicable law, Zufar Sunagatov and the Iced 
 By submitting a pull request, issue patch, code suggestion, documentation change, design, test, or any other contribution to the Iced Latte repositories, you agree that:
 
 - Your contribution is your original work or you have the right to submit it.
-- Contributions are accepted under the project's Apache License 2.0 contribution terms.
-- Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in Iced Latte is submitted under Apache License 2.0, without any additional terms or conditions.
-- By submitting a contribution, you confirm that you have the right to submit it and that it can be licensed as part of the project under Apache License 2.0.
+- Contributions are accepted only under the project's license terms.
+- By submitting a contribution, you irrevocably assign to the author all right, title, and interest in and to the contribution, including all copyright and other intellectual property rights.
+- Contributors do not receive ownership, copyright, trademark, commercial, publication, hosting, sublicensing, or redistribution rights.
 - You must not submit code, text, images, designs, assets, test data, or other material that you do not have the right to contribute.
 
 See the full [Contributing Guide](../.github/CONTRIBUTING.md) for details.

@@ -1,14 +1,19 @@
-# Relicensing Iced Latte
+# License Status
 
-Iced Latte is moving to the Apache License 2.0 to make the project clearly open
-source and suitable for open-source use, modification, distribution, private use,
-and commercial use.
+Iced Latte is licensed under the Iced Latte Personal Evaluation License 2026.
+The current license is the repository `LICENSE` file.
 
-Future contributions are accepted under Apache-2.0. Unless a contributor
-explicitly states otherwise, contributions intentionally submitted for inclusion
-in Iced Latte are submitted under the Apache License 2.0 without additional
-terms or conditions.
+This is not an open source license. The license grants limited personal local
+evaluation rights only.
 
-Because the repository has had contributors, the maintainer should collect
-agreement from any material past contributors in an issue or pull request comment
-before claiming that all historical contributions have been relicensed.
+Commercial use, remote hosting, publication, redistribution, sublicensing,
+forking, mirroring, derivative repositories, educational use, public
+presentation, and any transfer or sharing of the repository material or
+derivatives require prior written permission signed by the author and legally
+verified as required by the author.
+
+Unless the author expressly agrees otherwise in signed writing, contributions
+are assigned to the author as described in the repository `LICENSE` file.
+
+Earlier repository revisions may contain different license text. Those historical
+references are not the license for the current project.

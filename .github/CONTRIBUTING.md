@@ -2,19 +2,21 @@
 
 Thanks for your interest in contributing. Iced Latte is built in the open so engineers can practice on a real Java/Spring Boot codebase with real product flows, infrastructure, reviews, tests, and pull requests.
 
-> **Contribution license notice:** Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in Iced Latte is submitted under the Apache License 2.0, without any additional terms or conditions.
+> **Intellectual property notice:** By submitting any contribution, you irrevocably assign all rights to the author (Zufar Sunagatov). Contributors have no ownership, copyright, or other IP claim over the Iced Latte project or any related repository. See [`LICENSE`](../LICENSE) Sections 7-8 for full details.
 
 ---
 
 ## 📜 License & Contribution Terms
 
-Before contributing, read the [Apache License 2.0](../LICENSE).
+Before contributing, read the [Iced Latte Personal Evaluation License 2026](../LICENSE).
 
 Important points:
 
-- Iced Latte is licensed under Apache License 2.0.
-- Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in Iced Latte is submitted under the Apache License 2.0, without any additional terms or conditions.
-- By opening a pull request, you confirm that you have the right to submit the contribution and that it can be licensed as part of the project under Apache License 2.0.
+- Contributions are accepted only under the project's license terms.
+- By opening a PR, issue patch, code suggestion, documentation change, design, test, or other contribution, you assign the contribution rights to the author.
+- Contributors do not receive ownership, copyright, trademark, commercial, publication, hosting, sublicensing, or redistribution rights.
+- Personal local evaluation is allowed.
+- Public, educational, remote-hosted, commercial, redistributed, sublicensed, or derivative use requires prior written permission signed by the author and legally verified as required by the author.
 - Do not contribute code, text, images, assets, or designs you do not have the right to submit.
 
 If you do not agree with these terms, do not submit a contribution.

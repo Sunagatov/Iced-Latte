@@ -19,10 +19,10 @@
 
     <licenses>
         <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <name>Iced Latte Personal Evaluation License 2026</name>
+            <url>https://github.com/Sunagatov/Iced-Latte/blob/development/LICENSE</url>
             <distribution>repo</distribution>
-            <comments>SPDX-License-Identifier: Apache-2.0</comments>
+            <comments>SPDX-License-Identifier: LicenseRef-Iced-Latte-Evaluation-2026</comments>
         </license>
     </licenses>
 
