@@ -49,6 +49,9 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/30.05.2026.part1.harden-product-catalog-constraints.sql
       errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/19.07.2026.part2-constrain-product-price-scale.sql
+      errorIfMissing: true
 
   # ========== ORDER MODULE ENHANCEMENTS ==========
   - include:
@@ -59,6 +62,9 @@ databaseChangeLog:
       errorIfMissing: true
   - include:
       file: db/changelog/version-2.0/03.05.2026.part3.create-order-status-history-table.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/19.07.2026.part1.scope-order-idempotency-by-user.sql
       errorIfMissing: true
 
   # ========== STRIPE PAYMENT INTEGRATION ==========

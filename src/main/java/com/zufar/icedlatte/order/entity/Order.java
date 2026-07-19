@@ -84,6 +84,9 @@ public class Order extends AuditableEntity {
 
     @PrePersist
     public void prePersist() {
+        if (items == null) {
+            return;
+        }
         for (OrderItem orderItem : items) {
             orderItem.setOrderId(this.id);
         }

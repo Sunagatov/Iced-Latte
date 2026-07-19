@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.supportchat.telegram;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -64,7 +66,11 @@ class TelegramWebhookService {
 
     private boolean isAuthorizedSecret(String secretToken) {
         String expected = properties.telegram().webhookSecret();
-        return !expected.isBlank() && Objects.equals(expected, secretToken);
+        if (expected == null || expected.isBlank() || secretToken == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                expected.getBytes(StandardCharsets.UTF_8), secretToken.getBytes(StandardCharsets.UTF_8));
     }
 
     private boolean isSupportedOwnerReply(

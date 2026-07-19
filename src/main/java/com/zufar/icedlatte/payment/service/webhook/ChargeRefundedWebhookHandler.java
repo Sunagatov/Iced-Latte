@@ -60,6 +60,14 @@ class ChargeRefundedWebhookHandler implements StripeWebhookEventHandler {
             log.info("order.refund.webhook_ignored: orderId={}, status={}", orderId, order.status());
             return;
         }
+        if (!isFullyRefunded(charge)) {
+            log.info(
+                    "order.refund.webhook_partial_ignored: orderId={}, amount={}, amountRefunded={}",
+                    orderId,
+                    charge.getAmount(),
+                    charge.getAmountRefunded());
+            return;
+        }
         if (!orderPaymentApi.confirmRefund(orderId, "Stripe refund confirmed")) {
             log.warn("order.refund.transition_failed: orderId={}, status={}", orderId, order.status());
             return;
@@ -72,5 +80,14 @@ class ChargeRefundedWebhookHandler implements StripeWebhookEventHandler {
             paymentRepository.save(payment);
         });
         log.info("order.refund.confirmed: orderId={}, paymentIntentId={}", orderId, paymentIntentId);
+    }
+
+    private static boolean isFullyRefunded(Charge charge) {
+        if (Boolean.TRUE.equals(charge.getRefunded())) {
+            return true;
+        }
+        Long amount = charge.getAmount();
+        Long amountRefunded = charge.getAmountRefunded();
+        return amount != null && amountRefunded != null && amountRefunded >= amount;
     }
 }

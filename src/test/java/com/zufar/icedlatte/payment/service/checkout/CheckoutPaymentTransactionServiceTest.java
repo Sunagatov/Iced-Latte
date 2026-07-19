@@ -143,6 +143,47 @@ class CheckoutPaymentTransactionServiceTest {
     }
 
     @Test
+    @DisplayName("prepareCheckout rounds fractional cents to minor units")
+    void prepareCheckout_fractionalCentPrice_roundsMinorUnits() {
+        CreateCheckoutRequestDto request =
+                new CreateCheckoutRequestDto().recipientName("John").recipientSurname("Doe");
+        CartSnapshot cart = new CartSnapshot(
+                UUID.randomUUID(),
+                USER_ID,
+                List.of(cartItem(BigDecimal.valueOf(4.999))),
+                1,
+                BigDecimal.valueOf(4.999),
+                1,
+                OffsetDateTime.now(),
+                null);
+        OrderSnapshot order = new OrderSnapshot(
+                UUID.randomUUID(),
+                USER_ID,
+                OrderStatusSnapshot.PENDING_PAYMENT,
+                BigDecimal.valueOf(4.999),
+                null,
+                List.of());
+
+        when(paymentRepository.findByCheckoutIdempotencyKeyAndUserId(IDEMPOTENCY_KEY, USER_ID))
+                .thenReturn(Optional.empty());
+        when(shoppingCartService.getByUserIdOrThrow(USER_ID)).thenReturn(cart);
+        when(orderCheckoutApi.createPendingPaymentOrderSnapshot(eq(USER_ID), any(CheckoutOrderRequest.class), eq(cart)))
+                .thenReturn(order);
+        when(paymentRepository.saveAndFlush(any(Payment.class))).thenAnswer(inv -> {
+            Payment payment = inv.getArgument(0);
+            payment.setId(UUID.randomUUID());
+            return payment;
+        });
+        when(stripeProperties.currency()).thenReturn("usd");
+
+        service.prepareCheckout(USER_ID, request, IDEMPOTENCY_KEY);
+
+        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).saveAndFlush(captor.capture());
+        assertThat(captor.getValue().getAmountMinor()).isEqualTo(500L);
+    }
+
+    @Test
     @DisplayName("prepareCheckout returns existing order/payment on idempotent retry")
     void prepareCheckout_idempotentHit_returnsExisting() {
         UUID orderId = UUID.randomUUID();
@@ -281,5 +322,22 @@ class CheckoutPaymentTransactionServiceTest {
         assertThat(payment.getProviderSessionId()).isEqualTo("cs_test_123");
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.STRIPE_SESSION_CREATED);
         verify(paymentRepository).save(payment);
+    }
+
+    private static CartItemSnapshot cartItem(BigDecimal price) {
+        ProductSnapshot product = new ProductSnapshot(
+                UUID.randomUUID(),
+                "Coffee",
+                "Desc",
+                price,
+                10,
+                true,
+                null,
+                BigDecimal.valueOf(4.5),
+                12,
+                "Brand",
+                "Seller",
+                250);
+        return new CartItemSnapshot(UUID.randomUUID(), product, 1);
     }
 }

@@ -211,6 +211,28 @@ class FavoriteServiceTest {
     }
 
     @Test
+    @DisplayName("add rejects requests that would exceed total favorite limit")
+    void addRejectsRequestsThatWouldExceedTotalFavoriteLimit() {
+        UUID userId = UUID.randomUUID();
+        UUID firstNewProductId = UUID.randomUUID();
+        UUID secondNewProductId = UUID.randomUUID();
+        FavoriteListEntity entity = favoriteList(userId);
+        for (int i = 0; i < 99; i++) {
+            entity.getFavoriteItems().add(favoriteItem(entity, UUID.randomUUID()));
+        }
+        ListOfFavoriteProducts request = new ListOfFavoriteProducts();
+        request.setProductIds(List.of(firstNewProductId, secondNewProductId));
+
+        when(favoriteRepository.findByUserId(userId)).thenReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> favoriteService.add(request, userId))
+                .isInstanceOf(InvalidFavoriteRequestException.class)
+                .hasMessageContaining("100");
+        verify(productCatalogApi, never()).findExistingProductIds(any());
+        verify(favoriteRepository, never()).insertFavoriteItemIfAbsent(any(), any(), any());
+    }
+
+    @Test
     @DisplayName("add rejects null favorite request product ids")
     void addRejectsNullFavoriteRequestProductIds() {
         UUID userId = UUID.randomUUID();

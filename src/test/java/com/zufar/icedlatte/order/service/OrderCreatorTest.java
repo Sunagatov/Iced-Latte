@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.cart.api.CartCheckoutApi;
@@ -200,6 +201,35 @@ class OrderCreatorTest {
 
         assertThat(result).isEqualTo(expectedDto);
         verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Returns existing order when concurrent idempotency insert wins the race")
+    void createWithConcurrentIdempotencyCollisionReturnsExisting() {
+        UUID userId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        String key = "idem-key-123";
+        CreateNewOrderRequestDto request = buildRequest(null, buildAddressDto());
+        CartSnapshot cart = buildCart(productId);
+        Order existing = Order.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .status(OrderStatus.CREATED)
+                .items(List.of())
+                .build();
+        OrderDto expectedDto = new OrderDto();
+
+        when(orderRepository.findByIdempotencyKeyAndUserId(key, userId))
+                .thenReturn(Optional.empty(), Optional.of(existing));
+        when(shoppingCartService.getByUserIdOrThrow(userId)).thenReturn(cart);
+        when(productCatalogApi.findExistingProductIds(Set.of(productId))).thenReturn(Set.of(productId));
+        when(orderRepository.save(any(Order.class))).thenThrow(new DataIntegrityViolationException("duplicate key"));
+        when(orderDtoConverter.toResponseDto(existing)).thenReturn(expectedDto);
+
+        OrderDto result = orderCreator.create(userId, request, key);
+
+        assertThat(result).isEqualTo(expectedDto);
+        verify(shoppingCartService, never()).deleteCartForUser(userId);
     }
 
     @Test

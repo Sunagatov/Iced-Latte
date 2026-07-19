@@ -19,7 +19,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
+import com.zufar.icedlatte.openapi.dto.OrderEvent;
+import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,5 +58,24 @@ class OrderMaintenanceJobTest {
 
         verify(orderStatusTransitioner).expireUnpaid(orderId, "Unpaid order expired");
         verify(orderRepository, never()).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("continues expiring remaining orders when one stale order cannot transition")
+    void expireUnpaidOrdersInternalSkipsStaleOrderAndContinues() {
+        UUID staleOrderId = UUID.randomUUID();
+        UUID nextOrderId = UUID.randomUUID();
+        ReflectionTestUtils.setField(orderMaintenanceJob, "batchSize", 100);
+        when(orderRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Order>>any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(
+                        Order.builder().id(staleOrderId).build(),
+                        Order.builder().id(nextOrderId).build())));
+        when(orderStatusTransitioner.expireUnpaid(staleOrderId, "Unpaid order expired"))
+                .thenThrow(new InvalidOrderStateTransitionException(OrderStatus.PAID, OrderEvent.CANCEL));
+
+        orderMaintenanceJob.expireUnpaidOrdersInternal();
+
+        verify(orderStatusTransitioner).expireUnpaid(staleOrderId, "Unpaid order expired");
+        verify(orderStatusTransitioner).expireUnpaid(nextOrderId, "Unpaid order expired");
     }
 }

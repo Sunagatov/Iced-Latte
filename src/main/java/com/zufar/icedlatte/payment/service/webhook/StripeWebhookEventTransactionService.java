@@ -38,7 +38,7 @@ class StripeWebhookEventTransactionService {
     public boolean tryReacquireRetryableEvent(String eventId) {
         OffsetDateTime staleBefore = OffsetDateTime.now().minus(PROCESSING_STALE_AFTER);
         return repository
-                .findById(eventId)
+                .findByIdForUpdate(eventId)
                 .filter(evt -> evt.getStatus() == WebhookEventStatus.RETRYABLE_FAILED
                         || (evt.getStatus() == WebhookEventStatus.PROCESSING
                                 && evt.getReceivedAt() != null

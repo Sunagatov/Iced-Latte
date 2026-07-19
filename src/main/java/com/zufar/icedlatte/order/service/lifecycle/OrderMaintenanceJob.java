@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.zufar.icedlatte.common.monitoring.SentryJobMonitor;
 import com.zufar.icedlatte.openapi.dto.OrderStatus;
 import com.zufar.icedlatte.order.entity.Order;
+import com.zufar.icedlatte.order.exception.InvalidOrderStateTransitionException;
 import com.zufar.icedlatte.order.repository.OrderRepository;
 import com.zufar.icedlatte.order.specification.OrderSpecifications;
 
@@ -60,8 +61,12 @@ public class OrderMaintenanceJob {
         List<Order> expired =
                 orderRepository.findAll(spec, PageRequest.of(0, batchSize)).getContent();
         for (Order order : expired) {
-            orderStatusTransitioner.expireUnpaid(order.getId(), "Unpaid order expired");
-            log.info("order.expired: orderId={}", order.getId());
+            try {
+                orderStatusTransitioner.expireUnpaid(order.getId(), "Unpaid order expired");
+                log.info("order.expired: orderId={}", order.getId());
+            } catch (InvalidOrderStateTransitionException ex) {
+                log.info("order.expiration.skipped: orderId={} reason={}", order.getId(), ex.getMessage());
+            }
         }
         if (!expired.isEmpty()) {
             log.info("order.expiration.completed: count={}", expired.size());

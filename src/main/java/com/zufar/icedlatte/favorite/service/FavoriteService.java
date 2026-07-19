@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class FavoriteService {
 
     private static final int MAX_FAVORITE_PRODUCT_IDS = 100;
+    private static final int MAX_TOTAL_FAVORITE_PRODUCTS = 100;
 
     private final FavoriteRepository favoriteRepository;
     private final ProductCatalogApi productCatalogApi;
@@ -55,6 +56,7 @@ public class FavoriteService {
                 .filter(id -> !existingProductIds.contains(id))
                 .collect(LinkedHashSet::new, Set::add, Set::addAll);
 
+        validateTotalFavoriteLimit(existingProductIds.size(), newProductIds.size());
         validateProductsExist(newProductIds);
         insertFavoriteItems(favoriteList.getId(), newProductIds);
 
@@ -104,6 +106,14 @@ public class FavoriteService {
                 productIds.stream().filter(id -> !foundIds.contains(id)).toList();
         if (!missingIds.isEmpty()) {
             throw new FavoriteProductNotFoundException(missingIds);
+        }
+    }
+
+    private static void validateTotalFavoriteLimit(int existingProductCount, int newProductCount) {
+        int totalProductCount = existingProductCount + newProductCount;
+        if (totalProductCount > MAX_TOTAL_FAVORITE_PRODUCTS) {
+            throw new InvalidFavoriteRequestException(
+                    "Favorite list must contain no more than " + MAX_TOTAL_FAVORITE_PRODUCTS + " products.");
         }
     }
 

@@ -54,11 +54,12 @@ class StripeWebhookEventTransactionServiceTest {
                 OffsetDateTime.now(),
                 null,
                 "DB timeout");
-        when(repository.findById("evt_1")).thenReturn(Optional.of(event));
+        when(repository.findByIdForUpdate("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isTrue();
         assertThat(event.getStatus()).isEqualTo(WebhookEventStatus.PROCESSING);
         assertThat(event.getFailureReason()).isNull();
+        verify(repository).findByIdForUpdate("evt_1");
     }
 
     @Test
@@ -71,7 +72,7 @@ class StripeWebhookEventTransactionServiceTest {
                 OffsetDateTime.now(),
                 OffsetDateTime.now(),
                 null);
-        when(repository.findById("evt_1")).thenReturn(Optional.of(event));
+        when(repository.findByIdForUpdate("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
     }
@@ -81,7 +82,7 @@ class StripeWebhookEventTransactionServiceTest {
     void tryReacquireRetryableEvent_freshProcessingEvent_returnsFalse() {
         StripeWebhookEvent event = new StripeWebhookEvent(
                 "evt_1", "checkout.session.completed", WebhookEventStatus.PROCESSING, OffsetDateTime.now(), null, null);
-        when(repository.findById("evt_1")).thenReturn(Optional.of(event));
+        when(repository.findByIdForUpdate("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isFalse();
     }
@@ -96,7 +97,7 @@ class StripeWebhookEventTransactionServiceTest {
                 OffsetDateTime.now().minus(Duration.ofMinutes(6)),
                 null,
                 null);
-        when(repository.findById("evt_1")).thenReturn(Optional.of(event));
+        when(repository.findByIdForUpdate("evt_1")).thenReturn(Optional.of(event));
 
         assertThat(service.tryReacquireRetryableEvent("evt_1")).isTrue();
         assertThat(event.getStatus()).isEqualTo(WebhookEventStatus.PROCESSING);

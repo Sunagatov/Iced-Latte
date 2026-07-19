@@ -101,7 +101,7 @@ public class CheckoutPaymentTransactionService {
 
     private long toMinorUnits(BigDecimal amount) {
         return amount.multiply(BigDecimal.valueOf(100))
-                .setScale(0, RoundingMode.UNNECESSARY)
+                .setScale(0, RoundingMode.HALF_UP)
                 .longValueExact();
     }
 

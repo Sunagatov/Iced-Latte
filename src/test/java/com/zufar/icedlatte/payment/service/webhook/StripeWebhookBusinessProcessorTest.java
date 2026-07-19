@@ -245,6 +245,8 @@ class StripeWebhookBusinessProcessorTest {
         Event event = mockEvent("charge.refunded", "evt_refund");
         Charge charge = mock(Charge.class);
         when(charge.getPaymentIntent()).thenReturn("pi_refund");
+        when(charge.getAmount()).thenReturn(1000L);
+        when(charge.getAmountRefunded()).thenReturn(1000L);
         mockEventObject(event, charge);
         OrderSnapshot order = new OrderSnapshot(
                 ORDER_ID,
@@ -271,6 +273,32 @@ class StripeWebhookBusinessProcessorTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
         assertThat(payment.getRawEventId()).isEqualTo("evt_refund");
         assertThat(payment.getLatestEventType()).isEqualTo("charge.refunded");
+    }
+
+    @Test
+    @DisplayName("charge.refunded ignores partial refunds")
+    void chargeRefunded_partialRefund_ignoresOrderTransition() {
+        Event event = mockEvent("charge.refunded", "evt_partial_refund");
+        Charge charge = mock(Charge.class);
+        when(charge.getPaymentIntent()).thenReturn("pi_refund");
+        when(charge.getAmount()).thenReturn(1000L);
+        when(charge.getAmountRefunded()).thenReturn(400L);
+        mockEventObject(event, charge);
+        OrderSnapshot order = new OrderSnapshot(
+                ORDER_ID,
+                USER_ID,
+                OrderStatusSnapshot.REFUND_REQUESTED,
+                java.math.BigDecimal.TEN,
+                "pi_refund",
+                List.of());
+
+        when(orderPaymentApi.findByStripePaymentIntentId("pi_refund")).thenReturn(Optional.of(order));
+
+        processor.process(event);
+
+        verify(orderPaymentApi, never()).confirmRefund(any(), any());
+        verify(paymentRepository, never()).findByOrderIdForUpdate(any());
+        verify(paymentRepository, never()).save(any());
     }
 
     // --- Helpers ---

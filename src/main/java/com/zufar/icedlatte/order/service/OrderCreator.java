@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -53,6 +56,7 @@ public class OrderCreator implements OrderCheckoutApi {
     @Value("${order.cancellation-window-minutes:30}")
     private int cancellationWindowMinutes;
 
+    @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public OrderDto create(
             final UUID userId, final CreateNewOrderRequestDto request, final @Nullable String idempotencyKey) {
@@ -91,7 +95,19 @@ public class OrderCreator implements OrderCheckoutApi {
                 .idempotencyKey(idempotencyKey)
                 .build();
 
-        Order saved = orderRepository.save(order);
+        Order saved;
+        try {
+            saved = orderRepository.save(order);
+        } catch (DataIntegrityViolationException ex) {
+            if (idempotencyKey == null) {
+                throw ex;
+            }
+            Order existing = orderRepository
+                    .findByIdempotencyKeyAndUserId(idempotencyKey, userId)
+                    .orElseThrow(() -> ex);
+            log.info("order.idempotency_collision: userId={}, idempotencyKey={}", userId, idempotencyKey);
+            return orderDtoConverter.toResponseDto(existing);
+        }
         cartCheckoutApi.deleteCartForUser(userId);
         log.info("order.created: orderId={}, userId={}", saved.getId(), userId);
         return orderDtoConverter.toResponseDto(saved);

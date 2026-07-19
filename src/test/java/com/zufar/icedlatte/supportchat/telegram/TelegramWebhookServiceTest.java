@@ -90,6 +90,15 @@ class TelegramWebhookServiceTest {
     }
 
     @Test
+    @DisplayName("Missing webhook secret token is unauthorized")
+    void handle_missingSecretToken_rejectsRequest() {
+        var result = enabledService().handle(null, update(9001L, topicMessage("Owner answer")));
+
+        assertThat(result).isEqualTo(TelegramWebhookResult.UNAUTHORIZED);
+        verifyNoInteractions(conversationRepository, supportChatService);
+    }
+
+    @Test
     @DisplayName("Wrong owner is ignored")
     void handle_wrongOwner_ignoresUpdate() {
         TelegramWebhookUpdate.TelegramWebhookMessage message = new TelegramWebhookUpdate.TelegramWebhookMessage(
