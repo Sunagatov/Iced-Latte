@@ -32,7 +32,7 @@ jobs:
         run: mvn -B clean verify --file pom.xml --no-transfer-progress
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./target/site/jacoco/jacoco.xml
