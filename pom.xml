@@ -130,7 +130,7 @@
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
         <springdoc-openapi.version>3.0.3</springdoc-openapi.version>
-        <openapi-generator.version>7.21.0</openapi-generator.version>
+        <openapi-generator.version>7.24.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
         <instancio-junit.version>5.5.1</instancio-junit.version>
