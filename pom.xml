@@ -149,7 +149,7 @@
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
         <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>
-        <opentelemetry-semconv.version>1.41.1</opentelemetry-semconv.version>
+        <opentelemetry-semconv.version>1.43.0</opentelemetry-semconv.version>
         <sentry.version>8.37.1</sentry.version>
         <sentry.org/>
         <sentry.project/>
