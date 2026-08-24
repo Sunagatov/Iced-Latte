@@ -165,7 +165,7 @@
         <jspecify.version>1.0.0</jspecify.version>
 
         <!-- ========== MUTATION TESTING VERSIONS ========== -->
-        <pitest-maven-plugin.version>1.25.0</pitest-maven-plugin.version>
+        <pitest-maven-plugin.version>1.25.9</pitest-maven-plugin.version>
         <pitest-junit5-plugin.version>1.2.1</pitest-junit5-plugin.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
