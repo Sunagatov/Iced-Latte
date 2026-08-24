@@ -166,7 +166,7 @@
 
         <!-- ========== MUTATION TESTING VERSIONS ========== -->
         <pitest-maven-plugin.version>1.25.0</pitest-maven-plugin.version>
-        <pitest-junit5-plugin.version>1.2.1</pitest-junit5-plugin.version>
+        <pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
