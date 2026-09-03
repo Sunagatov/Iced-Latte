@@ -107,7 +107,7 @@
         <java.version>25</java.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
-        <postgresql.version>42.7.11</postgresql.version>
+        <postgresql.version>42.7.12</postgresql.version>
 
         <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
         <tomcat.version>11.0.22</tomcat.version>
@@ -116,7 +116,7 @@
 
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
-        <spring-retry.version>2.0.12</spring-retry.version>
+        <spring-retry.version>2.0.13</spring-retry.version>
         <bcprov.version>1.84</bcprov.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
