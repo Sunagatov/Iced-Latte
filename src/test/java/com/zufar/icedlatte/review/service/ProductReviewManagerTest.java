@@ -308,8 +308,65 @@ class ProductReviewManagerTest {
                     .isInstanceOf(ReviewConflictException.class)
                     .hasMessageContaining("changed concurrently");
         }
-
+        
+        //Rawney 26/sep/2026
         @Test
+        @DisplayName("Removes an existing identical vote")
+        void updateLike_sameVote_removesExistingVote() {
+            UUID productId = UUID.randomUUID();
+            UUID reviewId = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+
+            var existingVote = ProductReviewLike.builder()
+                    .userId(userId)
+                    .productId(productId)
+                    .productReviewId(reviewId)
+                    .isLike(true)
+                    .build();
+
+            var review = ProductReview.builder()
+                    .id(reviewId)
+                    .userId(userId)
+                    .productId(productId)
+                    .build();
+
+            var user = new UserLookupSnapshot(
+                    userId,
+                    "Ada",
+                    "Lovelace",
+                    "ada@example.com");
+
+            var expectedDto = new ProductReviewDto();
+
+            when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId))
+                    .thenReturn(Optional.of(existingVote));
+
+            when(reviewRepository.findById(reviewId))
+                    .thenReturn(Optional.of(review));
+
+            when(userLookupApi.getUserById(userId))
+                    .thenReturn(user);
+
+            when(productReviewDtoConverter.toProductReviewDto(review, user))
+                    .thenReturn(expectedDto);
+
+            ProductReviewDto result =
+                    service.updateLike(productId, reviewId, userId, true);
+
+            assertThat(result).isEqualTo(expectedDto);
+
+            verify(productReviewLikeRepository).delete(existingVote);
+
+            verify(productReviewLikeRepository, never())
+                    .saveAndFlush(any());
+
+            verify(reviewRepository).updateLikesCount(reviewId);
+            verify(reviewRepository).updateDislikesCount(reviewId);
+        }
+
+
+        /*
+         * @Test
         @DisplayName("Keeps an existing identical vote unchanged")
         void updateLike_sameVote_keepsExistingVote() {
             UUID productId = UUID.randomUUID();
@@ -341,5 +398,6 @@ class ProductReviewManagerTest {
             verify(reviewRepository).updateLikesCount(reviewId);
             verify(reviewRepository).updateDislikesCount(reviewId);
         }
+         */
     }
 }

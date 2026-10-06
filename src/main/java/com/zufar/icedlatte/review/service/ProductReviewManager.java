@@ -158,13 +158,27 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
                         () -> createProductReviewLike(userId, productId, productReviewId, newProductReviewLike));
     }
 
-    private void updateExistingProductReviewLike(ProductReviewLike entity, Boolean newProductReviewLike) {
+   /*
+    *  private void updateExistingProductReviewLike(ProductReviewLike entity, Boolean newProductReviewLike) {
         if (entity.getIsLike().equals(newProductReviewLike)) {
             return;
         }
         entity.setIsLike(newProductReviewLike);
         productReviewLikeRepository.saveAndFlush(entity);
     }
+    */
+     
+    //Rawney 26-sep-2026
+    private void updateExistingProductReviewLike(ProductReviewLike entity, Boolean newProductReviewLike) {
+        if (entity.getIsLike().equals(newProductReviewLike)) {
+            productReviewLikeRepository.delete(entity);
+            return;
+        }
+
+        entity.setIsLike(newProductReviewLike);
+        productReviewLikeRepository.saveAndFlush(entity);
+    }
+
 
     private void createProductReviewLike(
             UUID userId, UUID productId, UUID productReviewId, Boolean newProductReviewLike) {
