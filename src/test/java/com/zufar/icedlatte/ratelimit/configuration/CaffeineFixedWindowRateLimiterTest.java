@@ -3,6 +3,10 @@ package com.zufar.icedlatte.ratelimit.configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.jupiter.api.DisplayName;
@@ -87,6 +91,68 @@ class CaffeineFixedWindowRateLimiterTest {
             assertThat(durationChanged.allowed()).isTrue();
             assertThat(durationChanged.remaining()).isZero();
             assertThat(durationChanged.windowSeconds()).isEqualTo(5);
+        }
+
+        @Test
+        void alternatingWindowDurationsPreservesBothCounters() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
+            limiter.tryConsume("shared-key", 1, Duration.ofMinutes(1));
+            limiter.tryConsume("shared-key", 1, Duration.ofSeconds(5));
+
+            assertThat(limiter.tryConsume("shared-key", 1, Duration.ofMinutes(1))
+                            .allowed())
+                    .isFalse();
+            assertThat(limiter.tryConsume("shared-key", 1, Duration.ofSeconds(5))
+                            .allowed())
+                    .isFalse();
+        }
+
+        @Test
+        void longWindowsDoNotResetAfterTenMinutesOfInactivity() {
+            AtomicLong nanos = new AtomicLong();
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000, nanos::get);
+            limiter.tryConsume("daily-budget", 1, Duration.ofHours(24));
+            nanos.addAndGet(Duration.ofMinutes(11).toNanos());
+
+            assertThat(limiter.tryConsume("daily-budget", 1, Duration.ofHours(24))
+                            .allowed())
+                    .isFalse();
+        }
+
+        @Test
+        void fractionalWindowSecondsAreRoundedUp() {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
+            assertThat(limiter.tryConsume("fractional", 1, Duration.ofMillis(1500))
+                            .windowSeconds())
+                    .isEqualTo(2);
+        }
+
+        @Test
+        void readingABlockedWindowDoesNotExtendItsExpiry() {
+            AtomicLong nanos = new AtomicLong();
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000, nanos::get);
+            assertThat(limiter.tryConsume("key", 1, WINDOW).allowed()).isTrue();
+            nanos.addAndGet(Duration.ofSeconds(30).toNanos());
+            assertThat(limiter.tryConsume("key", 1, WINDOW).allowed()).isFalse();
+            nanos.addAndGet(Duration.ofSeconds(30).toNanos());
+            assertThat(limiter.tryConsume("key", 1, WINDOW).allowed()).isTrue();
+        }
+
+        @Test
+        void concurrentRequestsCannotExceedTheBudget() throws Exception {
+            var limiter = new CaffeineFixedWindowRateLimiter(FailPolicy.OPEN, 10_000);
+            Callable<Boolean> request =
+                    () -> limiter.tryConsume("shared", 10, WINDOW).allowed();
+            try (var executor = Executors.newFixedThreadPool(8)) {
+                var results = executor.invokeAll(Collections.nCopies(100, request));
+                int allowed = 0;
+                for (var result : results) {
+                    if (result.get()) {
+                        allowed++;
+                    }
+                }
+                assertThat(allowed).isEqualTo(10);
+            }
         }
 
         @Test

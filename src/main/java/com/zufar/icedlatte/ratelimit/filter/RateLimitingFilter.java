@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.ratelimit.filter;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -85,11 +86,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String ip = normalizeIdentity(clientIpExtractor.extract(request));
 
-        if (banTracker.isBanned(ip)) {
+        Duration remainingBan = banTracker.remainingBanDuration(ip);
+        if (!remainingBan.isZero()) {
             meterRegistry.counter("rate_limit.requests.banned").increment();
             long resetTimeMillis =
-                    System.currentTimeMillis() + properties.getBanDuration().toMillis();
-            long banDuration = properties.getBanDuration().toSeconds();
+                    System.currentTimeMillis() + Math.max(1, Math.ceilDiv(remainingBan.toNanos(), 1_000_000));
+            long banDuration =
+                    Math.max(1, Math.ceilDiv(properties.getBanDuration().toMillis(), 1000));
             RateLimitResult banResult = new RateLimitResult(false, 0, 0, resetTimeMillis, banDuration);
             String problemTypeUri = problemTypeUriFactory.build(ProblemType.RATE_LIMITED);
             RateLimitResponseWriter.writeTooManyRequests(response, banResult, problemTypeUri);
@@ -178,8 +181,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             RateLimitResult result,
             String rateLimitKey,
             String identityType) {
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(result.resetTimeMillis() - System.currentTimeMillis());
-        long retryAfterSeconds = Math.max(1, seconds);
+        long retryAfterSeconds = Math.max(1, Math.ceilDiv(result.resetTimeMillis() - System.currentTimeMillis(), 1000));
         String categoryValue = category.getValue();
         String method = request.getMethod();
         String requestPath = ClientIpExtractor.sanitize(request.getRequestURI());

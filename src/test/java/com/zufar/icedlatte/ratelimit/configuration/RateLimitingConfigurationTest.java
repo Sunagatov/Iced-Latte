@@ -92,6 +92,17 @@ class RateLimitingConfigurationTest {
             assertThat(result.allowed()).isTrue();
             verify(redisTemplate).execute(anyRedisScript(), eq(List.of("rate:5000:global:user:alice")), eq("5000"));
         }
+
+        @Test
+        void redisPolicyDoesNotRoundAFractionalWindowDown() {
+            when(redisTemplate.execute(anyRedisScript(), eq(List.of("rate:1500:fractional")), eq("1500")))
+                    .thenReturn(List.of(1L, 1500L));
+            var limiter = configuration.openRedisRateLimiter(redisTemplate);
+
+            assertThat(limiter.tryConsume("fractional", 5, Duration.ofMillis(1500))
+                            .windowSeconds())
+                    .isEqualTo(2);
+        }
     }
 
     @Nested

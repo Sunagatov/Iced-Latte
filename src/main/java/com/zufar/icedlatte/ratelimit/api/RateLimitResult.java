@@ -14,6 +14,6 @@ public record RateLimitResult(boolean allowed, int limit, int remaining, long re
                 limit,
                 remaining,
                 resetTimeMillis,
-                Math.max(1, (resetTimeMillis - System.currentTimeMillis()) / 1000));
+                Math.max(1, Math.ceilDiv(resetTimeMillis - System.currentTimeMillis(), 1000)));
     }
 }

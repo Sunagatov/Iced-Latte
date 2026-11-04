@@ -37,6 +37,19 @@ class RateLimitResponseWriterTest {
     }
 
     @Test
+    void retryAfterDoesNotTellTheClientToRetryBeforeTheWindowEnds() throws Exception {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        long reset = System.currentTimeMillis() + 59_999;
+        RateLimitResponseWriter.writeTooManyRequests(
+                response, new RateLimitResult(false, 5, 0, reset, 60), "https://errors.example.test/rate-limited");
+
+        long retryAfter = Long.parseLong(Objects.requireNonNull(response.getHeader("Retry-After")));
+        assertThat(retryAfter * 1000).isGreaterThanOrEqualTo(reset - System.currentTimeMillis());
+        long resetAfter = Long.parseLong(Objects.requireNonNull(response.getHeader("X-RateLimit-Reset")));
+        assertThat(resetAfter * 1000).isGreaterThanOrEqualTo(reset - System.currentTimeMillis());
+    }
+
+    @Test
     @DisplayName("rate-limit result normalizes invalid numeric values")
     void rateLimitResultNormalizesInvalidNumericValues() {
         RateLimitResult result = new RateLimitResult(false, -1, -5, System.currentTimeMillis(), 0);

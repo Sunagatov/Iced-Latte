@@ -14,6 +14,8 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import com.github.benmanes.caffeine.cache.Ticker;
 import com.zufar.icedlatte.ratelimit.api.RateLimitResult;
 import com.zufar.icedlatte.ratelimit.api.RateLimiter;
 
@@ -107,12 +109,36 @@ public class RateLimitingConfiguration {
     static class CaffeineFixedWindowRateLimiter implements RateLimiter {
         private final FailPolicy failPolicy;
         private final Cache<String, FixedWindow> windows;
+        private final Ticker ticker;
 
         CaffeineFixedWindowRateLimiter(FailPolicy failPolicy, int windowSize) {
+            this(failPolicy, windowSize, Ticker.systemTicker());
+        }
+
+        CaffeineFixedWindowRateLimiter(FailPolicy failPolicy, int windowSize, Ticker ticker) {
             this.failPolicy = failPolicy;
+            this.ticker = ticker;
             this.windows = Caffeine.newBuilder()
                     .maximumSize(windowSize)
-                    .expireAfterAccess(10, TimeUnit.MINUTES)
+                    .ticker(ticker)
+                    .expireAfter(new Expiry<String, FixedWindow>() {
+                        @Override
+                        public long expireAfterCreate(String key, FixedWindow value, long currentTime) {
+                            return value.remainingNanos(currentTime);
+                        }
+
+                        @Override
+                        public long expireAfterUpdate(
+                                String key, FixedWindow value, long currentTime, long currentDuration) {
+                            return currentDuration;
+                        }
+
+                        @Override
+                        public long expireAfterRead(
+                                String key, FixedWindow value, long currentTime, long currentDuration) {
+                            return currentDuration;
+                        }
+                    })
                     .build();
         }
 
@@ -121,8 +147,8 @@ public class RateLimitingConfiguration {
             try {
                 long windowMillis = windowDuration.toMillis();
                 FixedWindow window =
-                        windows.asMap().compute(key, (_, existing) -> fixedWindowFor(existing, windowMillis));
-                return window.tryConsume(maxTokens);
+                        windows.get(redisKey(key, windowMillis), _ -> new FixedWindow(windowMillis, ticker.read()));
+                return window.tryConsume(maxTokens, ticker.read());
             } catch (Exception e) {
                 logRepeatedLimiterFailure("rate_limit.cache_error", key, failPolicy, e, false);
                 boolean allowed = failPolicy == FailPolicy.OPEN;
@@ -135,34 +161,23 @@ public class RateLimitingConfiguration {
             }
         }
 
-        private static FixedWindow fixedWindowFor(FixedWindow existing, long windowMillis) {
-            if (existing == null || existing.windowMillis() != windowMillis) {
-                return new FixedWindow(windowMillis);
-            }
-            return existing;
-        }
-
         private static class FixedWindow {
             private long count = 0;
-            private long windowStartMillis;
+            private final long windowStartNanos;
             private final long windowMillis;
 
-            FixedWindow(long windowMillis) {
+            FixedWindow(long windowMillis, long windowStartNanos) {
                 this.windowMillis = windowMillis;
-                this.windowStartMillis = System.currentTimeMillis();
+                this.windowStartNanos = windowStartNanos;
             }
 
-            long windowMillis() {
-                return windowMillis;
+            long remainingNanos(long now) {
+                return Math.max(0, TimeUnit.MILLISECONDS.toNanos(windowMillis) - (now - windowStartNanos));
             }
 
-            synchronized RateLimitResult tryConsume(int maxTokens) {
-                long now = System.currentTimeMillis();
-                if (now - windowStartMillis >= windowMillis) {
-                    count = 0;
-                    windowStartMillis = now;
-                }
-                long resetTimeMillis = windowStartMillis + windowMillis;
+            synchronized RateLimitResult tryConsume(int maxTokens, long now) {
+                long remainingMillis = Math.ceilDiv(remainingNanos(now), 1_000_000);
+                long resetTimeMillis = System.currentTimeMillis() + remainingMillis;
                 long current = ++count;
                 int remaining = (int) Math.max(0, maxTokens - current);
                 return new RateLimitResult(
@@ -172,7 +187,7 @@ public class RateLimitingConfiguration {
     }
 
     private static long windowSeconds(Duration windowDuration) {
-        return Math.max(1, windowDuration.toSeconds());
+        return windowSeconds(windowDuration.toMillis());
     }
 
     private static String redisKey(String key, long windowMillis) {
@@ -180,7 +195,7 @@ public class RateLimitingConfiguration {
     }
 
     private static long windowSeconds(long windowMillis) {
-        return Math.max(1, TimeUnit.MILLISECONDS.toSeconds(windowMillis));
+        return Math.max(1, Math.ceilDiv(windowMillis, 1000));
     }
 
     private static void logRepeatedLimiterFailure(

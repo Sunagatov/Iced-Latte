@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.servlet.FilterChain;
 
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.zufar.icedlatte.common.config.CaffeineSizeProperties;
 import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
@@ -518,6 +520,28 @@ class RateLimitingFilterTest {
         assertThat(bannedResponse.getStatus()).isEqualTo(429);
         // The closed limiter was called 3 times for the blocks, but NOT for the banned request
         verify(closedRateLimiter, org.mockito.Mockito.times(3)).tryConsume(any(), anyInt(), any());
+    }
+
+    @Test
+    void bannedResponseUsesRemainingTimeInsteadOfStartingANewFullDuration() throws Exception {
+        RateLimitProperties props = properties();
+        props.setBanThreshold(1);
+        AtomicLong nanos = new AtomicLong();
+        var tracker =
+                new RateLimitBanTracker(props, new CaffeineSizeProperties(1000, 5000, 10000, 1000, 10000), nanos::get);
+        var banFilter = newFilter(props);
+        ReflectionTestUtils.setField(banFilter, "banTracker", tracker);
+        when(clientIpExtractor.extract(any())).thenReturn("test-client");
+        tracker.recordBlock("test-client");
+        nanos.addAndGet(Duration.ofMinutes(2).toNanos());
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+        banFilter.doFilterInternal(new MockHttpServletRequest("GET", "/api/v1/products"), response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(429);
+        assertThat(Long.parseLong(response.getHeader("Retry-After"))).isBetween(179L, 180L);
+        verifyNoInteractions(openRateLimiter, closedRateLimiter, chain);
     }
 
     private RateLimitingFilter newFilter(RateLimitProperties properties) {
