@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,16 @@ class AvatarUploadLifecycleServiceTest {
 
     @Mock
     private FileStorageWriterApi fileStorageWriterApi;
+
+    @Mock
+    private AvatarUploadAdmission admission;
+
+    @BeforeEach
+    void lockUploadReadsCurrentRow() {
+        lenient()
+                .when(admission.lockUpload(any(UUID.class)))
+                .thenAnswer(invocation -> repository.findById(invocation.getArgument(0)));
+    }
 
     @Test
     @DisplayName("creates pending upload with immutable incoming key and expiry")
@@ -104,9 +115,18 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(activeReady.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
         assertThat(activeReady.isActive()).isTrue();
         verify(repository).saveAll(List.of(olderPending, olderProcessing, olderReady));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(olderPending));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(olderProcessing));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(olderReady));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(olderPending),
+                        olderPending.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(olderProcessing),
+                        olderProcessing.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(olderReady),
+                        olderReady.getExpiresAt().plus(properties().processingTimeout()));
         verify(fileStorageWriterApi).enqueueDeleteObject(processedObjectMetadata(olderReady));
     }
 
@@ -259,7 +279,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(result).isEmpty();
         assertThat(pending.getStatus()).isEqualTo(UserAvatarUploadStatus.EXPIRED);
         verify(repository).save(pending);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(pending));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(pending),
+                        pending.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -281,7 +304,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(processing.getFailureCode()).hasSize(64).startsWith("INVALID_IMAGE");
         assertThat(processing.getFailureMessage()).hasSize(512);
         verify(repository).save(processing);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(processing));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(processing),
+                        processing.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -301,7 +327,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(pending.isActive()).isFalse();
         assertThat(pending.getSupersededAt()).isEqualTo(NOW);
         verify(repository).save(pending);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(pending));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(pending),
+                        pending.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -323,7 +352,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(ready.isActive()).isFalse();
         assertThat(ready.getSupersededAt()).isEqualTo(NOW);
         verify(repository).save(ready);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(ready));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(ready),
+                        ready.getExpiresAt().plus(properties().processingTimeout()));
         verify(fileStorageWriterApi).enqueueDeleteObject(processedObjectMetadata(ready));
     }
 
@@ -371,11 +403,16 @@ class AvatarUploadLifecycleServiceTest {
         UserAvatarUpload processing = upload(UUID.randomUUID(), UUID.randomUUID(), UserAvatarUploadStatus.PROCESSING);
         UserAvatarUpload ready = upload(UUID.randomUUID(), UUID.randomUUID(), UserAvatarUploadStatus.READY);
         AvatarUploadLifecycleService service = service(repository, UUID.randomUUID());
-        when(repository.findByStatusInAndExpiresAtBefore(
+        when(repository.findExpiredIds(
                         argThat(statuses -> statuses.contains(UserAvatarUploadStatus.PENDING_UPLOAD)
                                 && statuses.contains(UserAvatarUploadStatus.PROCESSING)),
-                        eq(NOW)))
-                .thenReturn(List.of(pending, processing));
+                        eq(NOW),
+                        any()))
+                .thenReturn(List.of(pending.getId(), processing.getId()));
+        pending.setExpiresAt(NOW.minusSeconds(1));
+        processing.setExpiresAt(NOW.minusSeconds(1));
+        when(repository.findById(pending.getId())).thenReturn(Optional.of(pending));
+        when(repository.findById(processing.getId())).thenReturn(Optional.of(processing));
 
         long expiredCount = service.expireStaleUploads(NOW);
 
@@ -384,8 +421,14 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(processing.getStatus()).isEqualTo(UserAvatarUploadStatus.EXPIRED);
         assertThat(ready.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
         verify(repository).saveAll(List.of(pending, processing));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(pending));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(processing));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(pending),
+                        pending.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(processing),
+                        processing.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -468,7 +511,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(processing.getProcessedAt()).isEqualTo(NOW);
         assertThat(processing.isActive()).isFalse();
         verify(repository).save(processing);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(processing));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(processing),
+                        processing.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -521,7 +567,10 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(pending.getProcessedKey())
                 .isEqualTo("avatars/processed/%s/%s/avatar.webp".formatted(userId, uploadId));
         verify(repository).save(pending);
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(pending));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(pending),
+                        pending.getExpiresAt().plus(properties().processingTimeout()));
     }
 
     @Test
@@ -555,6 +604,13 @@ class AvatarUploadLifecycleServiceTest {
         assertThat(result).isEmpty();
         assertThat(superseded.getStatus()).isEqualTo(UserAvatarUploadStatus.SUPERSEDED);
         assertThat(superseded.getProcessedKey()).isNull();
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        new FileMetadataDto(
+                                uploadId,
+                                "iced-latte-users",
+                                completion(userId, uploadId).processedKey()),
+                        NOW.plus(properties().processingTimeout()));
         verify(repository, never()).save(any());
     }
 
@@ -584,16 +640,64 @@ class AvatarUploadLifecycleServiceTest {
             assertThat(upload.getSupersededAt()).isEqualTo(NOW);
         });
         verify(repository).saveAll(java.util.List.of(pending, processing, inactiveReady, ready));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(pending));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(processing));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(inactiveReady));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(pending),
+                        pending.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(processing),
+                        processing.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(inactiveReady),
+                        inactiveReady.getExpiresAt().plus(properties().processingTimeout()));
         verify(fileStorageWriterApi).enqueueDeleteObject(processedObjectMetadata(inactiveReady));
-        verify(fileStorageWriterApi).enqueueDeleteObject(sourceObjectMetadata(ready));
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(ready),
+                        ready.getExpiresAt().plus(properties().processingTimeout()));
         verify(fileStorageWriterApi, never()).enqueueDeleteObject(processedObjectMetadata(ready));
     }
 
+    @Test
+    void reservesOnlyNewIntentsAndSchedulesSourceCleanupAfterTheLastValidWrite() {
+        UUID userId = UUID.randomUUID(), uploadId = UUID.randomUUID();
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        var service = service(repository, uploadId);
+        var created = service.createPendingUpload(userId, "image/png", 1024, "once");
+        when(repository.findByUserIdAndClientIdempotencyKey(userId, "once")).thenReturn(Optional.of(created));
+        assertThat(service.createPendingUpload(userId, "image/png", 1024, "once"))
+                .isSameAs(created);
+        verify(admission, times(1)).reserve(userId);
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(created),
+                        created.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi, never()).enqueueDeleteObject(sourceObjectMetadata(created));
+    }
+
+    @Test
+    void finalSourceCleanupBackfillsReadyAvatarsWithoutDeletingTheirProcessedObject() {
+        var ready = upload(UUID.randomUUID(), UUID.randomUUID(), UserAvatarUploadStatus.READY);
+        ready.setActive(true);
+        ready.setExpiresAt(NOW.minusSeconds(1));
+        when(repository.findSourceCleanupIds(eq(NOW), any())).thenReturn(List.of(ready.getId()));
+        when(repository.findById(ready.getId())).thenReturn(Optional.of(ready));
+        service(repository, UUID.randomUUID()).expireStaleUploads(NOW);
+        assertThat(ready.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
+        assertThat(ready.isActive()).isTrue();
+        assertThat(ready.isSourceCleanupScheduled()).isTrue();
+        verify(fileStorageWriterApi)
+                .enqueueDeleteObjectAfter(
+                        sourceObjectMetadata(ready),
+                        ready.getExpiresAt().plus(properties().processingTimeout()));
+        verify(fileStorageWriterApi, never()).enqueueDeleteObject(any());
+    }
+
     private AvatarUploadLifecycleService service(UserAvatarUploadRepository repository, UUID uploadId) {
-        return new AvatarUploadLifecycleService(repository, fileStorageWriterApi, properties(), CLOCK, () -> uploadId);
+        return new AvatarUploadLifecycleService(
+                repository, fileStorageWriterApi, properties(), admission, CLOCK, () -> uploadId);
     }
 
     private static UserAvatarUpload upload(UUID userId, UUID uploadId, UserAvatarUploadStatus status) {

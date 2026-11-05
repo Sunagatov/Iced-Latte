@@ -1,7 +1,10 @@
 package com.zufar.icedlatte.review.config;
 
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,6 +14,7 @@ import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
 
 @Configuration
+@EnableConfigurationProperties(AiUsageProperties.class)
 @ConditionalOnProperty(name = "ai.enabled", havingValue = "true")
 class AiEnabledConfig {
 
@@ -18,12 +22,16 @@ class AiEnabledConfig {
     OpenAiChatModel openAiChatModel(
             @Value("${ai.api-key}") String apiKey,
             @Value("${ai.base-url}") String baseUrl,
-            @Value("${ai.model-name}") String modelName) {
+            @Value("${ai.model-name}") String modelName,
+            AiUsageProperties usage) {
         return OpenAiChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .modelName(modelName)
                 .temperature(0.0)
+                .maxTokens(usage.maxOutputTokens())
+                .maxRetries(0)
+                .timeout(Duration.ofSeconds(20))
                 .build();
     }
 

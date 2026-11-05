@@ -7,10 +7,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.zufar.icedlatte.review.config.AiUsageProperties;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.exception.ReviewSummaryException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.ai.AiUsageGuard;
 import com.zufar.icedlatte.review.service.ai.summary.ProductSummaryService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,11 +30,13 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
 
     private final ReviewAiService reviewAiService;
     private final ProductReviewRepository reviewRepository;
+    private final AiUsageGuard usageGuard;
+    private final AiUsageProperties usageProperties;
 
     @Override
     public void moderate(String text) {
         try {
-            var response = reviewAiService.moderate(text);
+            var response = usageGuard.call(text, () -> reviewAiService.moderate(text));
             var normalizedResponse = response == null ? "" : response.trim();
 
             if (OK.equals(normalizedResponse)) {
@@ -46,7 +51,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
                 reason = normalizedResponse;
             }
             throw new ReviewModerationException(reason);
-        } catch (ReviewModerationException e) {
+        } catch (ReviewModerationException | ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
             String logMessage = "ai.moderation.unavailable: exceptionClass={}";
@@ -64,7 +69,10 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
                 return null;
             }
             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
-            return reviewAiService.aggregateSummary(combined);
+            var input = combined.substring(0, Math.min(combined.length(), usageProperties.maxInputChars()));
+            return usageGuard.call(input, () -> reviewAiService.aggregateSummary(input));
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             String logMessage = "ai.summary.unavailable: productId={}, exceptionClass={}";
             log.warn(logMessage, productId, e.getClass().getSimpleName());

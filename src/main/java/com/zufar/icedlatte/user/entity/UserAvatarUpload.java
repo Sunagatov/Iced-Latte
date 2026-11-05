@@ -101,6 +101,9 @@ public class UserAvatarUpload {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    @Column(name = "source_cleanup_scheduled", nullable = false)
+    private boolean sourceCleanupScheduled;
+
     public boolean reusableAt(Instant now) {
         return status == UserAvatarUploadStatus.PENDING_UPLOAD && expiresAt.isAfter(now);
     }

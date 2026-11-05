@@ -13,18 +13,21 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+import com.zufar.icedlatte.ratelimit.api.DailyOperationQuota;
+import com.zufar.icedlatte.review.config.AiUsageProperties;
 import com.zufar.icedlatte.review.entity.ProductReview;
 import com.zufar.icedlatte.review.exception.ReviewModerationException;
 import com.zufar.icedlatte.review.exception.ReviewSummaryException;
 import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+import com.zufar.icedlatte.review.service.ai.AiUsageGuard;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LangChain4jReviewAiService unit tests")
@@ -36,8 +39,17 @@ class LangChain4jReviewAiServiceTest {
     @Mock
     private ProductReviewRepository reviewRepository;
 
-    @InjectMocks
     private LangChain4jReviewAiService service;
+
+    @BeforeEach
+    void setupUsageGuard() {
+        var properties = new AiUsageProperties(100, 2, 20000, 256);
+        service = new LangChain4jReviewAiService(
+                reviewAiService,
+                reviewRepository,
+                new AiUsageGuard(mock(DailyOperationQuota.class), properties),
+                properties);
+    }
 
     @Test
     @DisplayName("moderate: passes when AI returns OK")

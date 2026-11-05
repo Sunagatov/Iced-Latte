@@ -14,14 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
-import com.zufar.icedlatte.filestorage.api.FileCacheInvalidationApi;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.user.exception.InvalidAvatarFileTypeException;
@@ -35,9 +33,6 @@ class UserAvatarUploaderTest {
     private FileStorageWriterApi fileStorageService;
 
     @Mock
-    private ObjectProvider<FileCacheInvalidationApi> cacheInvalidatorProvider;
-
-    @Mock
     private MultipartFile file;
 
     @Mock
@@ -45,6 +40,12 @@ class UserAvatarUploaderTest {
 
     @Mock
     private TurnstileProperties turnstileProperties;
+
+    @Mock
+    private AvatarUploadAdmission admission;
+
+    @Mock
+    private AvatarUploadLifecycleService lifecycleService;
 
     private UserAvatarUploader uploader;
 
@@ -60,10 +61,51 @@ class UserAvatarUploaderTest {
     @BeforeEach
     void injectBucket() throws Exception {
         uploader = new UserAvatarUploader(
-                fileStorageService, cacheInvalidatorProvider, turnstileVerifier, turnstileProperties);
+                fileStorageService, turnstileVerifier, turnstileProperties, admission, lifecycleService);
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
         field.setAccessible(true);
         field.set(uploader, BUCKET);
+        var sizeField = UserAvatarUploader.class.getDeclaredField("maxBytes");
+        sizeField.setAccessible(true);
+        sizeField.set(uploader, 5_242_880L);
+    }
+
+    @Test
+    void quotaFailurePreventsStorageWritesAndLeavesTheCurrentAvatarAlone() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenReturn(new ByteArrayInputStream(JPEG_HEADER));
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.TOO_MANY_REQUESTS))
+                .when(admission)
+                .reserve(userId);
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(userId, file, null))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+        verifyNoInteractions(fileStorageService, lifecycleService);
+    }
+
+    @Test
+    void directUploadsUseDifferentKeysSoAnOldDeletionCannotDeleteTheReplacement() throws Exception {
+        UUID userId = UUID.randomUUID();
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getInputStream()).thenAnswer(_ -> new ByteArrayInputStream(JPEG_HEADER));
+        when(fileStorageService.isEnabled()).thenReturn(true);
+        uploader.uploadUserAvatar(userId, file, null);
+        uploader.uploadUserAvatar(userId, file, null);
+        var keys = ArgumentCaptor.forClass(FileMetadataDto.class);
+        verify(fileStorageService, times(2)).store(eq(file), keys.capture());
+        assertThat(keys.getAllValues().get(0).fileName())
+                .isNotEqualTo(keys.getAllValues().get(1).fileName());
+        verify(lifecycleService, times(2)).invalidateUserUploadsAfterAvatarDelete(userId);
+    }
+
+    @Test
+    void oversizedFileIsRejectedBeforeAdmissionOrStorage() {
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getSize()).thenReturn(5_242_881L);
+        assertThatThrownBy(() -> uploader.uploadUserAvatar(UUID.randomUUID(), file, null))
+                .isInstanceOf(BadRequestException.class);
+        verifyNoInteractions(admission, fileStorageService, lifecycleService);
     }
 
     @Test
@@ -83,7 +125,9 @@ class UserAvatarUploaderTest {
         FileMetadataDto saved = captor.getValue();
         assertThat(saved.relatedObjectId()).isEqualTo(userId);
         assertThat(saved.bucketName()).isEqualTo(BUCKET);
-        assertThat(saved.fileName()).isEqualTo(expectedFileName);
+        assertThat(saved.fileName())
+                .startsWith("avatars/processed/" + userId + "/")
+                .endsWith("/avatar.jpg");
     }
 
     @Test
@@ -98,7 +142,9 @@ class UserAvatarUploaderTest {
 
         ArgumentCaptor<FileMetadataDto> captor = ArgumentCaptor.forClass(FileMetadataDto.class);
         verify(fileStorageService).store(eq(file), captor.capture());
-        assertThat(captor.getValue().fileName()).isEqualTo("user-avatar-" + userId + ".webp");
+        assertThat(captor.getValue().fileName())
+                .startsWith("avatars/processed/" + userId + "/")
+                .endsWith("/avatar.webp");
     }
 
     @Test

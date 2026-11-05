@@ -1,6 +1,7 @@
 package com.zufar.icedlatte.filestorage.service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +73,13 @@ public class FileStorageService implements FileStorageApi {
     public void enqueueDeleteObject(FileMetadataDto fileMetadataDto) {
         int maxAttempts = fileDeletionOutboxProperties.maxAttempts();
         fileDeletionOutboxRepository.insertDeleteObjectEvent(fileMetadataDto, maxAttempts);
+    }
+
+    @Override
+    @Transactional
+    public void enqueueDeleteObjectAfter(FileMetadataDto metadata, Instant notBefore) {
+        fileDeletionOutboxRepository.insertDeferredDeleteObjectEvent(
+                metadata, fileDeletionOutboxProperties.maxAttempts(), notBefore);
     }
 
     @Override

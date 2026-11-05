@@ -28,24 +28,31 @@ public class AvatarUploadActivationService {
     private final UserAvatarUploadRepository repository;
     private final FileStorageWriterApi fileStorageWriterApi;
     private final Clock clock;
+    private final AvatarUploadAdmission admission;
 
     @SuppressWarnings("unused")
     @Autowired
     public AvatarUploadActivationService(
-            UserAvatarUploadRepository repository, FileStorageWriterApi fileStorageWriterApi) {
-        this(repository, fileStorageWriterApi, Clock.systemUTC());
+            UserAvatarUploadRepository repository,
+            FileStorageWriterApi fileStorageWriterApi,
+            AvatarUploadAdmission admission) {
+        this(repository, fileStorageWriterApi, admission, Clock.systemUTC());
     }
 
     AvatarUploadActivationService(
-            UserAvatarUploadRepository repository, FileStorageWriterApi fileStorageWriterApi, Clock clock) {
+            UserAvatarUploadRepository repository,
+            FileStorageWriterApi fileStorageWriterApi,
+            AvatarUploadAdmission admission,
+            Clock clock) {
         this.repository = repository;
         this.fileStorageWriterApi = fileStorageWriterApi;
         this.clock = clock;
+        this.admission = admission;
     }
 
     @Transactional
     public Optional<UserAvatarUpload> activate(UUID uploadId) {
-        return repository.findById(uploadId).flatMap(this::activate);
+        return admission.lockUpload(uploadId).flatMap(this::activate);
     }
 
     private Optional<UserAvatarUpload> activate(UserAvatarUpload upload) {

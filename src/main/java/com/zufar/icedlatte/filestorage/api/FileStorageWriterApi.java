@@ -1,5 +1,6 @@
 package com.zufar.icedlatte.filestorage.api;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,8 @@ public interface FileStorageWriterApi {
     void recordExisting(FileMetadataDto fileMetadataDto);
 
     void enqueueDeleteObject(FileMetadataDto fileMetadataDto);
+
+    void enqueueDeleteObjectAfter(FileMetadataDto fileMetadataDto, Instant notBefore);
 
     void deleteFile(UUID relatedObjectId);
 }

@@ -124,6 +124,9 @@ public class ProductReviewSummaryDebouncer {
             productReviewProductApi.updateAiSummary(productId, summary);
             retryCounts.remove(productId);
             log.info("product.ai_summary.updated: productId={}", productId);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            retryCounts.remove(productId);
+            log.info("product.ai_summary.skipped: productId={}, reason=USAGE_LIMIT", productId);
         } catch (Exception e) {
             int retryCount = retryCounts.merge(productId, 1, Integer::sum);
             String logMessage =

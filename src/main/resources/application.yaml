@@ -217,6 +217,10 @@ avatar:
   completion-queue-url: ${AVATAR_UPLOAD_COMPLETION_QUEUE_URL:}
   retention-cleanup-enabled: ${AVATAR_UPLOAD_RETENTION_CLEANUP_ENABLED:true}
   retention-cleanup-interval: ${AVATAR_UPLOAD_RETENTION_CLEANUP_INTERVAL:PT30M}
+  usage:
+    daily-uploads: ${AVATAR_DAILY_UPLOADS:100}
+    daily-uploads-per-user: ${AVATAR_DAILY_UPLOADS_PER_USER:10}
+    live-intents-per-user: ${AVATAR_LIVE_INTENTS_PER_USER:3}
   completion-queue:
     enabled: ${AVATAR_UPLOAD_COMPLETION_QUEUE_ENABLED:false}
     poll-interval: ${AVATAR_UPLOAD_COMPLETION_QUEUE_POLL_INTERVAL:PT5S}
@@ -438,6 +442,11 @@ ai:
   api-key: ${SPRING_AI_OPENAI_API_KEY:}
   base-url: ${AI_BASE_URL}
   model-name: ${AI_MODEL_NAME}
+  usage:
+    daily-calls: ${AI_DAILY_CALLS:100}
+    concurrent-calls: ${AI_CONCURRENT_CALLS:2}
+    max-input-chars: ${AI_MAX_INPUT_CHARS:20000}
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:256}
   review-summary:
     # Wait this long after the last review before regenerating the AI summary (debounce).
     debounce-delay: PT2M

@@ -59,6 +59,31 @@ public class FileDeletionOutboxRepository {
         return UUID.nameUUIDFromBytes(key.getBytes(StandardCharsets.UTF_8));
     }
 
+    public void insertDeferredDeleteObjectEvent(FileMetadataDto metadata, int maxAttempts, Instant notBefore) {
+        // A separate generation also repairs objects recreated after an old, already-published deletion.
+        UUID id =
+                UUID.nameUUIDFromBytes((deletionId(metadata) + ":final:" + notBefore).getBytes(StandardCharsets.UTF_8));
+        jdbcTemplate.update(
+                """
+                INSERT INTO outbox_events (
+                    event_id, aggregate_type, aggregate_id, event_type, event_version,
+                    topic, partition_key, payload, headers, status, max_attempts, next_attempt_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS jsonb), CAST(? AS jsonb), 'PENDING', ?, ?)
+                ON CONFLICT (aggregate_type, aggregate_id, event_type, event_version) DO NOTHING
+                """,
+                id,
+                AGGREGATE_TYPE,
+                id,
+                EVENT_TYPE,
+                EVENT_VERSION,
+                INTERNAL_TOPIC,
+                metadata.relatedObjectId().toString(),
+                toPayload(metadata),
+                EMPTY_HEADERS,
+                maxAttempts,
+                Timestamp.from(notBefore));
+    }
+
     public List<FileDeletionOutboxRow> claimDeleteObjectEvents(int batchSize, String workerId) {
         return jdbcTemplate.query("""
                 WITH candidate AS (

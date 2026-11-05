@@ -51,6 +51,17 @@ class ProductReviewSummaryDebouncerTest {
 
     private ProductReviewSummaryDebouncer debouncer;
 
+    @Test
+    void quotaRefusalDoesNotScheduleRepeatedRetries() {
+        UUID productId = UUID.randomUUID();
+        when(productSummaryService.summarize(productId))
+                .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.TOO_MANY_REQUESTS));
+        debouncer.runSummary(productId);
+        verify(scheduler, never()).schedule(any(Runnable.class), any(Long.class), any(TimeUnit.class));
+        verify(productReviewProductGateway, never()).updateAiSummary(eq(productId), any());
+    }
+
     @BeforeEach
     void setUp() {
         debouncer = new ProductReviewSummaryDebouncer(

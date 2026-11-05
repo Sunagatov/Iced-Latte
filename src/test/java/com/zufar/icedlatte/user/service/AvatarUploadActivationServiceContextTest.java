@@ -33,6 +33,11 @@ class AvatarUploadActivationServiceContextTest {
     static class AvatarUploadActivationServiceConfiguration {
 
         @Bean
+        AvatarUploadAdmission avatarUploadAdmission() {
+            return mock(AvatarUploadAdmission.class);
+        }
+
+        @Bean
         UserAvatarUploadRepository userAvatarUploadRepository() {
             return mock(UserAvatarUploadRepository.class);
         }

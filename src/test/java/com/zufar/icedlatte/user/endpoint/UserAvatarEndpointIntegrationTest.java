@@ -35,6 +35,112 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     @Autowired
     private UserAvatarUploadRepository userAvatarUploadRepository;
 
+    @Autowired
+    private com.zufar.icedlatte.user.service.AvatarUploadLifecycleService uploadLifecycle;
+
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    @Autowired
+    private com.zufar.icedlatte.filestorage.api.FileStorageWriterApi storageWriter;
+
+    @Test
+    void replayedTerminalCompletionSchedulesDeletionEvenAfterAnOlderDeletionWasPublished() {
+        var user = registerAndAuthenticateUser();
+        UUID userId = userLookupApi.getUserByEmail(user.email()).id();
+        var failed = upload(
+                userId,
+                UUID.randomUUID(),
+                UserAvatarUploadStatus.FAILED,
+                Instant.now().minusSeconds(120),
+                Instant.now().plusSeconds(120));
+        userAvatarUploadRepository.saveAndFlush(failed);
+        String key = "avatars/processed/%s/%s/avatar.webp".formatted(userId, failed.getId());
+        storageWriter.enqueueDeleteObject(
+                new com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto(failed.getId(), "iced-latte-users", key));
+        jdbc.update(
+                "UPDATE outbox_events SET status = 'PUBLISHED' WHERE event_type = 'file.object.delete' AND payload ->> 'fileName' = ?",
+                key);
+        var source = new com.zufar.icedlatte.user.service.ValidAvatarUploadSourceObject(
+                failed.getOriginalBucket(), failed.getOriginalKey(), userId, failed.getId(), "image/png");
+        var completion = new com.zufar.icedlatte.user.service.AvatarUploadCompletion(
+                source, "iced-latte-users", key, "image/webp", 10, 10, 1024, 512, "0".repeat(64));
+        assertThat(uploadLifecycle.markReady(completion)).isEmpty();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM outbox_events WHERE event_type = 'file.object.delete' AND status = 'PENDING' AND payload ->> 'fileName' = ?",
+                        Long.class,
+                        key))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void concurrentNewLinksCannotBypassTheLimitBySupersedingOneAnother() throws Exception {
+        var user = registerAndAuthenticateUser();
+        UUID userId = userLookupApi.getUserByEmail(user.email()).id();
+        try (var pool = java.util.concurrent.Executors.newFixedThreadPool(4)) {
+            var calls = java.util.stream.IntStream.range(0, 12)
+                    .mapToObj(i -> (java.util.concurrent.Callable<Boolean>) () -> {
+                        try {
+                            uploadLifecycle.createPendingUpload(userId, "image/png", 1024, "concurrent-" + i);
+                            return true;
+                        } catch (org.springframework.web.server.ResponseStatusException ex) {
+                            assertThat(ex.getStatusCode().value()).isEqualTo(429);
+                            return false;
+                        }
+                    })
+                    .toList();
+            int accepted = 0;
+            for (var result : pool.invokeAll(calls)) if (result.get()) accepted++;
+            assertThat(accepted).isEqualTo(3);
+        }
+        var pending = userAvatarUploadRepository.findByUserIdAndStatusIn(
+                userId, List.of(UserAvatarUploadStatus.PENDING_UPLOAD));
+        assertThat(pending).hasSize(1);
+        var latest = pending.iterator().next();
+        assertThat(uploadLifecycle
+                        .createPendingUpload(
+                                userId,
+                                latest.getContentType(),
+                                latest.getOriginalSizeBytes(),
+                                latest.getClientIdempotencyKey())
+                        .getId())
+                .isEqualTo(latest.getId());
+        assertThat(jdbc.queryForObject(
+                        "SELECT used FROM daily_operation_quota WHERE scope = ?", Long.class, "avatar:user:" + userId))
+                .isEqualTo(3);
+    }
+
+    @Test
+    void finalCleanupRepairsOldSourceDeletionWithoutDeletingTheActiveAvatar() {
+        var user = registerAndAuthenticateUser();
+        UUID userId = userLookupApi.getUserByEmail(user.email()).id();
+        var ready = upload(
+                userId,
+                UUID.randomUUID(),
+                UserAvatarUploadStatus.READY,
+                Instant.now().minusSeconds(7200),
+                Instant.now().minusSeconds(3600));
+        ready.setActive(true);
+        ready.setProcessedBucket("iced-latte-users");
+        ready.setProcessedKey("avatars/processed/%s/%s/avatar.webp".formatted(userId, ready.getId()));
+        userAvatarUploadRepository.saveAndFlush(ready);
+        uploadLifecycle.expireStaleUploads(Instant.now());
+        var after = userAvatarUploadRepository.findById(ready.getId()).orElseThrow();
+        assertThat(after.isActive()).isTrue();
+        assertThat(after.getStatus()).isEqualTo(UserAvatarUploadStatus.READY);
+        assertThat(after.isSourceCleanupScheduled()).isTrue();
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM outbox_events WHERE event_type = 'file.object.delete' AND payload ->> 'fileName' = ?",
+                        Long.class,
+                        ready.getOriginalKey()))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM outbox_events WHERE event_type = 'file.object.delete' AND payload ->> 'fileName' = ?",
+                        Long.class,
+                        ready.getProcessedKey()))
+                .isZero();
+    }
+
     @DynamicPropertySource
     static void avatarProperties(DynamicPropertyRegistry registry) {
         registry.add("avatar.upload-mode", () -> "backend");

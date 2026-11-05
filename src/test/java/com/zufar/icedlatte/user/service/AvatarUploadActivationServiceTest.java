@@ -9,6 +9,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,16 @@ class AvatarUploadActivationServiceTest {
 
     @Mock
     private FileStorageWriterApi fileStorageWriterApi;
+
+    @Mock
+    private AvatarUploadAdmission admission;
+
+    @BeforeEach
+    void lockUploadReadsCurrentRow() {
+        lenient()
+                .when(admission.lockUpload(any(UUID.class)))
+                .thenAnswer(invocation -> repository.findById(invocation.getArgument(0)));
+    }
 
     @Test
     @DisplayName("activates ready upload and points current avatar metadata at processed object")
@@ -153,7 +164,7 @@ class AvatarUploadActivationServiceTest {
     }
 
     private AvatarUploadActivationService service() {
-        return new AvatarUploadActivationService(repository, fileStorageWriterApi, CLOCK);
+        return new AvatarUploadActivationService(repository, fileStorageWriterApi, admission, CLOCK);
     }
 
     private static UserAvatarUpload upload(UUID userId, UUID uploadId, UserAvatarUploadStatus status) {
