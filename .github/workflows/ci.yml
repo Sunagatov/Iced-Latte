@@ -29,9 +29,11 @@ jobs:
           cache: maven
 
       - name: Build, unit tests, integration tests and coverage
+        id: build
         run: mvn -B clean verify --file pom.xml --no-transfer-progress
 
       - name: Upload coverage to Codecov
+        id: coverage
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -39,6 +41,7 @@ jobs:
           fail_ci_if_error: ${{ github.actor != 'dependabot[bot]' }}
 
       - name: SonarCloud analysis
+        id: sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,6 +72,7 @@ jobs:
       - name: Notify Telegram on failure
         if: failure()
         env:
+          FAILED_STAGE: ${{ steps.build.outcome == 'failure' && 'Build/tests' || steps.coverage.outcome == 'failure' && 'Coverage upload' || steps.sonar.outcome == 'failure' && 'SonarCloud analysis' || 'Build setup' }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BRANCH: ${{ github.ref_name }}
@@ -80,7 +84,7 @@ jobs:
         run: |
           curl -s -X POST https://api.telegram.org/bot${BOT_TOKEN}/sendMessage \
             -d chat_id=${CHAT_ID} \
-            -d text="[FAIL] CI: Build/Test failed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
+            -d text="[FAIL] CI: ${FAILED_STAGE} failed%0ARepo: ${REPO}%0ABranch: ${BRANCH}%0ASha: ${SHA:0:7}%0ABy: ${ACTOR}%0AMsg: ${MSG}%0A${RUN_URL}"
 
   owasp:
     name: OWASP Dependency Check
@@ -88,6 +92,9 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 45
+    env:
+      DEPENDENCY_CHECK_VERSION: '13.0.0'
+      DEPENDENCY_CHECK_DATA: ${{ github.workspace }}/.dependency-check-data
     steps:
       - uses: actions/checkout@v6
 
@@ -97,15 +104,52 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Run OWASP Dependency-Check
-        id: owasp
+      - name: Restore vulnerability database
+        id: dependency-data
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.DEPENDENCY_CHECK_DATA }}
+          key: ${{ runner.os }}-dependency-check-${{ env.DEPENDENCY_CHECK_VERSION }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ${{ runner.os }}-dependency-check-${{ env.DEPENDENCY_CHECK_VERSION }}-
+
+      # Bootstrap once from the scanner's own mirror, then fetch fresh NVD API
+      # changes below. Downloading every CVE through the API timed out on cold CI.
+      - name: Bootstrap vulnerability database on cache miss
+        if: steps.dependency-data.outputs.cache-matched-key == ''
+        run: |
+          mvn -B "org.owasp:dependency-check-maven:${DEPENDENCY_CHECK_VERSION}:update-only" \
+            -DdataDirectory="${DEPENDENCY_CHECK_DATA}" \
+            -DnvdDatafeedUrl='https://dependency-check.github.io/DependencyCheck_Builder/nvd_cache/nvdcve-{0}.json.gz' \
+            -DfailOnError=true \
+            --no-transfer-progress
+
+      - name: Update vulnerability database from NVD
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          mvn -B org.owasp:dependency-check-maven:check \
+          mvn -B "org.owasp:dependency-check-maven:${DEPENDENCY_CHECK_VERSION}:update-only" \
+            -DdataDirectory="${DEPENDENCY_CHECK_DATA}" \
+            -DnvdApiKey="${NVD_API_KEY}" \
+            -DnvdValidForHours=0 \
+            -DfailOnError=true \
+            --no-transfer-progress
+
+      # Save a completed update even if the later scan detects vulnerabilities.
+      - name: Save updated vulnerability database
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.DEPENDENCY_CHECK_DATA }}
+          key: ${{ steps.dependency-data.outputs.cache-primary-key }}
+
+      - name: Run OWASP Dependency-Check
+        id: owasp
+        run: |
+          mvn -B "org.owasp:dependency-check-maven:${DEPENDENCY_CHECK_VERSION}:check" \
+            -DdataDirectory="${DEPENDENCY_CHECK_DATA}" \
+            -DautoUpdate=false \
+            -DfailOnError=true \
             -DfailBuildOnCVSS=7 \
             -DsuppressionFile=.github/owasp-suppressions.xml \
-            -DnvdApiKey=${NVD_API_KEY} \
             --no-transfer-progress
           echo "status=clean" >> $GITHUB_OUTPUT
 
