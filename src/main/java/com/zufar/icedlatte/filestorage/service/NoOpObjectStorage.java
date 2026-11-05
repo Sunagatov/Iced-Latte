@@ -3,7 +3,7 @@ package com.zufar.icedlatte.filestorage.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@ConditionalOnMissingBean(ObjectStorage.class)
+@ConditionalOnProperty(name = "spring.aws.enabled", havingValue = "false", matchIfMissing = true)
 public class NoOpObjectStorage implements ObjectStorage {
 
     public NoOpObjectStorage() {
