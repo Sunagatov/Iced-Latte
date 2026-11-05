@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +35,8 @@ import com.zufar.icedlatte.user.repository.UserRepository;
 class OAuthLoginServiceIntegrationTest extends IntegrationTestBase {
 
     private static final String AUTH_CODE = "auth-code";
-    private static final String GOOGLE_SUBJECT = "google-subject";
-    private static final String EMAIL = "oauth-race@example.com";
+    private static final String GOOGLE_SUBJECT = "google-subject-" + UUID.randomUUID();
+    private static final String EMAIL = "oauth-race-" + UUID.randomUUID() + "@example.com";
     private static final AuthSessionRequestMetadata REQUEST_METADATA =
             new AuthSessionRequestMetadata("TestAgent", "127.0.0.1");
 
@@ -60,12 +60,6 @@ class OAuthLoginServiceIntegrationTest extends IntegrationTestBase {
 
     @MockitoBean
     private SessionTokenService sessionTokenService;
-
-    @BeforeEach
-    void setUp() {
-        oAuthIdentityRepository.deleteAll();
-        userRepository.deleteAll();
-    }
 
     @Test
     @DisplayName("recovers from duplicate oauth identity creation when the unique violation is raised on flush")
