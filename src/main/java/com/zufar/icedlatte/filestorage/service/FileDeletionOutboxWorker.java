@@ -3,9 +3,9 @@ package com.zufar.icedlatte.filestorage.service;
 import java.io.IOException;
 import java.time.Instant;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "file-storage.deletion-outbox.worker-enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        name = "file-storage.deletion-outbox.worker-enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 public class FileDeletionOutboxWorker {
 
     private static final String MONITOR_SLUG = "file-deletion-outbox-worker";
