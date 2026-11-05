@@ -66,7 +66,7 @@ LABEL org.opencontainers.image.title="Iced-Latte Backend" \
       org.opencontainers.image.vendor="Iced-Latte Team"
 
 # Run as non-root by default.
-RUN addgroup -S app && adduser -S -h /app -G app app
+RUN addgroup -S -g 1000 app && adduser -S -u 1000 -h /app -G app app
 
 WORKDIR /app
 
@@ -90,10 +90,10 @@ ENV SPRING_PROFILES_ACTIVE=dev \
 
 # Application layers
 # These paths come from Spring Boot 4's current layer extraction layout.
-COPY --link --from=extract --chown=app:app /app/app/dependencies/ ./
-COPY --link --from=extract --chown=app:app /app/app/spring-boot-loader/ ./
-COPY --link --from=extract --chown=app:app /app/app/snapshot-dependencies/ ./
-COPY --link --from=extract --chown=app:app /app/app/application/ ./
+COPY --link --from=extract --chown=1000:1000 /app/app/dependencies/ ./
+COPY --link --from=extract --chown=1000:1000 /app/app/spring-boot-loader/ ./
+COPY --link --from=extract --chown=1000:1000 /app/app/snapshot-dependencies/ ./
+COPY --link --from=extract --chown=1000:1000 /app/app/application/ ./
 
 # Runtime identity
 USER app
