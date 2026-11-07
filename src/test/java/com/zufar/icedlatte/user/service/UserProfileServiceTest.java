@@ -160,6 +160,7 @@ class UserProfileServiceTest {
         userProfileService.deleteProfile(userId);
 
         verify(userRepository).delete(userEntity);
+        verify(eventPublisher).publishEvent(new com.zufar.icedlatte.user.api.UserDeletionRequestedEvent(userId));
         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
         verify(fileStorageWriterApi).deleteFile(userId);
     }
@@ -173,6 +174,9 @@ class UserProfileServiceTest {
         RuntimeException avatarFailure = new IllegalStateException("s3 unavailable");
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
         doThrow(revocationFailure).when(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+        doNothing()
+                .when(eventPublisher)
+                .publishEvent(new com.zufar.icedlatte.user.api.UserDeletionRequestedEvent(userId));
         doThrow(avatarFailure).when(fileStorageWriterApi).deleteFile(userId);
 
         userProfileService.deleteProfile(userId);

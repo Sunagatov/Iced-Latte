@@ -66,7 +66,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
                     PageRequest.of(0, MAX_REVIEWS_FOR_SUMMARY, Sort.by(Sort.Direction.DESC, "createdAt"));
             var reviews = reviewRepository.findAllByProductId(productId, pageRequest);
             if (reviews.isEmpty()) {
-                return null;
+                return "";
             }
             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
             var input = combined.substring(0, Math.min(combined.length(), usageProperties.maxInputChars()));

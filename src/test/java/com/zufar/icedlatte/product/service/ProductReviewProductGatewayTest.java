@@ -45,6 +45,9 @@ class ProductReviewProductGatewayTest {
         gateway.refreshReviewAggregates(productId);
 
         verify(productInfoRepository).updateAverageRating(productId);
+        var order = inOrder(productInfoRepository);
+        order.verify(productInfoRepository).lockReviewAggregates(productId);
+        order.verify(productInfoRepository).updateAverageRating(productId);
         verify(productInfoRepository).updateReviewsCount(productId);
         verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
     }

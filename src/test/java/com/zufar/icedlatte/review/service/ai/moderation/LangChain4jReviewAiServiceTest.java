@@ -116,15 +116,15 @@ class LangChain4jReviewAiServiceTest {
     }
 
     @Test
-    @DisplayName("summarize: returns null when product has no reviews")
-    void summarize_noReviews_returnsNull() {
+    @DisplayName("summarize: requests summary removal when product has no reviews")
+    void summarize_noReviews_returnsEmpty() {
         UUID productId = UUID.randomUUID();
         when(reviewRepository.findAllByProductId(eq(productId), any(Pageable.class)))
                 .thenReturn(List.of());
 
         var result = service.summarize(productId);
 
-        assertThat(result).isNull();
+        assertThat(result).isEmpty();
     }
 
     @Test

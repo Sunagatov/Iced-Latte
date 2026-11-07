@@ -18,6 +18,11 @@ import com.zufar.icedlatte.review.entity.ProductReview;
 @Repository
 public interface ProductReviewRepository extends JpaRepository<ProductReview, UUID> {
 
+    @Query(value = "SELECT id FROM product_reviews WHERE id = :reviewId FOR NO KEY UPDATE", nativeQuery = true)
+    Optional<UUID> lockVotes(@Param("reviewId") UUID reviewId);
+
+    List<ProductReview> findAllByUserId(UUID userId);
+
     Optional<ProductReview> findByUserIdAndProductId(UUID userId, UUID productId);
 
     Page<ProductReview> findAllByUserId(UUID userId, Pageable pageable);

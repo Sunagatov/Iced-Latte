@@ -28,6 +28,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshReviewAggregates(final UUID productId) {
+        productInfoRepository.lockReviewAggregates(productId);
         productInfoRepository.updateAverageRating(productId);
         productInfoRepository.updateReviewsCount(productId);
         productCacheEvictor.evictProductByIdAfterCommit(productId);
@@ -36,6 +37,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshAllReviewAggregates() {
+        productInfoRepository.lockAllReviewAggregates();
         productInfoRepository.updateAllAverageRatings();
         productInfoRepository.updateAllReviewsCounts();
         productCacheEvictor.clearProductByIdAfterCommit();
@@ -43,7 +45,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
-    public void updateAiSummary(final UUID productId, final String summary) {
+    public void updateAiSummary(final UUID productId, final @org.jspecify.annotations.Nullable String summary) {
         int updatedRows = productInfoRepository.updateAiSummary(productId, summary);
         if (updatedRows > 0) {
             productCacheEvictor.evictProductByIdAfterCommit(productId);

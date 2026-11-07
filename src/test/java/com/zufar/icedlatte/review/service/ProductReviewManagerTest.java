@@ -90,6 +90,34 @@ class ProductReviewManagerTest {
                 turnstileProperties);
     }
 
+    @Test
+    void userDeletionRemovesRatingsAndVotesAndRefreshesAffectedTotals() {
+        UUID userId = UUID.randomUUID(), productId = UUID.randomUUID(), reviewId = UUID.randomUUID();
+        var ownReview = ProductReview.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .productId(productId)
+                .build();
+        var vote = ProductReviewLike.builder()
+                .productReviewId(reviewId)
+                .userId(userId)
+                .productId(productId)
+                .build();
+        when(reviewRepository.findAllByUserId(userId)).thenReturn(java.util.List.of(ownReview));
+        when(productReviewLikeRepository.findAllByUserId(userId)).thenReturn(java.util.List.of(vote));
+        service.removeUserReviewsAndVotes(userId);
+        var order = inOrder(reviewRepository, productReviewLikeRepository, productReviewProductGateway);
+        order.verify(reviewRepository).lockVotes(reviewId);
+        order.verify(productReviewLikeRepository).deleteAllByUserId(userId);
+        order.verify(productReviewLikeRepository).flush();
+        order.verify(reviewRepository).deleteAll(java.util.List.of(ownReview));
+        order.verify(reviewRepository).flush();
+        order.verify(reviewRepository).updateLikesCount(reviewId);
+        order.verify(reviewRepository).updateDislikesCount(reviewId);
+        order.verify(productReviewProductGateway).refreshReviewAggregates(productId);
+        verify(summaryDebouncer).schedule(productId);
+    }
+
     @Nested
     @DisplayName("create")
     class Create {

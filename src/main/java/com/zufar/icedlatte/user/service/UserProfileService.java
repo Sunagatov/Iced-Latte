@@ -23,6 +23,7 @@ import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
 import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
 import com.zufar.icedlatte.openapi.dto.UserDto;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
+import com.zufar.icedlatte.user.api.UserDeletionRequestedEvent;
 import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
 import com.zufar.icedlatte.user.converter.UserDtoConverter;
 import com.zufar.icedlatte.user.entity.UserEntity;
@@ -67,7 +68,9 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteProfile(UUID userId) {
+        userRepository.lockForDeletion(userId);
         UserEntity userEntity = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        eventPublisher.publishEvent(new UserDeletionRequestedEvent(userId));
         userRepository.delete(userEntity);
         cleanUpDeletedProfileAfterCommit(userId);
     }

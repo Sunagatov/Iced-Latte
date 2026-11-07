@@ -10,5 +10,5 @@ public interface ProductReviewProductApi {
 
     void refreshAllReviewAggregates();
 
-    void updateAiSummary(UUID productId, String summary);
+    void updateAiSummary(UUID productId, @org.jspecify.annotations.Nullable String summary);
 }

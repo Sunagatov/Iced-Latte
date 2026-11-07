@@ -114,6 +114,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         }
         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
 
+        reviewRepository.lockVotes(productReviewId);
         upsertProductReviewLike(userId, productId, productReviewId, newProductReviewLike);
 
         reviewRepository.updateLikesCount(productReviewId);
@@ -131,6 +132,27 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
     public void refreshAllCounts() {
         reviewRepository.updateAllLikesCounts();
         reviewRepository.updateAllDislikesCounts();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public void removeUserReviewsAndVotes(UUID userId) {
+        var reviews = reviewRepository.findAllByUserId(userId);
+        var votes = productReviewLikeRepository.findAllByUserId(userId);
+        var affectedReviews = votes.stream()
+                .map(ProductReviewLike::getProductReviewId)
+                .distinct()
+                .sorted()
+                .toList();
+        affectedReviews.forEach(reviewRepository::lockVotes);
+        productReviewLikeRepository.deleteAllByUserId(userId);
+        productReviewLikeRepository.flush();
+        reviewRepository.deleteAll(reviews);
+        reviewRepository.flush();
+        for (UUID reviewId : affectedReviews) {
+            reviewRepository.updateLikesCount(reviewId);
+            reviewRepository.updateDislikesCount(reviewId);
+        }
+        reviews.stream().map(ProductReview::getProductId).distinct().sorted().forEach(this::refreshReviewState);
     }
 
     private ProductReview buildProductReview(UUID productId, UUID userId, ProductReviewRequest reviewRequest) {

@@ -1,9 +1,11 @@
 package com.zufar.icedlatte.product.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,6 +15,14 @@ import org.springframework.data.repository.query.Param;
 import com.zufar.icedlatte.product.entity.ProductInfo;
 
 public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>, JpaSpecificationExecutor<ProductInfo> {
+
+    // A separate statement ensures aggregate queries see the preceding writer's commit.
+    // NO KEY UPDATE remains compatible with foreign-key checks on new reviews.
+    @Query(value = "SELECT id FROM product WHERE id = :productId FOR NO KEY UPDATE", nativeQuery = true)
+    Optional<UUID> lockReviewAggregates(@Param("productId") UUID productId);
+
+    @Query(value = "SELECT id FROM product ORDER BY id FOR NO KEY UPDATE", nativeQuery = true)
+    List<UUID> lockAllReviewAggregates();
 
     @Query("SELECT DISTINCT p.sellerName FROM ProductInfo p ORDER BY p.sellerName")
     List<String> findDistinctSellerNames();
@@ -67,5 +77,5 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
 
     @Modifying
     @Query("UPDATE ProductInfo p SET p.aiSummary = :summary WHERE p.id = :productId")
-    int updateAiSummary(@Param("productId") UUID productId, @Param("summary") String summary);
+    int updateAiSummary(@Param("productId") UUID productId, @Param("summary") @Nullable String summary);
 }

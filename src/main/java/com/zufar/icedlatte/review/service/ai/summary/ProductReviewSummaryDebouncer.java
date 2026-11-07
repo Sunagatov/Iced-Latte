@@ -117,11 +117,11 @@ public class ProductReviewSummaryDebouncer {
         firstTriggerTime.remove(productId);
         try {
             var summary = productSummaryService.summarize(productId);
-            if (summary == null || summary.isBlank()) {
+            if (summary == null) {
                 log.info("product.ai_summary.skipped: productId={}, reason=EMPTY_SUMMARY", productId);
                 return;
             }
-            productReviewProductApi.updateAiSummary(productId, summary);
+            productReviewProductApi.updateAiSummary(productId, summary.isBlank() ? null : summary);
             retryCounts.remove(productId);
             log.info("product.ai_summary.updated: productId={}", productId);
         } catch (org.springframework.web.server.ResponseStatusException e) {

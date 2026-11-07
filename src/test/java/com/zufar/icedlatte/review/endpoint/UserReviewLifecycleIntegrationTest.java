@@ -13,6 +13,43 @@ import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 @DisplayName("User review lifecycle integration tests")
 class UserReviewLifecycleIntegrationTest extends AuthenticatedUserIntegrationSupport {
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    @Test
+    void deletingAnAccountRefreshesItsReviewsAndVotesOnOtherReviews() {
+        AuthenticatedUser author = registerAndAuthenticateUser();
+        AuthenticatedUser other = registerAndAuthenticateUser();
+        createReview(author);
+        String otherReview = createReview(other);
+        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, author.accessToken()))
+                .body("{\"isLike\":true}")
+                .post("/{productId}/reviews/{reviewId}/likes", PRODUCT_ID, otherReview)
+                .then()
+                .statusCode(200)
+                .body("likesCount", equalTo(1));
+        given(authenticatedJsonSpec(USER_REVIEWS_BASE_PATH, author.accessToken()))
+                .delete()
+                .then()
+                .statusCode(200);
+        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, other.accessToken()))
+                .get("/{productId}/review", PRODUCT_ID)
+                .then()
+                .statusCode(200)
+                .body("likesCount", equalTo(0));
+        var product = java.util.UUID.fromString(PRODUCT_ID);
+        Long actualCount =
+                jdbc.queryForObject("SELECT count(*) FROM product_reviews WHERE product_id=?", Long.class, product);
+        Long storedCount = jdbc.queryForObject("SELECT reviews_count FROM product WHERE id=?", Long.class, product);
+        Double actualAverage = jdbc.queryForObject(
+                "SELECT avg(rating) FROM product_reviews WHERE product_id=?", Double.class, product);
+        Double storedAverage =
+                jdbc.queryForObject("SELECT average_rating FROM product WHERE id=?", Double.class, product);
+        org.assertj.core.api.Assertions.assertThat(storedCount).isEqualTo(actualCount);
+        org.assertj.core.api.Assertions.assertThat(storedAverage)
+                .isCloseTo(actualAverage, org.assertj.core.data.Offset.offset(0.051));
+    }
+
     private static final String USER_REVIEWS_BASE_PATH = "/api/v1/users";
     private static final String PRODUCT_ID = "d1a2b3c4-0001-4000-8000-000000000007";
     private static final String REVIEW_TEXT = "Fresh review from integration test user";

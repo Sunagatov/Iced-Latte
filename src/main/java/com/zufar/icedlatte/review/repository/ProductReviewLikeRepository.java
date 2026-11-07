@@ -10,4 +10,8 @@ import com.zufar.icedlatte.review.entity.ProductReviewLike;
 public interface ProductReviewLikeRepository extends JpaRepository<ProductReviewLike, UUID> {
 
     Optional<ProductReviewLike> findByUserIdAndProductReviewId(UUID userId, UUID reviewId);
+
+    java.util.List<ProductReviewLike> findAllByUserId(UUID userId);
+
+    void deleteAllByUserId(UUID userId);
 }

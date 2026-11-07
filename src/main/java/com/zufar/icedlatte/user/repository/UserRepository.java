@@ -16,6 +16,9 @@ import com.zufar.icedlatte.user.entity.UserEntity;
 
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
+    @Query(value = "SELECT id FROM user_details WHERE id = :userId FOR UPDATE", nativeQuery = true)
+    Optional<UUID> lockForDeletion(@Param("userId") UUID userId);
+
     /**
      * Finds a user entity by its email.
      *

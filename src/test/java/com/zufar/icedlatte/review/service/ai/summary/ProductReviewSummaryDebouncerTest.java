@@ -52,6 +52,14 @@ class ProductReviewSummaryDebouncerTest {
     private ProductReviewSummaryDebouncer debouncer;
 
     @Test
+    void clearsSummaryWhenThereAreNoRemainingReviews() {
+        UUID productId = UUID.randomUUID();
+        when(productSummaryService.summarize(productId)).thenReturn("");
+        debouncer.runSummary(productId);
+        verify(productReviewProductGateway).updateAiSummary(productId, null);
+    }
+
+    @Test
     void quotaRefusalDoesNotScheduleRepeatedRetries() {
         UUID productId = UUID.randomUUID();
         when(productSummaryService.summarize(productId))
