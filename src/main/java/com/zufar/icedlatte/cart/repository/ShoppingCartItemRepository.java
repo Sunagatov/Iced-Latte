@@ -17,7 +17,7 @@ public interface ShoppingCartItemRepository extends JpaRepository<ShoppingCartIt
     Optional<ShoppingCartItem> findByIdAndShoppingCartUserId(
             @Param("itemId") UUID itemId, @Param("userId") UUID userId);
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM ShoppingCartItem i " + "WHERE i.id IN :itemIds AND i.shoppingCart.userId = :userId")
     void deleteByIdInAndUserId(@Param("itemIds") List<UUID> itemIds, @Param("userId") UUID userId);
 }

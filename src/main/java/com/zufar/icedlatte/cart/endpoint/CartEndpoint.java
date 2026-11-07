@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,11 +17,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
 import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
+import com.zufar.icedlatte.cart.service.CartMergeService;
 import com.zufar.icedlatte.cart.service.ShoppingCartService;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
@@ -44,14 +47,18 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
 
     private final CurrentUserProvider currentUserProvider;
     private final ShoppingCartService shoppingCartService;
+    private final CartMergeService cartMergeService;
 
     @Override
     @PostMapping("/items")
     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(
-            @Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
+            @Valid @RequestBody final AddNewItemsToShoppingCartRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) @Nullable UUID idempotencyKey) {
         var userId = currentUserProvider.getUserId();
         Set<AddCartItemRequest> cartItemRequests = toAddCartItemRequests(request);
-        var shoppingCart = shoppingCartService.addItemsToCart(userId, cartItemRequests);
+        var shoppingCart = idempotencyKey == null
+                ? shoppingCartService.addItemsToCart(userId, cartItemRequests)
+                : cartMergeService.merge(userId, idempotencyKey, cartItemRequests);
         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
         return ResponseEntity.ok(shoppingCart);
     }

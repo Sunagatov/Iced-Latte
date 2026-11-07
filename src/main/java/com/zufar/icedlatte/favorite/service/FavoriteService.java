@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
 import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
 import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
@@ -37,6 +38,7 @@ public class FavoriteService {
 
     private final FavoriteRepository favoriteRepository;
     private final ProductCatalogApi productCatalogApi;
+    private final SyncRevisionService syncRevisions;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
@@ -48,6 +50,7 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts request, final UUID userId) {
+        syncRevisions.lock(userId, "favourites");
         List<UUID> requestedProductIds = validateAndCopyProductIds(request);
         FavoriteListEntity favoriteList = getOrCreateFavoriteList(userId);
 
@@ -59,6 +62,7 @@ public class FavoriteService {
         validateTotalFavoriteLimit(existingProductIds.size(), newProductIds.size());
         validateProductsExist(newProductIds);
         insertFavoriteItems(favoriteList.getId(), newProductIds);
+        syncRevisions.changed(userId, "favourites");
 
         FavoriteListEntity refreshed = favoriteRepository
                 .findByUserId(userId)
@@ -68,12 +72,14 @@ public class FavoriteService {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void delete(final UUID productId, final UUID userId) {
+        syncRevisions.lock(userId, "favourites");
         favoriteRepository.findByUserId(userId).ifPresent(favoriteList -> {
             boolean removed = favoriteList
                     .getFavoriteItems()
                     .removeIf(item -> item.getProductId().equals(productId));
             if (removed) {
                 favoriteRepository.touchFavoriteList(favoriteList.getId());
+                syncRevisions.changed(userId, "favourites");
             }
         });
     }

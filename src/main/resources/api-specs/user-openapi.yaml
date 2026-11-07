@@ -706,6 +706,11 @@ components:
         - lastName
         - email
       properties:
+        profileRevision:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Revision of the editable profile fields.
         id:
           type: "string"
           format: "uuid"

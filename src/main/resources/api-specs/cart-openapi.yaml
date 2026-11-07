@@ -32,6 +32,14 @@ paths:
         - "Shopping Cart"
       summary: "Add items to the shopping cart"
       operationId: "addNewItemToShoppingCart"
+      parameters:
+        - name: "Idempotency-Key"
+          in: header
+          required: false
+          description: "Stable UUID for retrying a guest-cart merge without adding its quantities twice. Reuse with a different payload is rejected; a retry returns the current cart."
+          schema:
+            type: string
+            format: uuid
       requestBody:
         description: "Payload containing a list of items to be added to the shopping cart."
         required: true

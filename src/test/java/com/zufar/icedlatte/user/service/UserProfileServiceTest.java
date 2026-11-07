@@ -39,6 +39,9 @@ import com.zufar.icedlatte.user.repository.UserRepository;
 class UserProfileServiceTest {
 
     @Mock
+    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
+
+    @Mock
     private SingleUserProvider singleUserProvider;
 
     @Mock

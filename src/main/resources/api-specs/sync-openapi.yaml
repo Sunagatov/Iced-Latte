@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Iced Latte synchronization API
+  version: 1.0.0
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/sync/{resource}/operations/{operationId}:
+    get:
+      operationId: getSyncOperation
+      parameters:
+        - $ref: '#/components/parameters/Resource'
+        - name: operationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Stored operation outcome and current resource snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResult'
+        '404':
+          description: No committed receipt for this operation in the authenticated account.
+  /api/v1/sync/{resource}:
+    get:
+      operationId: readSyncResource
+      parameters:
+        - $ref: '#/components/parameters/Resource'
+      responses:
+        '200':
+          description: Current confirmed state and its revision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncSnapshot'
+  /api/v1/sync/{resource}/operations:
+    post:
+      operationId: executeSyncOperation
+      parameters:
+        - $ref: '#/components/parameters/Resource'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncCommand'
+      responses:
+        '200':
+          description: Definitive applied or rejected outcome. A repeated operation ID returns the same outcome and the current snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResult'
+        '409':
+          description: Account mismatch or operation ID reused with another payload. No new operation is performed.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Resource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [cart, favourites, profile]
+  schemas:
+    SyncCommand:
+      type: object
+      required: [operationId, expectedUserId, expectedRevision, type, payload]
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        expectedUserId:
+          type: string
+          format: uuid
+        expectedRevision:
+          type: integer
+          format: int64
+          minimum: 0
+        type:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    SyncSnapshot:
+      type: object
+      required: [userId, revision, data]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        revision:
+          type: integer
+          format: int64
+        data:
+          type: object
+          additionalProperties: true
+    SyncConflict:
+      type: object
+      required: [code, message]
+      properties:
+        productId:
+          type: string
+          nullable: true
+        code:
+          type: string
+        message:
+          type: string
+    SyncResult:
+      type: object
+      required: [operationId, outcome, code, message, conflicts, appliedRevision, snapshot]
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: [APPLIED, REJECTED]
+        code:
+          type: string
+        message:
+          type: string
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncConflict'
+        appliedRevision:
+          type: integer
+          format: int64
+        snapshot:
+          $ref: '#/components/schemas/SyncSnapshot'

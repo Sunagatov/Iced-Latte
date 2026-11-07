@@ -33,6 +33,7 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
 import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
 import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
 import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
 import com.zufar.icedlatte.product.api.ProductCatalogApi;
 import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
@@ -50,10 +51,12 @@ public class ShoppingCartService implements CartCheckoutApi {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartItemRepository shoppingCartItemRepository;
     private final ProductCatalogApi productCatalogApi;
+    private final SyncRevisionService syncRevisions;
 
     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto getByUserId(final UUID userId) {
+        syncRevisions.lock(userId, "cart");
         return toCartDto(getOrCreateCart(userId));
     }
 
@@ -82,6 +85,7 @@ public class ShoppingCartService implements CartCheckoutApi {
     }
 
     private ShoppingCart addItemsAndSave(final UUID userId, final Set<AddCartItemRequest> itemsToAdd) {
+        syncRevisions.lock(userId, "cart");
         validateAddCartItemRequests(itemsToAdd);
         ShoppingCart shoppingCart = getOrCreateCart(userId);
         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
@@ -89,13 +93,16 @@ public class ShoppingCartService implements CartCheckoutApi {
                         AddCartItemRequest::productId, AddCartItemRequest::productQuantity, Integer::sum));
         validateProductsExist(productsWithQuantity.keySet());
         mergeIntoCart(shoppingCart, productsWithQuantity);
-        return shoppingCartRepository.saveAndFlush(shoppingCart);
+        var saved = shoppingCartRepository.saveAndFlush(shoppingCart);
+        syncRevisions.changed(userId, "cart");
+        return saved;
     }
 
     @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto updateItemQuantity(
             final UUID shoppingCartItemId, final UUID userId, final int productQuantityChange) {
+        syncRevisions.lock(userId, "cart");
         ShoppingCartItem item = shoppingCartItemRepository
                 .findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
                 .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
@@ -104,14 +111,17 @@ public class ShoppingCartService implements CartCheckoutApi {
 
         item.setProductQuantity(item.getProductQuantity() + productQuantityChange);
         shoppingCartItemRepository.save(item);
+        syncRevisions.changed(userId, "cart");
         return getByUserId(userId);
     }
 
     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public ShoppingCartDto deleteItems(final List<UUID> itemIds, final UUID userId) {
+        syncRevisions.lock(userId, "cart");
         List<UUID> validatedItemIds = validateAndCopyDeleteItemIds(itemIds);
         shoppingCartItemRepository.deleteByIdInAndUserId(validatedItemIds, userId);
+        syncRevisions.changed(userId, "cart");
         log.info("cart.items.deleted: count={}, userId={}", validatedItemIds.size(), userId);
         return getByUserId(userId);
     }
@@ -263,6 +273,8 @@ public class ShoppingCartService implements CartCheckoutApi {
     @Override
     @Transactional
     public void deleteCartForUser(final UUID userId) {
+        syncRevisions.lock(userId, "cart");
         shoppingCartRepository.deleteByUserId(userId);
+        syncRevisions.changed(userId, "cart");
     }
 }

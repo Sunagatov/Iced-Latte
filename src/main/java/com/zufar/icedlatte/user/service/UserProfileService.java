@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.zufar.icedlatte.common.exception.UnauthorizedException;
 import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserProfileService implements UserAccessControlApi {
 
+    private final SyncRevisionService syncRevisions;
     private final SingleUserProvider singleUserProvider;
     private final UserRepository userRepository;
     private final UserDtoConverter userDtoConverter;
@@ -48,12 +50,15 @@ public class UserProfileService implements UserAccessControlApi {
     private final ApplicationEventPublisher eventPublisher;
     private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
+    @Transactional
     public UserDto getProfile(UUID userId) {
+        syncRevisions.lock(userId, "profile");
         return toProfileDto(singleUserProvider.getUserEntityById(userId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public UserDto updateProfile(UUID userId, UpdateUserAccountRequest request) {
+        syncRevisions.lock(userId, "profile");
         AddressDto addressDto = request.getAddress();
         PutUsersRequestValidator.validate(
                 request.getFirstName(),
@@ -63,7 +68,9 @@ public class UserProfileService implements UserAccessControlApi {
                 addressDto);
         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
         userDtoConverter.updateEntity(userEntity, request);
-        return toProfileDto(userRepository.save(userEntity));
+        var saved = userRepository.save(userEntity);
+        syncRevisions.changed(userId, "profile");
+        return toProfileDto(saved);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
@@ -121,6 +128,7 @@ public class UserProfileService implements UserAccessControlApi {
 
     private UserDto toProfileDto(UserEntity userEntity) {
         UserDto userDto = userDtoConverter.toDto(userEntity);
+        userDto.setProfileRevision(syncRevisions.current(userEntity.getId(), "profile"));
         userDto.setAvatarLink(findAvatarLink(userEntity.getId()).orElse(null));
         return userDto;
     }

@@ -102,3 +102,9 @@ databaseChangeLog:
   - include:
       file: db/changelog/version-2.0/04.11.2026.part1.add-operation-quotas.sql
       errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql
+      errorIfMissing: true
+  - include:
+      file: db/changelog/version-2.0/07.11.2026.part2.sync-operations.sql
+      errorIfMissing: true

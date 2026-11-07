@@ -46,6 +46,9 @@ class FavoriteServiceTest {
     private FavoriteService favoriteService;
 
     @Mock
+    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
+
+    @Mock
     private FavoriteRepository favoriteRepository;
 
     @Mock

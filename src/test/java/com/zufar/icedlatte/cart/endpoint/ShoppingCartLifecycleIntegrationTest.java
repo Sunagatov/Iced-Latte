@@ -20,6 +20,86 @@ class ShoppingCartLifecycleIntegrationTest extends AuthenticatedUserIntegrationS
     private static final String SECOND_PRODUCT_ID = "ad0ef2b7-816b-4a11-b361-dfcbe705fc96";
 
     @Test
+    void guestMergeRetryAddsOnceAndReturnsLaterEdits() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String key = java.util.UUID.randomUUID().toString();
+        String body = """
+                {"items":[{"productId":"%s","productQuantity":2}]}
+                """.formatted(PRODUCT_ID);
+        for (int attempt = 0; attempt < 2; attempt++) {
+            given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                    .header("Idempotency-Key", key)
+                    .body(body)
+                    .post("/items")
+                    .then()
+                    .statusCode(200)
+                    .body("productsQuantity", equalTo(2));
+        }
+        addItem(user, PRODUCT_ID, 1).then().statusCode(200).body("productsQuantity", equalTo(3));
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", key)
+                .body(body)
+                .post("/items")
+                .then()
+                .statusCode(200)
+                .body("productsQuantity", equalTo(3));
+    }
+
+    @Test
+    void guestMergeKeyRejectsChangedPayloadAndMalformedKeys() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String key = java.util.UUID.randomUUID().toString();
+        String body = """
+                {"items":[{"productId":"%s","productQuantity":%d}]}
+                """;
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", key)
+                .body(body.formatted(PRODUCT_ID, 2))
+                .post("/items")
+                .then()
+                .statusCode(200);
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", key)
+                .body(body.formatted(PRODUCT_ID, 3))
+                .post("/items")
+                .then()
+                .statusCode(400);
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", "invalid")
+                .body(body.formatted(PRODUCT_ID, 2))
+                .post("/items")
+                .then()
+                .statusCode(400);
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .get()
+                .then()
+                .statusCode(200)
+                .body("productsQuantity", equalTo(2));
+    }
+
+    @Test
+    void failedGuestMergeDoesNotConsumeTheKey() {
+        AuthenticatedUser user = registerAndAuthenticateUser();
+        String key = java.util.UUID.randomUUID().toString();
+        String body = """
+                {"items":[{"productId":"%s","productQuantity":2}]}
+                """;
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", key)
+                .body(body.formatted(java.util.UUID.randomUUID()))
+                .post("/items")
+                .then()
+                .statusCode(404);
+        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
+                .header("Idempotency-Key", key)
+                .body(body.formatted(PRODUCT_ID))
+                .post("/items")
+                .then()
+                .statusCode(200)
+                .body("productsQuantity", equalTo(2));
+    }
+
+    @Test
     @DisplayName("Should create an empty cart for a fresh user")
     void shouldCreateEmptyCartForFreshUser() {
         AuthenticatedUser user = registerAndAuthenticateUser();

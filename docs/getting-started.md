@@ -314,6 +314,26 @@ npm run test:e2e:local-smoke
 
 ---
 
+### Full-stack synchronization regression
+
+With Docker Desktop, Node dependencies installed in the frontend checkout, and
+Chrome available, run from this backend repository:
+
+```bash
+mvn -Dtest=SyncBrowserIntegrationTest -Dsync.browser=true test
+```
+
+The test finds a sibling `Iced-Latte-Frontend` checkout by default. For another
+location set `ICED_LATTE_FRONTEND_SOURCE` to its absolute path (or pass
+`-Dsync.frontend=/path/to/checkout`). It launches real Next.js and Spring against
+disposable PostgreSQL/Redis containers, with external mail/storage mocked.
+The browser covers cart, favourites, profile conflicts and guest merge on desktop
+and mobile sizes, including response loss after a real database commit.
+Results, screenshots and private logs are under `target/sync-browser/`. No live
+accounts, production data or paid provider calls are used. Normal test runs skip
+this suite unless `sync.browser=true`. The test stops only its own child processes
+and restores Next's generated type-import change.
+
 ## 🗄️ Database
 
 Local PostgreSQL defaults:

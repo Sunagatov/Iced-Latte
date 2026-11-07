@@ -58,8 +58,11 @@ class ShoppingCartServiceTest {
 
     @BeforeEach
     void setUp() {
-        shoppingCartService =
-                new ShoppingCartService(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        shoppingCartService = new ShoppingCartService(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -250,7 +253,11 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of()))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -262,7 +269,11 @@ class ShoppingCartServiceTest {
                         shoppingCartService.addItems(userId, Set.of(new AddCartItemRequest(UUID.randomUUID(), 100))))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -275,7 +286,11 @@ class ShoppingCartServiceTest {
                 .isInstanceOf(InvalidCartItemRequestException.class)
                 .hasMessageContaining("must not be null");
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -289,7 +304,11 @@ class ShoppingCartServiceTest {
                 .isInstanceOf(InvalidCartItemRequestException.class)
                 .hasMessageContaining("must not contain null items");
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -303,7 +322,11 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.addItemsToCart(userId, Set.of(itemToAdd)))
                 .isInstanceOf(InvalidItemProductQuantityException.class);
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -430,7 +453,11 @@ class ShoppingCartServiceTest {
         assertThatThrownBy(() -> shoppingCartService.deleteItems(List.of(), userId))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -443,7 +470,11 @@ class ShoppingCartServiceTest {
                         () -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
                 .isInstanceOf(InvalidCartItemRequestException.class);
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     @Test
@@ -456,7 +487,11 @@ class ShoppingCartServiceTest {
                 .isInstanceOf(InvalidCartItemRequestException.class)
                 .hasMessageContaining("must not be null");
 
-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+        verifyNoInteractions(
+                shoppingCartRepository,
+                shoppingCartItemRepository,
+                productCatalogApi,
+                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
     }
 
     private static ProductSnapshot productDto(UUID id, BigDecimal price) {
