@@ -7,6 +7,7 @@ security:
 paths:
   /api/v1/sync/{resource}/operations/{operationId}:
     get:
+      tags: [Sync]
       operationId: getSyncOperation
       parameters:
         - $ref: '#/components/parameters/Resource'
@@ -27,6 +28,7 @@ paths:
           description: No committed receipt for this operation in the authenticated account.
   /api/v1/sync/{resource}:
     get:
+      tags: [Sync]
       operationId: readSyncResource
       parameters:
         - $ref: '#/components/parameters/Resource'
@@ -39,6 +41,7 @@ paths:
                 $ref: '#/components/schemas/SyncSnapshot'
   /api/v1/sync/{resource}/operations:
     post:
+      tags: [Sync]
       operationId: executeSyncOperation
       parameters:
         - $ref: '#/components/parameters/Resource'

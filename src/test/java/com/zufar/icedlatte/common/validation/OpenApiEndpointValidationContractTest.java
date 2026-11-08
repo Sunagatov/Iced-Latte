@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,6 +40,8 @@ import com.zufar.icedlatte.security.endpoint.OAuthEndpoint;
 import com.zufar.icedlatte.security.endpoint.PasswordEndpoint;
 import com.zufar.icedlatte.security.endpoint.SessionsEndpoint;
 import com.zufar.icedlatte.supportchat.endpoint.SupportChatEndpoint;
+import com.zufar.icedlatte.sync.SyncEndpoint;
+import com.zufar.icedlatte.sync.SyncService;
 import com.zufar.icedlatte.user.endpoint.DeliveryAddressEndpoint;
 import com.zufar.icedlatte.user.endpoint.UserAvatarEndpoint;
 import com.zufar.icedlatte.user.endpoint.UserProfileEndpoint;
@@ -63,7 +66,8 @@ class OpenApiEndpointValidationContractTest {
             AuthenticationEndpoint.class,
             SessionsEndpoint.class,
             PasswordEndpoint.class,
-            SupportChatEndpoint.class);
+            SupportChatEndpoint.class,
+            SyncEndpoint.class);
 
     @Test
     @DisplayName("every production endpoint is covered by generated OpenAPI contract checks")
@@ -186,6 +190,9 @@ class OpenApiEndpointValidationContractTest {
     }
 
     private static Object dummyValue(Class<?> parameterType) throws ReflectiveOperationException {
+        if (parameterType == SyncService.Command.class) {
+            return new SyncService.Command(UUID.randomUUID(), UUID.randomUUID(), 0L, "add", Map.of());
+        }
         if (parameterType == String.class) {
             return "dummy";
         }

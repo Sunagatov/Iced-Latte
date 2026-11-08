@@ -43,6 +43,7 @@ class ModularityTests {
                 "common :: monitoring",
                 "common :: pagination",
                 "common :: retry",
+                "common :: sync",
                 "common :: turnstile",
                 "common :: util",
                 "common :: validation-pagination",
