@@ -164,7 +164,7 @@ class UserProfileEndpointIntegrationTest extends AuthenticatedUserIntegrationSup
     @DisplayName("Should change password and authenticate only with the new password")
     void shouldChangePasswordAndAuthenticateOnlyWithTheNewPassword() {
         AuthenticatedUser user = registerAndAuthenticateUser();
-        String newPassword = "NewPass123!";
+        String newPassword = "another calm morning coffee";
 
         String changePasswordBody = """
                 {

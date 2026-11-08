@@ -34,6 +34,9 @@ import io.restassured.specification.RequestSpecification;
 @DisplayName("OAuth security endpoint integration tests")
 class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
+    private static final String VERIFIER = "B".repeat(43);
+    private static final String CHALLENGE =
+            com.zufar.icedlatte.security.oauth.flow.OAuthTokenHandoffStore.challenge(VERIFIER);
     private static final String BASE_PATH = "/api/v1/auth";
     private static final String GOOGLE_OAUTH_STATE_COOKIE = "iced_latte_oauth_state_google";
     private static final String GITHUB_OAUTH_STATE_COOKIE = "iced_latte_oauth_state_github";
@@ -57,7 +60,10 @@ class AuthEndpointIntegrationTest extends IntegrationTestBase {
 
     @BeforeEach
     void setUp() {
-        specification = given().port(port).basePath(BASE_PATH);
+        specification = given().port(port)
+                .basePath(BASE_PATH)
+                .queryParam("codeChallenge", CHALLENGE)
+                .header("X-OAuth-Verifier", VERIFIER);
         when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.of(oAuthProviderClient));
         when(oAuthProviderClient.buildAuthorizationUri(any(String.class)))
                 .thenAnswer(invocation -> googleAuthUri(invocation.getArgument(0)));
