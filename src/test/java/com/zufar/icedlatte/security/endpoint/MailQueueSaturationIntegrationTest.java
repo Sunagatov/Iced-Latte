@@ -14,6 +14,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
 
+@org.springframework.test.annotation.DirtiesContext(
+        classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS)
 class MailQueueSaturationIntegrationTest extends AuthenticatedUserIntegrationSupport {
     @Autowired
     @Qualifier("authEmailExecutor")
@@ -23,7 +25,9 @@ class MailQueueSaturationIntegrationTest extends AuthenticatedUserIntegrationSup
     void saturationDoesNotDiscloseMembershipOrFailCommittedPasswordChange() throws Exception {
         var user = registerAndAuthenticateUser();
         CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(2);
         Runnable blocked = () -> {
+            started.countDown();
             try {
                 release.await();
             } catch (InterruptedException e) {
@@ -31,7 +35,20 @@ class MailQueueSaturationIntegrationTest extends AuthenticatedUserIntegrationSup
             }
         };
         try {
-            for (int i = 0; i < 66; i++) executor.execute(blocked);
+            executor.execute(blocked);
+            executor.execute(blocked);
+            org.assertj.core.api.Assertions.assertThat(started.await(10, java.util.concurrent.TimeUnit.SECONDS))
+                    .isTrue();
+            boolean saturated = false;
+            for (int i = 0; i < 128; i++) {
+                try {
+                    executor.execute(blocked);
+                } catch (TaskRejectedException expected) {
+                    saturated = true;
+                    break;
+                }
+            }
+            org.assertj.core.api.Assertions.assertThat(saturated).isTrue();
             assertThatThrownBy(() -> executor.execute(blocked)).isInstanceOf(TaskRejectedException.class);
             given(jsonSpec("/api/v1/auth/password"))
                     .body(Map.of("email", user.email()))
