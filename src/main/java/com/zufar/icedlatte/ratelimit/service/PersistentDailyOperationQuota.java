@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zufar.icedlatte.ratelimit.api.DailyOperationQuota;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
@@ -106,6 +107,7 @@ public class PersistentDailyOperationQuota implements DailyOperationQuota {
 
     private void recordDecision(String scope, String outcome) {
         String category = scope.startsWith("ai:") ? "ai" : scope.startsWith("avatar:") ? "uploads" : "other";
-        registry.counter("operation.quota.decisions", "category", category, "outcome", outcome).increment();
+        registry.counter("operation.quota.decisions", "category", category, "outcome", outcome)
+                .increment();
     }
 }
