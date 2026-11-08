@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.user.entity.UserAvatarUpload;
 
 import lombok.RequiredArgsConstructor;
@@ -20,10 +21,12 @@ public class AvatarUploadCompletionHandler {
     private final AvatarUploadSourceObjectValidator sourceObjectValidator;
     private final AvatarUploadLifecycleService lifecycleService;
     private final AvatarUploadActivationService activationService;
+    private final SyncRevisionService syncRevisions;
 
     @Transactional
     public Optional<UserAvatarUpload> complete(@Nullable AvatarUploadCompletionCommand command) {
         AvatarUploadCompletion completion = completionValidator.validate(command);
+        syncRevisions.lock(completion.source().userId(), "profile");
         return lifecycleService.markReady(completion).flatMap(upload -> activationService.activate(upload.getId()));
     }
 

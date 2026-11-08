@@ -45,6 +45,76 @@ class UserAvatarEndpointIntegrationTest extends AuthenticatedUserIntegrationSupp
     private com.zufar.icedlatte.filestorage.api.FileStorageWriterApi storageWriter;
 
     @Test
+    void avatarWritesAdvanceProfileRevisionsAndRejectedUploadsPreserveTheCurrentPhoto() {
+        var user = registerAndAuthenticateUser();
+        UUID userId = userLookupApi.getUserByEmail(user.email()).id();
+        org.mockito.Mockito.when(objectStorage.isConfigured()).thenReturn(true);
+        org.mockito.Mockito.when(objectStorage.getUrl(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> java.util.Optional.of("https://storage.example.com/"
+                        + ((com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto) invocation.getArgument(0))
+                                .fileName()));
+        long before = profileRevision(user.accessToken());
+        byte[] png = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0};
+        for (int i = 1; i <= 2; i++) {
+            given().port(port)
+                    .basePath(BASE_PATH)
+                    .header("Authorization", "Bearer " + user.accessToken())
+                    .multiPart("file", "avatar.png", png, "image/png")
+                    .post("/avatar")
+                    .then()
+                    .statusCode(200);
+            assertThat(profileRevision(user.accessToken())).isEqualTo(before + i);
+        }
+        String current = given().port(port)
+                .basePath(BASE_PATH)
+                .header("Authorization", "Bearer " + user.accessToken())
+                .get("/avatar")
+                .then()
+                .statusCode(200)
+                .extract()
+                .asString();
+        given().port(port)
+                .basePath(BASE_PATH)
+                .header("Authorization", "Bearer " + user.accessToken())
+                .multiPart("file", "bad.jpg", "not a jpeg".getBytes(), "image/jpeg")
+                .post("/avatar")
+                .then()
+                .statusCode(400);
+        assertThat(profileRevision(user.accessToken())).isEqualTo(before + 2);
+        assertThat(given().port(port)
+                        .basePath(BASE_PATH)
+                        .header("Authorization", "Bearer " + user.accessToken())
+                        .get("/avatar")
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .asString())
+                .isEqualTo(current);
+        given().port(port)
+                .basePath(BASE_PATH)
+                .header("Authorization", "Bearer " + user.accessToken())
+                .delete("/avatar")
+                .then()
+                .statusCode(200);
+        assertThat(profileRevision(user.accessToken())).isEqualTo(before + 3);
+        assertThat(jdbc.queryForObject(
+                        "SELECT count(*) FROM file_metadata WHERE related_object_id = ?", Long.class, userId))
+                .isZero();
+    }
+
+    private long profileRevision(String token) {
+        return given().port(port)
+                .basePath(BASE_PATH)
+                .header("Authorization", "Bearer " + token)
+                .get()
+                .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath()
+                .getLong("profileRevision");
+    }
+
+    @Test
     void replayedTerminalCompletionSchedulesDeletionEvenAfterAnOlderDeletionWasPublished() {
         var user = registerAndAuthenticateUser();
         UUID userId = userLookupApi.getUserByEmail(user.email()).id();

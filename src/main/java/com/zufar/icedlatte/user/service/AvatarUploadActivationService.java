@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
 import com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto;
 import com.zufar.icedlatte.user.entity.UserAvatarUpload;
@@ -29,30 +30,37 @@ public class AvatarUploadActivationService {
     private final FileStorageWriterApi fileStorageWriterApi;
     private final Clock clock;
     private final AvatarUploadAdmission admission;
+    private final SyncRevisionService syncRevisions;
 
     @SuppressWarnings("unused")
     @Autowired
     public AvatarUploadActivationService(
             UserAvatarUploadRepository repository,
             FileStorageWriterApi fileStorageWriterApi,
-            AvatarUploadAdmission admission) {
-        this(repository, fileStorageWriterApi, admission, Clock.systemUTC());
+            AvatarUploadAdmission admission,
+            SyncRevisionService syncRevisions) {
+        this(repository, fileStorageWriterApi, admission, syncRevisions, Clock.systemUTC());
     }
 
     AvatarUploadActivationService(
             UserAvatarUploadRepository repository,
             FileStorageWriterApi fileStorageWriterApi,
             AvatarUploadAdmission admission,
+            SyncRevisionService syncRevisions,
             Clock clock) {
         this.repository = repository;
         this.fileStorageWriterApi = fileStorageWriterApi;
         this.clock = clock;
         this.admission = admission;
+        this.syncRevisions = syncRevisions;
     }
 
     @Transactional
     public Optional<UserAvatarUpload> activate(UUID uploadId) {
-        return admission.lockUpload(uploadId).flatMap(this::activate);
+        return repository.findOwnerIdById(uploadId).flatMap(userId -> {
+            syncRevisions.lock(userId, "profile");
+            return admission.lockUpload(uploadId).flatMap(this::activate);
+        });
     }
 
     private Optional<UserAvatarUpload> activate(UserAvatarUpload upload) {
@@ -90,6 +98,7 @@ public class AvatarUploadActivationService {
         activeUpload.filter(active -> !active.getId().equals(upload.getId())).ifPresent(this::supersede);
         upload.setActive(true);
         upload.setActivatedAt(clock.instant());
+        syncRevisions.changed(upload.getUserId(), "profile");
         return Optional.of(repository.save(upload));
     }
 

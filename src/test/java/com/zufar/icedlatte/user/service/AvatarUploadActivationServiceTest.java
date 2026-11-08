@@ -38,8 +38,15 @@ class AvatarUploadActivationServiceTest {
     @Mock
     private AvatarUploadAdmission admission;
 
+    @Mock
+    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
+
     @BeforeEach
     void lockUploadReadsCurrentRow() {
+        lenient()
+                .when(repository.findOwnerIdById(any(UUID.class)))
+                .thenAnswer(invocation ->
+                        repository.findById(invocation.getArgument(0)).map(UserAvatarUpload::getUserId));
         lenient()
                 .when(admission.lockUpload(any(UUID.class)))
                 .thenAnswer(invocation -> repository.findById(invocation.getArgument(0)));
@@ -73,6 +80,11 @@ class AvatarUploadActivationServiceTest {
                 .recordExisting(new FileMetadataDto(userId, ready.getProcessedBucket(), ready.getProcessedKey()));
         verify(repository).saveAndFlush(oldActive);
         verify(repository).save(ready);
+        var order = inOrder(syncRevisions, admission, fileStorageWriterApi);
+        order.verify(syncRevisions).lock(userId, "profile");
+        order.verify(admission).lockUpload(ready.getId());
+        order.verify(fileStorageWriterApi).recordExisting(any());
+        order.verify(syncRevisions).changed(userId, "profile");
     }
 
     @Test
@@ -87,6 +99,7 @@ class AvatarUploadActivationServiceTest {
 
         assertThat(result).containsSame(active);
         verifyNoInteractions(fileStorageWriterApi);
+        verify(syncRevisions, never()).changed(any(), any());
         verify(repository, never()).save(any());
     }
 
@@ -164,7 +177,7 @@ class AvatarUploadActivationServiceTest {
     }
 
     private AvatarUploadActivationService service() {
-        return new AvatarUploadActivationService(repository, fileStorageWriterApi, admission, CLOCK);
+        return new AvatarUploadActivationService(repository, fileStorageWriterApi, admission, syncRevisions, CLOCK);
     }
 
     private static UserAvatarUpload upload(UUID userId, UUID uploadId, UserAvatarUploadStatus status) {

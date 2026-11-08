@@ -33,6 +33,11 @@ class AvatarUploadActivationServiceContextTest {
     static class AvatarUploadActivationServiceConfiguration {
 
         @Bean
+        com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisionService() {
+            return mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class);
+        }
+
+        @Bean
         AvatarUploadAdmission avatarUploadAdmission() {
             return mock(AvatarUploadAdmission.class);
         }

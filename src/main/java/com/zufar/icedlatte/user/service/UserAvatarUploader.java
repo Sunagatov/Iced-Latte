@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zufar.icedlatte.common.exception.BadRequestException;
+import com.zufar.icedlatte.common.sync.SyncRevisionService;
 import com.zufar.icedlatte.common.turnstile.TurnstileProperties;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationRequest;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerifier;
@@ -31,6 +32,7 @@ public class UserAvatarUploader {
     private final TurnstileProperties turnstileProperties;
     private final AvatarUploadAdmission admission;
     private final AvatarUploadLifecycleService lifecycleService;
+    private final SyncRevisionService syncRevisions;
 
     @Value("${spring.aws.buckets.user-avatar:}")
     private String bucketName;
@@ -56,12 +58,15 @@ public class UserAvatarUploader {
         String contentType = AvatarContentTypes.normalize(file);
         validateAvatarFile(userId, file, contentType);
 
+        // Match profile edits' lock order before taking the avatar's user lock.
+        syncRevisions.lock(userId, "profile");
         admission.lockUser(userId);
         admission.reserve(userId);
         lifecycleService.invalidateUserUploadsAfterAvatarDelete(userId);
 
         String fileName = avatarFileName(userId, contentType);
         uploadAvatarFile(file, userId, fileName);
+        syncRevisions.changed(userId, "profile");
     }
 
     private void validateAvatarFile(UUID userId, MultipartFile file, String contentType) {

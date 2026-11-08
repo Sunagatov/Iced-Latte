@@ -37,6 +37,9 @@ class AvatarUploadCompletionHandlerTest {
     @Mock
     private AvatarUploadActivationService activationService;
 
+    @Mock
+    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
+
     @Test
     @DisplayName("marks completion ready and activates avatar")
     void completeMarksReadyAndActivatesAvatar() {
@@ -55,6 +58,10 @@ class AvatarUploadCompletionHandlerTest {
         assertThat(result).containsSame(active);
         verify(lifecycleService).markReady(completion);
         verify(activationService).activate(UPLOAD_ID);
+        var order = inOrder(syncRevisions, lifecycleService, activationService);
+        order.verify(syncRevisions).lock(USER_ID, "profile");
+        order.verify(lifecycleService).markReady(completion);
+        order.verify(activationService).activate(UPLOAD_ID);
     }
 
     @Test
@@ -132,7 +139,7 @@ class AvatarUploadCompletionHandlerTest {
 
     private AvatarUploadCompletionHandler handler() {
         return new AvatarUploadCompletionHandler(
-                completionValidator, sourceObjectValidator, lifecycleService, activationService);
+                completionValidator, sourceObjectValidator, lifecycleService, activationService, syncRevisions);
     }
 
     private static AvatarUploadCompletionCommand command() {

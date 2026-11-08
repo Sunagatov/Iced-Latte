@@ -145,8 +145,10 @@ public class UserProfileService implements UserAccessControlApi {
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void deleteAvatar(UUID userId) {
+        syncRevisions.lock(userId, "profile");
         avatarUploadLifecycleService.invalidateUserUploadsAfterAvatarDelete(userId);
         fileStorageWriterApi.deleteFile(userId);
+        syncRevisions.changed(userId, "profile");
     }
 
     private UserDto toProfileDto(UserEntity userEntity) {

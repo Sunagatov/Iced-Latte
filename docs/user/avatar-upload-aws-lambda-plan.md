@@ -5,6 +5,15 @@ the current local/backend upload flow intact for contributors.
 
 ## Current Backend Status
 
+Avatar/profile synchronization, 8 November 2026: successful multipart upload,
+processed-avatar activation and deletion advance the existing profile revision
+in the metadata transaction. These paths lock profile state before the user row,
+including the completion handler, matching profile edits. Failed uploads leave
+the current photo and revision intact; replaying an already-active completion
+does not advance the revision. The frontend uses this revision to refresh its
+private image route and sends a scoped invalidation hint to other open tabs.
+This does not enable the presigned/Lambda pipeline in any environment.
+
 As of June 28, 2026, the backend Phase 2 work is partially implemented in this
 repo.
 

@@ -221,6 +221,11 @@ class UserProfileServiceTest {
 
         verify(avatarUploadLifecycleService).invalidateUserUploadsAfterAvatarDelete(userId);
         verify(fileStorageWriterApi).deleteFile(userId);
+        var order = org.mockito.Mockito.inOrder(syncRevisions, avatarUploadLifecycleService, fileStorageWriterApi);
+        order.verify(syncRevisions).lock(userId, "profile");
+        order.verify(avatarUploadLifecycleService).invalidateUserUploadsAfterAvatarDelete(userId);
+        order.verify(fileStorageWriterApi).deleteFile(userId);
+        order.verify(syncRevisions).changed(userId, "profile");
     }
 
     @Test

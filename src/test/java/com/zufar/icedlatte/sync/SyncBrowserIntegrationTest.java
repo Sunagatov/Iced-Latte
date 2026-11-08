@@ -30,6 +30,40 @@ class SyncBrowserIntegrationTest extends AuthenticatedUserIntegrationSupport {
 
     @Test
     void realFrontendAndBackendRecoverLostResponsesAndConflicts() throws Exception {
+        // Private image bytes remain local, while uploads and profile revisions
+        // still traverse the real proxy, application and database.
+        var avatarObjects = new java.util.concurrent.ConcurrentHashMap<String, byte[]>();
+        var imageServer = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        imageServer.createContext("/avatar/", exchange -> {
+            byte[] bytes = avatarObjects.get(exchange.getRequestURI().getPath().substring("/avatar/".length()));
+            if (bytes == null) {
+                exchange.sendResponseHeaders(404, -1);
+            } else {
+                exchange.getResponseHeaders().set("Content-Type", "image/png");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+            }
+            exchange.close();
+        });
+        org.mockito.Mockito.when(objectStorage.isConfigured()).thenReturn(true);
+        org.mockito.Mockito.doAnswer(call -> {
+                    org.springframework.web.multipart.MultipartFile file = call.getArgument(0);
+                    avatarObjects.put(call.getArgument(2), file.getBytes());
+                    return null;
+                })
+                .when(objectStorage)
+                .upload(
+                        org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.anyString(),
+                        org.mockito.ArgumentMatchers.anyString());
+        org.mockito.Mockito.when(objectStorage.getUrl(org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(call -> {
+                    com.zufar.icedlatte.filestorage.api.dto.FileMetadataDto metadata = call.getArgument(0);
+                    return avatarObjects.containsKey(metadata.fileName())
+                            ? java.util.Optional.of("http://127.0.0.1:"
+                                    + imageServer.getAddress().getPort() + "/avatar/" + metadata.fileName())
+                            : java.util.Optional.empty();
+                });
         Path frontend = Path.of(System.getProperty(
                         "sync.frontend",
                         System.getenv().getOrDefault("ICED_LATTE_FRONTEND_SOURCE", "../Iced-Latte-Frontend")))
@@ -75,6 +109,7 @@ class SyncBrowserIntegrationTest extends AuthenticatedUserIntegrationSupport {
                         "false"));
         Process server = builder.start();
         Process browser = null;
+        imageServer.start();
         try {
             try (var http =
                     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()) {
@@ -122,6 +157,7 @@ class SyncBrowserIntegrationTest extends AuthenticatedUserIntegrationSupport {
                     .as("real browser checks; see target/sync-browser/browser.log")
                     .isZero();
         } finally {
+            imageServer.stop(0);
             if (browser != null) stop(browser);
             stop(server);
             String before = new String(originalTypes, StandardCharsets.UTF_8);

@@ -47,6 +47,9 @@ class UserAvatarUploaderTest {
     @Mock
     private AvatarUploadLifecycleService lifecycleService;
 
+    @Mock
+    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
+
     private UserAvatarUploader uploader;
 
     private static final String BUCKET = "test-bucket";
@@ -61,7 +64,7 @@ class UserAvatarUploaderTest {
     @BeforeEach
     void injectBucket() throws Exception {
         uploader = new UserAvatarUploader(
-                fileStorageService, turnstileVerifier, turnstileProperties, admission, lifecycleService);
+                fileStorageService, turnstileVerifier, turnstileProperties, admission, lifecycleService, syncRevisions);
         var field = UserAvatarUploader.class.getDeclaredField("bucketName");
         field.setAccessible(true);
         field.set(uploader, BUCKET);
@@ -125,6 +128,11 @@ class UserAvatarUploaderTest {
         FileMetadataDto saved = captor.getValue();
         assertThat(saved.relatedObjectId()).isEqualTo(userId);
         assertThat(saved.bucketName()).isEqualTo(BUCKET);
+        var order = inOrder(syncRevisions, admission, fileStorageService);
+        order.verify(syncRevisions).lock(userId, "profile");
+        order.verify(admission).lockUser(userId);
+        order.verify(fileStorageService).store(eq(file), any());
+        order.verify(syncRevisions).changed(userId, "profile");
         assertThat(saved.fileName())
                 .startsWith("avatars/processed/" + userId + "/")
                 .endsWith("/avatar.jpg");
