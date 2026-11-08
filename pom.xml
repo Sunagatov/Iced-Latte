@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.9</version>
+        <version>4.1.2</version>
         <relativePath/>
     </parent>
 
@@ -116,75 +116,75 @@
 
         <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
         <tomcat.version>11.0.27</tomcat.version>
-        <jackson-bom.version>3.1.8</jackson-bom.version>
-        <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
-        <kotlin.version>2.4.20</kotlin.version>
+        <jackson-bom.version>3.3.0</jackson-bom.version>
+        <jackson-2-bom.version>2.23.0</jackson-2-bom.version>
+        <kotlin.version>2.4.21</kotlin.version>
         <netty.version>4.2.20.Final</netty.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
-        <spring-retry.version>2.0.12</spring-retry.version>
-        <bcprov.version>1.84</bcprov.version>
+        <spring-retry.version>2.0.13</spring-retry.version>
+        <bcprov.version>1.86</bcprov.version>
 
         <!-- ========== SERIALIZATION & LOGGING VERSIONS ========== -->
-        <jackson-databind-nullable.version>0.2.10</jackson-databind-nullable.version>
+        <jackson-databind-nullable.version>0.2.13</jackson-databind-nullable.version>
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
-        <loki-logback-appender.version>2.0.3</loki-logback-appender.version>
+        <loki-logback-appender.version>2.1.0</loki-logback-appender.version>
 
         <!-- ========== CODE GENERATION VERSIONS ========== -->
-        <lombok.version>1.18.44</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
 
         <!-- ========== DOCUMENTATION VERSIONS ========== -->
-        <springdoc-openapi.version>3.0.3</springdoc-openapi.version>
-        <openapi-generator.version>7.21.0</openapi-generator.version>
+        <springdoc-openapi.version>3.2.0</springdoc-openapi.version>
+        <openapi-generator.version>7.27.0</openapi-generator.version>
 
         <!-- ========== TESTING VERSIONS ========== -->
-        <instancio-junit.version>5.5.1</instancio-junit.version>
-        <rest-assured.version>6.0.0</rest-assured.version>
+        <instancio-junit.version>6.2.1</instancio-junit.version>
+        <rest-assured.version>6.3.0</rest-assured.version>
 
         <!-- ========== THIRD-PARTY INTEGRATIONS VERSIONS ========== -->
-        <stripe.version>32.0.0</stripe.version>
-        <google-api-client.version>2.9.0</google-api-client.version>
+        <stripe.version>34.1.0</stripe.version>
+        <google-api-client.version>2.9.2</google-api-client.version>
 
         <!-- ========== AWS VERSIONS ========== -->
-        <aws-sdk-bom.version>2.42.23</aws-sdk-bom.version>
+        <aws-sdk-bom.version>2.57.11</aws-sdk-bom.version>
 
         <!-- ========== AI VERSIONS ========== -->
-        <langchain4j.version>1.12.2</langchain4j.version>
+        <langchain4j.version>1.23.0</langchain4j.version>
         <opennlp-tools.version>2.5.12</opennlp-tools.version>
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
-        <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>
-        <opentelemetry-semconv.version>1.41.1</opentelemetry-semconv.version>
-        <sentry.version>8.37.1</sentry.version>
+        <opentelemetry-proto.version>1.11.1-alpha</opentelemetry-proto.version>
+        <opentelemetry-semconv.version>1.45.0</opentelemetry-semconv.version>
+        <sentry.version>8.63.0</sentry.version>
         <sentry.org/>
         <sentry.project/>
         <sentry.base-url/>
 
         <!-- ========== ARCHITECTURE TESTING VERSIONS ========== -->
-        <spring-modulith.version>2.0.6</spring-modulith.version>
-        <archunit.version>1.4.2</archunit.version>
+        <spring-modulith.version>2.1.2</spring-modulith.version>
+        <archunit.version>1.5.1</archunit.version>
 
         <!-- ========== STATIC ANALYSIS VERSIONS ========== -->
-        <error-prone.version>2.49.0</error-prone.version>
-        <nullaway.version>0.13.4</nullaway.version>
-        <jspecify.version>1.0.0</jspecify.version>
+        <error-prone.version>2.52.0</error-prone.version>
+        <nullaway.version>0.14.3</nullaway.version>
+        <jspecify.version>1.0.1</jspecify.version>
 
         <!-- ========== MUTATION TESTING VERSIONS ========== -->
-        <pitest-maven-plugin.version>1.25.0</pitest-maven-plugin.version>
-        <pitest-junit5-plugin.version>1.2.1</pitest-junit5-plugin.version>
+        <pitest-maven-plugin.version>1.30.2</pitest-maven-plugin.version>
+        <pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
 
         <!-- ========== MAVEN PLUGINS VERSIONS ========== -->
-        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-        <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
-        <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
-        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
-        <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-        <sonar-maven-plugin.version>5.5.0.6356</sonar-maven-plugin.version>
-        <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <spotless-maven-plugin.version>3.5.1</spotless-maven-plugin.version>
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
+        <maven-failsafe-plugin.version>3.6.1</maven-failsafe-plugin.version>
+        <maven-enforcer-plugin.version>3.7.0</maven-enforcer-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.7.0</build-helper-maven-plugin.version>
+        <spotless-maven-plugin.version>3.11.0</spotless-maven-plugin.version>
         <palantir-java-format.version>2.91.0</palantir-java-format.version>
         <sentry-maven-plugin.version>0.11.0</sentry-maven-plugin.version>
 
