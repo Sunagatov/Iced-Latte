@@ -67,7 +67,10 @@ public class AWSConfig {
         S3Presigner.Builder builder =
                 S3Presigner.builder().credentialsProvider(buildCredentials()).region(Region.of(awsProperties.region()));
         if (StringUtils.hasText(awsProperties.endpointUrl())) {
-            builder.endpointOverride(URI.create(awsProperties.endpointUrl()));
+            builder.endpointOverride(URI.create(awsProperties.endpointUrl()))
+                    .serviceConfiguration(S3Configuration.builder()
+                            .pathStyleAccessEnabled(true)
+                            .build());
         }
         return builder.build();
     }

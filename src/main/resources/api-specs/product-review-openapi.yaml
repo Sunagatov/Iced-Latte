@@ -447,6 +447,57 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - "Review Reactions"
+      summary: "Remove the current user's vote, available for authorized users only"
+      operationId: "removeProductReviewLike"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product."
+          schema:
+            type: "string"
+            format: "uuid"
+        - name: "productReviewId"
+          in: "path"
+          required: true
+          description: "Unique identifier of the product's review."
+          schema:
+            type: "string"
+            format: "uuid"
+      responses:
+        "200":
+          description: "Current user's vote was cleared (idempotent)"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductReviewDto"
+        "401":
+          description: "Unauthorized access occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: "Bad request, e.g. review vote 'isLike' is missing or the vote changed concurrently."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: "Product or product review not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: "Internal server error occurred."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:

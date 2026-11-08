@@ -50,6 +50,41 @@ class UserReviewLifecycleIntegrationTest extends AuthenticatedUserIntegrationSup
                 .isCloseTo(actualAverage, org.assertj.core.data.Offset.offset(0.051));
     }
 
+    @Test
+    void clearingAVoteIsAuthenticatedIdempotentAndPreservesOtherUsersVotes() {
+        AuthenticatedUser author = registerAndAuthenticateUser();
+        AuthenticatedUser voter = registerAndAuthenticateUser();
+        AuthenticatedUser other = registerAndAuthenticateUser();
+        String review = createReview(author);
+        String path = "/{productId}/reviews/{reviewId}/likes";
+        for (var user : java.util.List.of(voter, other)) {
+            given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, user.accessToken()))
+                    .body("{\"isLike\":true}")
+                    .post(path, PRODUCT_ID, review)
+                    .then()
+                    .statusCode(200);
+        }
+        // Repeating the setter must not toggle the existing vote.
+        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, voter.accessToken()))
+                .body("{\"isLike\":true}")
+                .post(path, PRODUCT_ID, review)
+                .then()
+                .statusCode(200)
+                .body("likesCount", equalTo(2));
+        for (int retry = 0; retry < 2; retry++) {
+            given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, voter.accessToken()))
+                    .delete(path, PRODUCT_ID, review)
+                    .then()
+                    .statusCode(200)
+                    .body("likesCount", equalTo(1))
+                    .body("dislikesCount", equalTo(0));
+        }
+        given(jsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL))
+                .delete(path, PRODUCT_ID, review)
+                .then()
+                .statusCode(401);
+    }
+
     private static final String USER_REVIEWS_BASE_PATH = "/api/v1/users";
     private static final String PRODUCT_ID = "d1a2b3c4-0001-4000-8000-000000000007";
     private static final String REVIEW_TEXT = "Fresh review from integration test user";

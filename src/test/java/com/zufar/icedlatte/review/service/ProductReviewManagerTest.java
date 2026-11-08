@@ -118,6 +118,43 @@ class ProductReviewManagerTest {
         verify(summaryDebouncer).schedule(productId);
     }
 
+    @Test
+    void clearingVoteDeletesOnlyTheCurrentUsersVoteAndRecountsAfterFlush() {
+        UUID productId = UUID.randomUUID(), reviewId = UUID.randomUUID(), userId = UUID.randomUUID();
+        var vote = ProductReviewLike.builder()
+                .userId(userId)
+                .productReviewId(reviewId)
+                .build();
+        var review =
+                ProductReview.builder().id(reviewId).userId(UUID.randomUUID()).build();
+        when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId))
+                .thenReturn(Optional.of(vote));
+        when(reviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
+        service.removeLike(productId, reviewId, userId);
+        var order = inOrder(productReviewValidator, reviewRepository, productReviewLikeRepository);
+        order.verify(productReviewValidator).validateProductIdIsValid(productId, reviewId);
+        order.verify(reviewRepository).lockVotes(reviewId);
+        order.verify(productReviewLikeRepository).findByUserIdAndProductReviewId(userId, reviewId);
+        order.verify(productReviewLikeRepository).delete(vote);
+        order.verify(productReviewLikeRepository).flush();
+        order.verify(reviewRepository).updateLikesCount(reviewId);
+        order.verify(reviewRepository).updateDislikesCount(reviewId);
+    }
+
+    @Test
+    void clearingAnAbsentVoteIsIdempotent() {
+        UUID productId = UUID.randomUUID(), reviewId = UUID.randomUUID(), userId = UUID.randomUUID();
+        when(productReviewLikeRepository.findByUserIdAndProductReviewId(userId, reviewId))
+                .thenReturn(Optional.empty());
+        when(reviewRepository.findById(reviewId))
+                .thenReturn(Optional.of(ProductReview.builder().userId(userId).build()));
+        service.removeLike(productId, reviewId, userId);
+        service.removeLike(productId, reviewId, userId);
+        verify(productReviewLikeRepository, never()).delete(any());
+        verify(reviewRepository, times(2)).updateLikesCount(reviewId);
+        verify(reviewRepository, times(2)).updateDislikesCount(reviewId);
+    }
+
     @Nested
     @DisplayName("create")
     class Create {

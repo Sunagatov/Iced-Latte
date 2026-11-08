@@ -19,8 +19,7 @@ public class PutUsersRequestValidator {
     private static final int MIN_NAME_LENGTH = 2;
     private static final int MAX_NAME_LENGTH = 64;
     private static final int MAX_ADDRESS_FIELD_LENGTH = 128;
-    private static final Pattern NAME_PATTERN =
-            Pattern.compile("^[a-zA-Z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u00FF\\s'\\u2019\\-]+$");
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M} '\\u2019\\-]+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+[1-9]\\d{6,14}$");
     private static final String PHONE_ERROR = "Phone must be in international E.164 format, e.g. +12025550123.";
 

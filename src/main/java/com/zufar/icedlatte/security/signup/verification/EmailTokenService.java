@@ -12,11 +12,11 @@ import java.util.Locale;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.common.util.EmailNormalizer;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.dto.TokenPurpose;
+import com.zufar.icedlatte.security.signup.exception.InvalidEmailTokenException;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 
 import lombok.RequiredArgsConstructor;
@@ -95,7 +95,7 @@ public class EmailTokenService {
         T payload = temporaryStore
                 .take(tokenKey(purpose, token))
                 .map(protectedEntry -> tokenPayloadProtector.unprotect(protectedEntry, payloadType))
-                .orElseThrow(() -> new BadRequestException("Incorrect token"));
+                .orElseThrow(InvalidEmailTokenException::new);
         temporaryStore.remove(cooldownKey(purpose, payload.email()));
         return payload;
     }
@@ -122,7 +122,7 @@ public class EmailTokenService {
     private void validateTokenFormat(String token) {
         int tokenLength = emailTokenProperties.verificationTokenLength();
         if (token == null || token.length() != tokenLength || !token.chars().allMatch(this::isUrlSafeTokenChar)) {
-            throw new BadRequestException("Incorrect token format");
+            throw new InvalidEmailTokenException();
         }
     }
 

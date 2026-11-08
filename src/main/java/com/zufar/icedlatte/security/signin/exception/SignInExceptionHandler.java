@@ -21,6 +21,7 @@ import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
 import com.zufar.icedlatte.common.http.ApiPaths;
 import com.zufar.icedlatte.common.http.RequestPathUtils;
 import com.zufar.icedlatte.common.turnstile.TurnstileVerificationException;
+import com.zufar.icedlatte.security.signup.exception.InvalidEmailTokenException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,13 @@ import lombok.extern.slf4j.Slf4j;
 public class SignInExceptionHandler {
 
     private final ProblemDetailFactory problemDetailFactory;
+
+    @ExceptionHandler(InvalidEmailTokenException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleInvalidEmailToken(final InvalidEmailTokenException exception) {
+        return problemDetailFactory.build(
+                ProblemType.INVALID_EMAIL_TOKEN, "Invalid email code", HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
 
     @ExceptionHandler({AuthSecurityException.class, TurnstileVerificationException.class})
     public ResponseEntity<ProblemDetail> handleSecurityException(

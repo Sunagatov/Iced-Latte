@@ -127,6 +127,22 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
         return productReviewDtoConverter.toProductReviewDto(productReview, user);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+    public ProductReviewDto removeLike(UUID productId, UUID productReviewId, UUID userId) {
+        productReviewValidator.validateProductIdIsValid(productId, productReviewId);
+        reviewRepository.lockVotes(productReviewId);
+        productReviewLikeRepository
+                .findByUserIdAndProductReviewId(userId, productReviewId)
+                .ifPresent(productReviewLikeRepository::delete);
+        productReviewLikeRepository.flush();
+        reviewRepository.updateLikesCount(productReviewId);
+        reviewRepository.updateDislikesCount(productReviewId);
+        ProductReview review = reviewRepository
+                .findById(productReviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(productReviewId));
+        return productReviewDtoConverter.toProductReviewDto(review, userLookupApi.getUserById(review.getUserId()));
+    }
+
     @Override
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     public void refreshAllCounts() {

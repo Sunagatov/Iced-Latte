@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +30,14 @@ public class ReviewReactionsEndpoint implements ReviewReactionsApi {
 
     private final ProductReviewManager productReviewService;
     private final CurrentUserProvider currentUserProvider;
+
+    @Override
+    @DeleteMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/{productReviewId}/likes")
+    public ResponseEntity<ProductReviewDto> removeProductReviewLike(
+            @PathVariable UUID productId, @PathVariable UUID productReviewId) {
+        return ResponseEntity.ok(
+                productReviewService.removeLike(productId, productReviewId, currentUserProvider.getUserId()));
+    }
 
     @Override
     @PostMapping(ApiPaths.PRODUCTS + "/{productId}/reviews/{productReviewId}/likes")

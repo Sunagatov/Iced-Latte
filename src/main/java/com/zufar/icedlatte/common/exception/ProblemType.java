@@ -10,6 +10,7 @@ public class ProblemType {
     public static final String AUTH_REQUIRED = "auth-required";
     public static final String ACCESS_DENIED = "access-denied";
     public static final String INVALID_CREDENTIALS = "invalid-credentials";
+    public static final String INVALID_EMAIL_TOKEN = "invalid-email-token";
     public static final String SESSION_EXPIRED = "session-expired";
     public static final String AUTH_FAILED = "auth-failed";
     public static final String REGISTRATION_FAILED = "registration-failed";

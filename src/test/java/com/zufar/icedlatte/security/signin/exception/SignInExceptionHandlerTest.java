@@ -20,6 +20,8 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.zufar.icedlatte.common.exception.handler.ProblemDetailFactory;
+import com.zufar.icedlatte.common.exception.handler.ProblemTypeUriFactory;
+import com.zufar.icedlatte.security.signup.exception.InvalidEmailTokenException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("SignInExceptionHandler Tests")
@@ -35,6 +37,19 @@ class SignInExceptionHandlerTest {
     private SignInExceptionHandler handler;
 
     private static final ProblemDetail STUB_401 = ProblemDetail.forStatus(401);
+
+    @Test
+    void invalidEmailTokenHasADistinctSafeProblemType() {
+        var realHandler = new SignInExceptionHandler(
+                new ProblemDetailFactory(new ProblemTypeUriFactory("https://iced-latte.local/problems/")));
+
+        var result = realHandler.handleInvalidEmailToken(new InvalidEmailTokenException());
+
+        assertThat(result.getStatus()).isEqualTo(400);
+        assertThat(result.getType().toString()).endsWith("/invalid-email-token");
+        assertThat(result.getDetail())
+                .isEqualTo("This email code is invalid, expired or already used. Request a new email.");
+    }
 
     @Test
     @DisplayName("Should return CONFLICT when UserRegistrationException is thrown")

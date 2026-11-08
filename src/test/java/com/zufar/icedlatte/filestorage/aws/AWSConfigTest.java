@@ -68,6 +68,19 @@ class AWSConfigTest {
     }
 
     @Test
+    void customStoragePresignedUrlsKeepTheBucketInThePath() {
+        AWSConfig config = configured("https://storage.example.test/storage/v1/s3");
+        try (S3Presigner presigner = config.s3Presigner()) {
+            var url = presigner
+                    .presignGetObject(r -> r.signatureDuration(Duration.ofMinutes(5))
+                            .getObjectRequest(g -> g.bucket("iced-latte-users").key("avatar-id")))
+                    .url();
+            assertThat(url.getHost()).isEqualTo("storage.example.test");
+            assertThat(url.getPath()).isEqualTo("/storage/v1/s3/iced-latte-users/avatar-id");
+        }
+    }
+
+    @Test
     @DisplayName("cloudFrontClient uses the global region")
     void cloudFrontClientUsesGlobalRegion() {
         AWSConfig config = configured("");

@@ -53,4 +53,15 @@ class PutUsersRequestValidatorTest {
                 () -> PutUsersRequestValidator.validate(
                         "name", "surname", "+79000000000", LocalDate.of(2000, 12, 1), address));
     }
+
+    @org.junit.jupiter.api.Test
+    void acceptsUnicodeNamesAndCombiningAccents() {
+        for (String name : java.util.List.of("Зуфар", "Çağrı", "李明", "E\u0301lodie", "O’Connor")) {
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(
+                    () -> PutUsersRequestValidator.validate(name, name, null, null, null));
+        }
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.zufar.icedlatte.common.exception.BadRequestException.class,
+                () -> PutUsersRequestValidator.validate("Ada\nLovelace", "Smith", null, null, null));
+    }
 }

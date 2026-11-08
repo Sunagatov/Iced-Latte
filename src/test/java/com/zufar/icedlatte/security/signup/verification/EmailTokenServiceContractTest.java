@@ -17,6 +17,7 @@ import com.zufar.icedlatte.common.exception.BadRequestException;
 import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.jwt.config.JwtProperties;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
+import com.zufar.icedlatte.security.signup.exception.InvalidEmailTokenException;
 import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 
 @DisplayName("EmailTokenService contract tests")
@@ -61,6 +62,18 @@ class EmailTokenServiceContractTest {
         String token = service.generateEmailVerificationToken(request);
 
         assertThatThrownBy(() -> service.consumePasswordResetToken(token)).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void passwordResetRejectsUsedUnknownAndMalformedTokensWithAnActionableError() {
+        String token = service.generatePasswordResetToken("john@example.com");
+        assertThat(service.consumePasswordResetToken(token).email()).isEqualTo("john@example.com");
+
+        for (String invalid : new String[] {token, "A".repeat(43), "bad-token"}) {
+            assertThatThrownBy(() -> service.consumePasswordResetToken(invalid))
+                    .isInstanceOf(InvalidEmailTokenException.class)
+                    .hasMessage("This email code is invalid, expired or already used. Request a new email.");
+        }
     }
 
     @Test

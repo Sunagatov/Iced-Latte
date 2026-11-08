@@ -107,6 +107,8 @@ public class SecurityRouteAuthorization {
                 .authenticated()
                 .requestMatchers(HttpMethod.POST, PRODUCT_REVIEW_LIKES_URL_PATTERN)
                 .authenticated()
+                .requestMatchers(HttpMethod.DELETE, PRODUCT_REVIEW_LIKES_URL_PATTERN)
+                .authenticated()
                 .requestMatchers(HttpMethod.GET, PRODUCT_REVIEWS_URL_PATTERN, PRODUCT_REVIEWS_STATISTICS_URL_PATTERN)
                 .permitAll();
     }
