@@ -16,19 +16,26 @@ import org.springframework.web.server.ResponseStatusException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zufar.icedlatte.ratelimit.api.DailyOperationQuota;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @Service
 public class PersistentDailyOperationQuota implements DailyOperationQuota {
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final HikariDataSource quotaPool;
+    private final MeterRegistry registry;
 
     @Autowired
-    public PersistentDailyOperationQuota(HikariDataSource mainPool) {
-        this(mainPool, Clock.systemUTC());
+    public PersistentDailyOperationQuota(HikariDataSource mainPool, MeterRegistry registry) {
+        this(mainPool, Clock.systemUTC(), registry);
     }
 
     PersistentDailyOperationQuota(HikariDataSource mainPool, Clock clock) {
+        this(mainPool, clock, new SimpleMeterRegistry());
+    }
+
+    private PersistentDailyOperationQuota(HikariDataSource mainPool, Clock clock, MeterRegistry registry) {
         // Reservations must commit independently, even while all main-pool connections
         // are held by requests waiting on user locks. Bound this pool to two connections.
         var config = new HikariConfig();
@@ -41,15 +48,22 @@ public class PersistentDailyOperationQuota implements DailyOperationQuota {
         config.setConnectionTimeout(5000);
         config.setInitializationFailTimeout(-1);
         config.setPoolName("operation-quota");
+        config.setMetricRegistry(registry);
         this.quotaPool = new HikariDataSource(config);
         this.jdbc = new JdbcTemplate(quotaPool);
         this.clock = clock;
+        this.registry = registry;
     }
 
     PersistentDailyOperationQuota(JdbcTemplate jdbc, Clock clock) {
+        this(jdbc, clock, new SimpleMeterRegistry());
+    }
+
+    PersistentDailyOperationQuota(JdbcTemplate jdbc, Clock clock, MeterRegistry registry) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.quotaPool = null;
+        this.registry = registry;
     }
 
     @PreDestroy
@@ -60,6 +74,7 @@ public class PersistentDailyOperationQuota implements DailyOperationQuota {
     @Override
     public void reserve(String scope, long dailyLimit) {
         if (dailyLimit < 1) {
+            recordDecision(scope, "blocked");
             throw new ResponseStatusException(
                     HttpStatus.TOO_MANY_REQUESTS, "This operation is disabled by its daily allowance.");
         }
@@ -77,12 +92,20 @@ public class PersistentDailyOperationQuota implements DailyOperationQuota {
                     RETURNING used
                     """, Long.class, scope, Date.valueOf(LocalDate.now(clock)), dailyLimit);
             if (result.isEmpty()) {
+                recordDecision(scope, "blocked");
                 throw new ResponseStatusException(
                         HttpStatus.TOO_MANY_REQUESTS, "Daily allowance reached. Try again tomorrow (UTC).");
             }
+            recordDecision(scope, "allowed");
         } catch (DataAccessException ex) {
+            recordDecision(scope, "unavailable");
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE, "Usage allowance is temporarily unavailable.", ex);
         }
+    }
+
+    private void recordDecision(String scope, String outcome) {
+        String category = scope.startsWith("ai:") ? "ai" : scope.startsWith("avatar:") ? "uploads" : "other";
+        registry.counter("operation.quota.decisions", "category", category, "outcome", outcome).increment();
     }
 }
