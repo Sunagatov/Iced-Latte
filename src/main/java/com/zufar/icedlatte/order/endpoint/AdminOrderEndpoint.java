@@ -1,5 +1,7 @@
 package com.zufar.icedlatte.order.endpoint;
 
+import static com.zufar.icedlatte.order.service.validator.GetOrdersRequestValidator.validate;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +53,9 @@ public class AdminOrderEndpoint implements AdminOrdersApi {
             @RequestParam(required = false) final Integer year,
             @RequestParam(required = false) final LocalDate dateFrom,
             @RequestParam(required = false) final LocalDate dateTo) {
+
+        validate(dateFrom, dateTo);
+
         var pageable = orderPageRequestFactory.build(page, size, sortBy, sortDirection);
         return ResponseEntity.ok(orderDetailProvider.getOrders(userId, status, year, dateFrom, dateTo, pageable));
     }
