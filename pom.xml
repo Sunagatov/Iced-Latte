@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.7</version>
+        <version>4.0.9</version>
         <relativePath/>
     </parent>
 
@@ -48,6 +48,11 @@
                 <version>${aws-sdk-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>swagger-ui</artifactId>
+                <version>5.34.1</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -107,14 +112,14 @@
         <java.version>25</java.version>
 
         <!-- ========== DATABASE VERSIONS ========== -->
-        <postgresql.version>42.7.11</postgresql.version>
+        <postgresql.version>42.7.14</postgresql.version>
 
         <!-- ========== SPRING MANAGED DEPENDENCY OVERRIDES ========== -->
         <tomcat.version>11.0.27</tomcat.version>
         <jackson-bom.version>3.1.8</jackson-bom.version>
         <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
         <kotlin.version>2.4.20</kotlin.version>
-        <netty.version>4.2.15.Final</netty.version>
+        <netty.version>4.2.20.Final</netty.version>
 
         <!-- ========== SECURITY VERSIONS ========== -->
         <jjwt.version>0.13.0</jjwt.version>
@@ -147,7 +152,7 @@
 
         <!-- ========== AI VERSIONS ========== -->
         <langchain4j.version>1.12.2</langchain4j.version>
-        <opennlp-tools.version>2.5.9</opennlp-tools.version>
+        <opennlp-tools.version>2.5.12</opennlp-tools.version>
 
         <!-- ========== OBSERVABILITY VERSIONS ========== -->
         <opentelemetry-proto.version>1.10.0-alpha</opentelemetry-proto.version>

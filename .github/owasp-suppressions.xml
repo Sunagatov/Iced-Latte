@@ -28,22 +28,4 @@
         <cve>CVE-2026-39882</cve>
         <cve>CVE-2026-40894</cve>
     </suppress>
-    <suppress>
-        <notes><![CDATA[
-        springdoc-openapi-starter-webmvc-ui 3.0.3 currently bundles swagger-ui 5.32.2 and there
-        is no newer springdoc 3.x release in Maven Central yet. Track this until springdoc ships
-        an updated Swagger UI bundle.
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.webjars/swagger-ui@.*$</packageUrl>
-        <cve>CVE-2026-41238</cve>
-        <cve>CVE-2026-41239</cve>
-        <cve>CVE-2026-41240</cve>
-    </suppress>
-    <suppress>
-        <notes><![CDATA[
-        Same bundled DOMPurify issue as above, tracked by GitHub advisory in swagger-ui.
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.webjars/swagger-ui@.*$</packageUrl>
-        <vulnerabilityName>GHSA-39q2-94rc-95cp</vulnerabilityName>
-    </suppress>
 </suppressions>
