@@ -37,6 +37,8 @@ import com.zufar.icedlatte.user.repository.UserRepository;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserProfileService unit tests")
 class UserProfileServiceTest {
+    @org.mockito.Mock
+    private com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
 
     @Mock
     private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
@@ -282,6 +284,25 @@ class UserProfileServiceTest {
         }
     }
 
+    @Test
+    void notificationQueueFailureCannotFailACommittedPasswordChange() {
+        UUID userId = UUID.randomUUID();
+        when(singleUserProvider.getUserEntityById(userId))
+                .thenReturn(UserEntity.builder().email("user@example.com").build());
+        when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
+        when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
+        doAnswer(invocation -> {
+                    if (invocation.getArgument(0) instanceof com.zufar.icedlatte.user.api.UserPasswordChangedEvent) {
+                        throw new org.springframework.core.task.TaskRejectedException("full");
+                    }
+                    return null;
+                })
+                .when(eventPublisher)
+                .publishEvent(any(Object.class));
+        userProfileService.changePassword(userId, "new_plain");
+        verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+    }
+
     @Nested
     @DisplayName("changePassword")
     class ChangePassword {
@@ -332,6 +353,8 @@ class UserProfileServiceTest {
         @DisplayName("direct overload encodes and saves")
         void changePassword_directOverload_encodesAndSaves() {
             UUID userId = UUID.randomUUID();
+            when(singleUserProvider.getUserEntityById(userId))
+                    .thenReturn(UserEntity.builder().email("user@example.com").build());
             when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
             when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
 
@@ -345,6 +368,8 @@ class UserProfileServiceTest {
         @DisplayName("direct overload requests session revocation only after commit")
         void changePasswordDirectOverloadRequestsSessionRevocationAfterCommit() {
             UUID userId = UUID.randomUUID();
+            when(singleUserProvider.getUserEntityById(userId))
+                    .thenReturn(UserEntity.builder().email("user@example.com").build());
             when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
             when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(1);
 
@@ -369,6 +394,8 @@ class UserProfileServiceTest {
         @DisplayName("direct overload throws when password update touches no rows")
         void changePasswordDirectOverloadThrowsWhenUserIsMissing() {
             UUID userId = UUID.randomUUID();
+            when(singleUserProvider.getUserEntityById(userId))
+                    .thenReturn(UserEntity.builder().email("user@example.com").build());
             when(passwordEncoder.encode("new_plain")).thenReturn("encoded_new");
             when(userRepository.changeUserPassword("encoded_new", userId)).thenReturn(0);
 

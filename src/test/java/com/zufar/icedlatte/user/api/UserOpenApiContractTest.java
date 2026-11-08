@@ -21,13 +21,10 @@ class UserOpenApiContractTest {
 
         assertThat(yaml)
                 .contains("PasswordField:")
-                .contains("(?=.*[a-z])")
-                .contains("(?=.*[A-Z])")
-                .contains("(?=.*\\\\d)")
-                .contains("at least one lowercase letter")
-                .contains("one uppercase letter")
-                .contains("one digit")
-                .contains(
-                        "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit.");
+                .contains("minLength: 15")
+                .contains("long passphrases are allowed")
+                .contains("Use a password between 15 and 128 characters.")
+                .contains("Existing password; legacy creation rules do not apply.")
+                .doesNotContain("(?=.*[A-Z])");
     }
 }

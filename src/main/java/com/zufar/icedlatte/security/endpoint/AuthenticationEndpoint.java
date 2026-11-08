@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.zufar.icedlatte.common.util.ClientIpExtractor;
 import com.zufar.icedlatte.openapi.dto.ConfirmEmailRequest;
@@ -42,15 +43,14 @@ public class AuthenticationEndpoint implements AuthenticationApi {
 
     @Override
     @PostMapping("/api/v1/auth/register")
-    public ResponseEntity<UserAuthenticationResponse> register(
-            @RequestBody @Valid final UserRegistrationRequest request) {
+    public ResponseEntity<Void> register(@RequestBody @Valid final UserRegistrationRequest request) {
         AuthSessionRequestMetadata metadata = requestMetadata();
-        if (emailEnabled) {
-            emailVerificationService.sendEmailVerificationCode(request, metadata.ipAddress());
-            return ResponseEntity.ok().build();
+        if (!emailEnabled) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Email registration is unavailable.");
         }
-        AuthenticationTokens authenticationTokens = userRegistrationService.register(request, metadata);
-        return ResponseEntity.ok(toResponse(authenticationTokens));
+        userRegistrationService.verifyRegistrationChallenge(request, metadata.ipAddress());
+        emailVerificationService.sendEmailVerificationCode(request, metadata.ipAddress());
+        return ResponseEntity.ok().build();
     }
 
     @Override

@@ -47,6 +47,8 @@ class ModularityTests {
                 "common :: turnstile",
                 "common :: util",
                 "common :: validation-pagination",
+                // Shared creation policy is used by both registration and profile/recovery changes.
+                "common :: password-policy",
                 "filestorage :: api",
                 "filestorage :: aws",
                 "filestorage :: exception",

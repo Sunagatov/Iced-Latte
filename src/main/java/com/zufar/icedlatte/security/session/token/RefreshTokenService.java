@@ -32,7 +32,7 @@ public class RefreshTokenService {
     private final AuthSessionService authSessionService;
     private final SessionTokenService sessionTokenService;
 
-    @Transactional
+    @Transactional(noRollbackFor = JwtTokenBlacklistedException.class)
     public RefreshTokenResult refresh(HttpServletRequest request, AuthSessionRequestMetadata requestMetadata) {
         log.debug("auth.token.refreshing");
         String rawToken = jwtBearerTokenResolver.extract(request);
@@ -43,6 +43,10 @@ public class RefreshTokenService {
         try {
             session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
+            if (ex.isCompromiseDetected()) {
+                // Do not reinterpret detected replay as legacy, including after JWT expiry.
+                throw ex;
+            }
             if (jwtTokenClaims.isSessionManagedRefreshToken(rawToken)) {
                 jwtTokenClaims
                         .extractRefreshTokenSessionId(rawToken)

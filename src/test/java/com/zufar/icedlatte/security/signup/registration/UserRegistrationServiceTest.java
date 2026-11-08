@@ -31,6 +31,8 @@ import com.zufar.icedlatte.user.api.UserRegistrationApi;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserRegistrationService unit tests")
 class UserRegistrationServiceTest {
+    @org.mockito.Mock
+    private com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
 
     @Mock
     private UserRegistrationApi userRegistrationApi;

@@ -24,6 +24,8 @@ import com.zufar.icedlatte.user.api.dto.UserLookupSnapshot;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PasswordResetService unit tests")
 class PasswordResetServiceTest {
+    @org.mockito.Mock
+    private com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
 
     @Mock
     private UserLookupApi userLookupApi;
@@ -107,6 +109,18 @@ class PasswordResetServiceTest {
                             "turnstile-token", null, "forgot_password", "forgot_password"));
             verify(emailVerificationService).sendPasswordResetCode(email);
         }
+    }
+
+    @Test
+    void hidesMailQueueSaturationForKnownAndUnknownEmails() {
+        String email = "known@example.com";
+        when(userLookupApi.findUserByEmail(email))
+                .thenReturn(Optional.of(new UserLookupSnapshot(UUID.randomUUID(), "Known", "User", email)));
+        doThrow(new org.springframework.core.task.TaskRejectedException("full"))
+                .when(emailVerificationService)
+                .sendPasswordResetCode(email);
+        service.requestReset(email, "turnstile-token");
+        service.requestReset("missing@example.com", "turnstile-token");
     }
 
     @Test

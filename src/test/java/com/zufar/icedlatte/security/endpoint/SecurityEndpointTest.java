@@ -81,8 +81,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
                 .body(getRequestBody(SECURITY_REGISTRATION))
                 .post("/register")
                 .then()
-                .statusCode(HttpStatus.OK.value())
-                .body("token", notNullValue());
+                .statusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
     }
 
     @Test
@@ -160,28 +159,24 @@ class SecurityEndpointTest extends IntegrationTestBase {
 
     @Test
     @DisplayName("Should registration new user Failed email not unique")
-    void shouldRegistrationNewUserFailedEmailNotUnique() {
+    void disabledEmailRegistrationIsUnavailableForRepeatedRequests() {
         String uniqueEmail = "duplicate." + System.currentTimeMillis() + "@gmail.com";
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail
-                + "\",\"password\":\"!h2h3kKl\"}";
+                + "\",\"password\":\"gentle river coffee morning\"}";
 
-        given(specification).body(body).post("/register").then().statusCode(HttpStatus.OK.value());
-        given(specification)
-                .body(body)
-                .post("/register")
-                .then()
-                .statusCode(HttpStatus.CONFLICT.value())
-                .body("detail", notNullValue());
+        given(specification).body(body).post("/register").then().statusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
+        given(specification).body(body).post("/register").then().statusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
     }
 
     @Test
     @DisplayName("Should fail registration immediately when confirmed email already exists")
-    void shouldFailRegistrationImmediatelyWhenConfirmedEmailAlreadyExists() {
+    void disabledEmailRegistrationIsUnavailableForExistingAccounts() {
         String uniqueEmail = "confirmed.duplicate." + System.currentTimeMillis() + "@gmail.com";
-        UserRegistrationRequest pending = new UserRegistrationRequest("Jon", "Smith", uniqueEmail, "!h2h3kKl");
+        UserRegistrationRequest pending =
+                new UserRegistrationRequest("Jon", "Smith", uniqueEmail, "gentle river coffee morning");
         String token = emailTokenService.generateEmailVerificationToken(pending);
         String body = "{\"firstName\":\"Jon\",\"lastName\":\"Smith\",\"email\":\"" + uniqueEmail
-                + "\",\"password\":\"!h2h3kKl\"}";
+                + "\",\"password\":\"gentle river coffee morning\"}";
 
         given(specification)
                 .body("{\"token\":\"" + token + "\"}")
@@ -189,13 +184,7 @@ class SecurityEndpointTest extends IntegrationTestBase {
                 .then()
                 .statusCode(HttpStatus.CREATED.value());
 
-        given(specification)
-                .body(body)
-                .post("/register")
-                .then()
-                .statusCode(HttpStatus.CONFLICT.value())
-                .body("type", equalTo("https://errors.example.test/problems/registration-failed"))
-                .body("detail", equalTo("This email is already registered. Please sign in or use a different email."));
+        given(specification).body(body).post("/register").then().statusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
     }
 
     @Test

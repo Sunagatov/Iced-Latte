@@ -34,6 +34,7 @@ paths:
       tags:
         - "OAuth"
       summary: "Start OAuth sign-in"
+      description: "Requires a codeChallenge query parameter containing the base64url SHA-256 digest of a browser-bound 32-byte verifier. Missing or invalid challenges are rejected."
       operationId: "initiateOAuth"
       parameters:
         - name: provider
@@ -42,6 +43,15 @@ paths:
           schema:
             type: string
           description: "OAuth provider identifier, for example google or github."
+        - name: codeChallenge
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 43
+            maxLength: 43
+            pattern: "^[A-Za-z0-9_-]{43}$"
+          description: "Base64url SHA-256 digest of the initiating browser verifier."
         - name: redirectUrl
           in: query
           required: false
@@ -105,6 +115,7 @@ paths:
       tags:
         - "OAuth"
       summary: "Exchange OAuth handoff code for tokens"
+      description: "Requires X-OAuth-Verifier from the initiating browser. The handoff is single-use and bound to its SHA-256 challenge."
       operationId: "completeOAuthTokenHandoff"
       parameters:
         - name: code
@@ -116,6 +127,15 @@ paths:
             maxLength: 43
             pattern: "^[A-Za-z0-9_-]{43}$"
           description: "Short-lived one-time OAuth handoff code from the frontend callback fragment."
+        - name: X-OAuth-Verifier
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 43
+            maxLength: 43
+            pattern: "^[A-Za-z0-9_-]{43}$"
+          description: "Verifier held in the initiating browser HttpOnly cookie."
       responses:
         "200":
           description: "OAuth token handoff completed."
@@ -145,11 +165,7 @@ paths:
               $ref: "#/components/schemas/UserRegistrationRequest"
       responses:
         "200":
-          description: "Registration successful. Returns tokens when email verification is disabled, or empty body when verification email was sent."
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserAuthenticationResponse"
+          description: "Request accepted with an empty body for both new and existing addresses. Account creation requires email confirmation. If email delivery is disabled, returns 503."
         "400":
           description: "Bad request"
           content:
@@ -157,7 +173,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: "Email is already registered"
+          description: "Registration conflict during confirmed account creation"
           content:
             application/json:
               schema:
@@ -599,10 +615,9 @@ components:
 
     PasswordField:
       type: "string"
-      description: "Password must be between 8 and 128 characters, with at least one lowercase letter, one uppercase letter, and one digit."
-      minLength: 8
+      description: "Use 15 to 128 characters; long passphrases are allowed. Common passwords are rejected."
+      minLength: 15
       maxLength: 128
-      pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"
 
     ErrorResponse:
       $ref: "common-schemas.yaml#/components/schemas/ErrorResponse"

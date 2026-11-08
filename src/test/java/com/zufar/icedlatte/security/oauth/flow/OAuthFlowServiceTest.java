@@ -66,6 +66,7 @@ class OAuthFlowServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(oAuthStateStore.consumeChallenge(any(), anyString())).thenReturn(Optional.of("A".repeat(43)));
         service = new OAuthFlowService(
                 oAuthLoginService,
                 oAuthProviderClientRegistry,
@@ -87,12 +88,14 @@ class OAuthFlowServiceTest {
         Optional<URI> result = service.initiate(
                 OAuthProvider.GOOGLE,
                 "https://app.example.com:443/auth/google/callback?next=/checkout",
+                "A".repeat(43),
                 request,
                 response);
 
         assertThat(result).contains(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
-        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        verify(oAuthStateStore)
+                .store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture(), eq("A".repeat(43)));
         verify(oAuthStateCookieService).bind(eq(request), eq(response), eq(OAuthProvider.GOOGLE), anyString(), any());
         assertThat(callbackBase.getValue())
                 .isEqualTo("https://app.example.com:443/auth/google/callback?next=/checkout");
@@ -104,10 +107,16 @@ class OAuthFlowServiceTest {
         when(oAuthProviderClient.buildAuthorizationUri(anyString()))
                 .thenReturn(URI.create("https://accounts.google.com/o/oauth2/v2/auth"));
 
-        service.initiate(OAuthProvider.GOOGLE, "https://evil.example.com/auth/google/callback", request, response);
+        service.initiate(
+                OAuthProvider.GOOGLE,
+                "https://evil.example.com/auth/google/callback",
+                "A".repeat(43),
+                request,
+                response);
 
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
-        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        verify(oAuthStateStore)
+                .store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture(), eq("A".repeat(43)));
         assertThat(callbackBase.getValue()).isEqualTo("https://app.example.com/auth/google/callback");
     }
 
@@ -120,11 +129,13 @@ class OAuthFlowServiceTest {
         service.initiate(
                 OAuthProvider.GOOGLE,
                 "https://app.example.com/auth/google/callback?next=https://evil.example.com",
+                "A".repeat(43),
                 request,
                 response);
 
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
-        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        verify(oAuthStateStore)
+                .store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture(), eq("A".repeat(43)));
         assertThat(callbackBase.getValue()).isEqualTo("https://app.example.com/auth/google/callback");
     }
 
@@ -137,11 +148,13 @@ class OAuthFlowServiceTest {
         service.initiate(
                 OAuthProvider.GOOGLE,
                 "https://app.example.com/auth/google/callback?next=/%5Cevil.example.com",
+                "A".repeat(43),
                 request,
                 response);
 
         ArgumentCaptor<String> callbackBase = ArgumentCaptor.forClass(String.class);
-        verify(oAuthStateStore).store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture());
+        verify(oAuthStateStore)
+                .store(eq(OAuthProvider.GOOGLE), anyString(), callbackBase.capture(), eq("A".repeat(43)));
         assertThat(callbackBase.getValue()).isEqualTo("https://app.example.com/auth/google/callback");
     }
 
@@ -149,7 +162,7 @@ class OAuthFlowServiceTest {
     void initiateReturnsEmptyWhenProviderClientIsNotRegistered() {
         when(oAuthProviderClientRegistry.findClient(OAuthProvider.GOOGLE)).thenReturn(Optional.empty());
 
-        Optional<URI> result = service.initiate(OAuthProvider.GOOGLE, null, request, response);
+        Optional<URI> result = service.initiate(OAuthProvider.GOOGLE, null, "A".repeat(43), request, response);
 
         assertThat(result).isEmpty();
         verifyNoInteractions(oAuthStateStore, oAuthProviderClient);
@@ -178,14 +191,15 @@ class OAuthFlowServiceTest {
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback?next=/checkout"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", REQUEST_METADATA))
                 .thenReturn(tokenPair());
-        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
+        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class), eq("A".repeat(43))))
+                .thenReturn("handoff-code");
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
 
         assertThat(redirect.toString())
                 .isEqualTo("https://app.example.com/auth/google/callback?next=/checkout#oauthCode=handoff-code");
         assertThat(redirect.toString()).doesNotContain("jwt-token", "refresh-token");
-        verify(oAuthTokenHandoffStore).store(any(AuthenticationTokens.class));
+        verify(oAuthTokenHandoffStore).store(any(AuthenticationTokens.class), eq("A".repeat(43)));
         verify(oAuthStateCookieService).clear(request, response, OAuthProvider.GOOGLE);
     }
 
@@ -209,7 +223,8 @@ class OAuthFlowServiceTest {
                 .thenReturn(Optional.of("https://app.example.com/auth/google/callback#old"));
         when(oAuthLoginService.handle(OAuthProvider.GOOGLE, "valid-code", REQUEST_METADATA))
                 .thenReturn(tokenPair());
-        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class))).thenReturn("handoff-code");
+        when(oAuthTokenHandoffStore.store(any(AuthenticationTokens.class), eq("A".repeat(43))))
+                .thenReturn("handoff-code");
 
         URI redirect = service.completeCallback(OAuthProvider.GOOGLE, "valid-code", "state-token", request, response);
 
@@ -220,9 +235,9 @@ class OAuthFlowServiceTest {
     @Test
     void completeTokenHandoffConsumesStoredTokenPair() {
         AuthenticationTokens tokenPair = tokenPair();
-        when(oAuthTokenHandoffStore.consume("handoff-code")).thenReturn(Optional.of(tokenPair));
+        when(oAuthTokenHandoffStore.consume("handoff-code", "verifier")).thenReturn(Optional.of(tokenPair));
 
-        AuthenticationTokens result = service.completeTokenHandoff("handoff-code");
+        AuthenticationTokens result = service.completeTokenHandoff("handoff-code", "verifier");
 
         assertThat(result).isSameAs(tokenPair);
     }

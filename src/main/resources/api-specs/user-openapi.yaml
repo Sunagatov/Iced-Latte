@@ -133,7 +133,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
               examples:
                 invalidPassword:
-                  value: { "message": "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit." }
+                  value: { "message": "Use a password between 15 and 128 characters." }
         "401":
           description: "Unauthorized access or invalid old password."
           content:
@@ -681,10 +681,9 @@ components:
 
     PasswordField:
       type: "string"
-      description: "Password must be between 8 and 128 characters, with at least one lowercase letter, one uppercase letter, and one digit."
-      minLength: 8
+      description: "Use 15 to 128 characters; long passphrases are allowed. Common passwords are rejected."
+      minLength: 15
       maxLength: 128
-      pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"
 
     ChangeUserPasswordRequest:
       type: "object"
@@ -696,7 +695,10 @@ components:
         newPassword:
           $ref: "#/components/schemas/PasswordField"
         oldPassword:
-          $ref: "#/components/schemas/PasswordField"
+          type: "string"
+          minLength: 1
+          maxLength: 128
+          description: "Existing password; legacy creation rules do not apply."
 
     UserDto:
       type: "object"

@@ -223,7 +223,7 @@ jobs:
           for spec in src/main/resources/api-specs/*-openapi.yaml; do
             name=$(basename "$spec")
             [ -f "$BASE_DIR/$name" ] || continue
-            if docker run --rm -v "$PWD:/work" -w /work "$OASDIFF_IMAGE" breaking "$BASE_DIR/$name" "$spec" --fail-on ERR; then
+            if docker run --rm -v "$PWD:/work" -w /work "$OASDIFF_IMAGE" breaking "$BASE_DIR/$name" "$spec" --fail-on ERR --err-ignore .github/oasdiff-auth-hardening.ignore; then
               echo "[OK] No breaking changes in $name"
             else
               echo "[FAIL] Breaking changes detected in $name"

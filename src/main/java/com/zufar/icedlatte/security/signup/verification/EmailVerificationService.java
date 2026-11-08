@@ -7,6 +7,7 @@ import com.zufar.icedlatte.openapi.dto.UserRegistrationRequest;
 import com.zufar.icedlatte.security.email.sender.AuthTokenEmailSender;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
+import com.zufar.icedlatte.security.signup.exception.TimeTokenException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
@@ -27,16 +28,28 @@ public class EmailVerificationService {
         sendEmailVerificationCode(request, null);
     }
 
+    @org.springframework.scheduling.annotation.Async("authEmailExecutor")
     public void sendEmailVerificationCode(UserRegistrationRequest request, String remoteIp) {
-        userRegistrationService.ensureRegistrationAllowed(request, remoteIp);
-        String token = emailTokenService.generateEmailVerificationToken(request);
-        emailConfirmation.sendTemporaryCode(EmailNormalizer.normalize(request.getEmail()), token);
+        if (userRegistrationService.emailAlreadyRegistered(request.getEmail())) {
+            return;
+        }
+        try {
+            String token = emailTokenService.generateEmailVerificationToken(request);
+            emailConfirmation.sendTemporaryCode(EmailNormalizer.normalize(request.getEmail()), token);
+        } catch (TimeTokenException ignored) {
+            // Pending and existing registrations have the same public response.
+        }
     }
 
+    @org.springframework.scheduling.annotation.Async("authEmailExecutor")
     public void sendPasswordResetCode(String email) {
         String normalizedEmail = EmailNormalizer.normalize(email);
-        String token = emailTokenService.generatePasswordResetToken(normalizedEmail);
-        emailConfirmation.sendTemporaryCode(normalizedEmail, token);
+        try {
+            String token = emailTokenService.generatePasswordResetToken(normalizedEmail);
+            emailConfirmation.sendPasswordReset(normalizedEmail, token);
+        } catch (TimeTokenException ignored) {
+            // Cooldown is deliberately indistinguishable from accepted delivery.
+        }
     }
 
     public AuthenticationTokens confirmEmailByCode(String token, AuthSessionRequestMetadata requestMetadata) {

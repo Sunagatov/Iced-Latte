@@ -47,6 +47,7 @@ public class UserProfileService implements UserAccessControlApi {
     private final FileStorageWriterApi fileStorageWriterApi;
     private final AvatarUploadLifecycleService avatarUploadLifecycleService;
     private final PasswordEncoder passwordEncoder;
+    private final com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
     private final ApplicationEventPublisher eventPublisher;
     private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
 
@@ -94,12 +95,34 @@ public class UserProfileService implements UserAccessControlApi {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
     @Override
     public void changePassword(UUID userId, String newPassword) {
+        passwordPolicy.validateNewPassword(newPassword);
+        String email = singleUserProvider.getUserEntityById(userId).getEmail();
         String encodedPassword = passwordEncoder.encode(newPassword);
         int updatedRows = userRepository.changeUserPassword(encodedPassword, userId);
         if (updatedRows == 0) {
             throw new UserNotFoundException(userId);
         }
         requestSessionsRevocationAfterCommit(userId);
+        Runnable notify = () -> {
+            try {
+                eventPublisher.publishEvent(new com.zufar.icedlatte.user.api.UserPasswordChangedEvent(email));
+            } catch (RuntimeException e) {
+                // Optional mail delivery must not turn a committed password change into a failed response.
+                log.warn(
+                        "auth.password.notification_not_queued: type={}",
+                        e.getClass().getSimpleName());
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notify.run();
+                }
+            });
+        } else {
+            notify.run();
+        }
     }
 
     @Override

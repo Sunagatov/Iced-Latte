@@ -44,7 +44,11 @@ public class OAuthFlowService {
     private final ClientIpExtractor clientIpExtractor;
 
     public Optional<URI> initiate(
-            OAuthProvider provider, String redirectUrl, HttpServletRequest request, HttpServletResponse response) {
+            OAuthProvider provider,
+            String redirectUrl,
+            String codeChallenge,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         var client = oAuthProviderClientRegistry.findClient(provider);
         if (client.isEmpty()) {
             log.warn("auth.oauth.disabled: provider={}", provider.id());
@@ -52,9 +56,13 @@ public class OAuthFlowService {
         }
         OAuthProviderClient providerClient = client.orElseThrow();
         log.info("auth.oauth.initiate: provider={}", provider.id());
+        String challenge = codeChallenge;
+        if (challenge == null || !challenge.matches("[A-Za-z0-9_-]{43}")) {
+            throw new BadRequestException("OAuth browser challenge is required.");
+        }
         String callbackBase = oAuthRedirectService.resolveCallbackBase(provider, redirectUrl);
         String nonce = generateStateNonce();
-        oAuthStateStore.store(provider, nonce, callbackBase);
+        oAuthStateStore.store(provider, nonce, callbackBase, challenge);
         oAuthStateCookieService.bind(request, response, provider, nonce, oAuthStateStore.stateTtl());
         return Optional.of(providerClient.buildAuthorizationUri(nonce));
     }
@@ -87,14 +95,15 @@ public class OAuthFlowService {
         }
         Optional<String> callbackBase = oAuthStateStore.consume(provider, state);
         oAuthStateCookieService.clear(request, response, provider);
-        if (callbackBase.isEmpty()) {
+        Optional<String> challenge = oAuthStateStore.consumeChallenge(provider, state);
+        if (callbackBase.isEmpty() || challenge.isEmpty()) {
             log.info("auth.oauth.callback.invalid-state: provider={}", provider.id());
             return oAuthRedirectService.signInErrorRedirect(INVALID_STATE_ERROR);
         }
         String callbackUrl = callbackBase.orElseThrow();
         try {
             AuthenticationTokens tokens = oAuthLoginService.handle(provider, code, requestMetadata(request));
-            String handoffCode = oAuthTokenHandoffStore.store(tokens);
+            String handoffCode = oAuthTokenHandoffStore.store(tokens, challenge.orElseThrow());
             return URI.create(oAuthRedirectService.callbackUrlWithHandoffCode(callbackUrl, handoffCode));
         } catch (BadRequestException | UnauthorizedException e) {
             String logMessage =
@@ -109,12 +118,12 @@ public class OAuthFlowService {
         }
     }
 
-    public AuthenticationTokens completeTokenHandoff(String code) {
+    public AuthenticationTokens completeTokenHandoff(String code, String verifier) {
         if (!StringUtils.hasText(code)) {
             throw new BadRequestException("OAuth token code is required.");
         }
         return oAuthTokenHandoffStore
-                .consume(code)
+                .consume(code, verifier)
                 .orElseThrow(() -> new BadRequestException("OAuth token code is invalid or expired."));
     }
 

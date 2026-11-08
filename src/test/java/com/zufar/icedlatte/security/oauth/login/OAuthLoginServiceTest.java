@@ -87,36 +87,23 @@ class OAuthLoginServiceTest {
     }
 
     @Test
-    void linksNewOauthIdentityToExistingUserWhenProviderEmailIsVerified() {
-        UserAuthenticationSnapshot existingUser = activeUser();
+    void rejectsAutomaticLinkingEvenWhenProviderEmailIsVerified() {
         stubProfile(GOOGLE_SUBJECT, EXISTING_EMAIL, true, "Alice", "Existing");
         stubNoIdentity();
-        stubUser(existingUser);
-        stubToken();
-        AuthenticationTokens response = handle();
-        assertThat(response.accessToken()).isEqualTo("access-token");
-        ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
-        verify(oAuthIdentityRepository).saveAndFlush(savedIdentities.capture());
-        OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
-        assertThat(savedIdentity.getProvider()).isEqualTo(OAuthProvider.GOOGLE);
-        assertThat(savedIdentity.getProviderSubject()).isEqualTo(GOOGLE_SUBJECT);
-        assertThat(savedIdentity.getEmail()).isEqualTo(EXISTING_EMAIL);
-        assertThat(savedIdentity.getUserId()).isEqualTo(existingUser.userId());
+        stubUser(activeUser());
+        assertThatThrownBy(this::handle).isInstanceOf(UnauthorizedException.class);
+        verify(oAuthIdentityRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(userRegistrationApi, sessionTokenService, passwordEncoder);
     }
 
     @Test
-    void normalizesProviderSubjectAndEmailBeforeLookupAndIdentitySave() {
-        UserAuthenticationSnapshot existingUser = activeUser();
+    void normalizesEmailBeforeRejectingAnExistingAccount() {
         stubProfile("  google-subject  ", " Existing@Example.com ", true, "Alice", "Existing");
         stubNoIdentity();
-        stubUser(existingUser);
-        stubToken();
-        handle();
-        ArgumentCaptor<OAuthIdentityEntity> savedIdentities = ArgumentCaptor.forClass(OAuthIdentityEntity.class);
-        verify(oAuthIdentityRepository).saveAndFlush(savedIdentities.capture());
-        OAuthIdentityEntity savedIdentity = savedIdentities.getValue();
-        assertThat(savedIdentity.getProviderSubject()).isEqualTo("google-subject");
-        assertThat(savedIdentity.getEmail()).isEqualTo("existing@example.com");
+        stubUser(activeUser());
+        assertThatThrownBy(this::handle).isInstanceOf(UnauthorizedException.class);
+        verify(userAuthenticationApi).findUserAuthenticationByEmail(EXISTING_EMAIL);
+        verifyNoInteractions(sessionTokenService);
     }
 
     @Test
@@ -265,7 +252,7 @@ class OAuthLoginServiceTest {
 
         assertThatThrownBy(this::handle)
                 .isInstanceOf(UnauthorizedException.class)
-                .hasMessage("OAuth account is not available.");
+                .hasMessage("Sign in using your existing account before linking another provider.");
     }
 
     @Test

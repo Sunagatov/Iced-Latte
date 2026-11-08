@@ -30,7 +30,7 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     @DisplayName("Should successfully register new user with valid data")
     void shouldRegisterNewUserSuccessfully() {
         final UserRegistrationRequest request =
-                new UserRegistrationRequest("John", "Doe", "john.doe@example.com", "Password123!");
+                new UserRegistrationRequest("John", "Doe", "john.doe@example.com", "gentle river coffee morning");
 
         final AuthenticationTokens response = userRegistrationService.register(request, REQUEST_METADATA);
         assertNotNull(response.accessToken());
@@ -54,11 +54,11 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     @DisplayName("Should throw exception when registering user with existing email")
     void shouldThrowExceptionForDuplicateEmail() {
         final UserRegistrationRequest firstRequest =
-                new UserRegistrationRequest("John", "Doe", "duplicate@example.com", "Password123!");
+                new UserRegistrationRequest("John", "Doe", "duplicate@example.com", "gentle river coffee morning");
         userRegistrationService.register(firstRequest, REQUEST_METADATA);
 
         final UserRegistrationRequest duplicateRequest =
-                new UserRegistrationRequest("Jane", "Smith", "duplicate@example.com", "Password456!");
+                new UserRegistrationRequest("Jane", "Smith", "duplicate@example.com", "another peaceful coffee day");
 
         assertThrows(
                 UserRegistrationException.class,
@@ -69,7 +69,7 @@ class UserRegistrationServiceIntegrationTest extends IntegrationTestBase {
     @DisplayName("Should return false for existing email availability check")
     void shouldReturnFalseForExistingEmail() {
         final UserRegistrationRequest request =
-                new UserRegistrationRequest("John", "Doe", "existing@example.com", "Password123!");
+                new UserRegistrationRequest("John", "Doe", "existing@example.com", "gentle river coffee morning");
         userRegistrationService.register(request, REQUEST_METADATA);
 
         assertTrue(userRepository.findByEmail("existing@example.com").isPresent());

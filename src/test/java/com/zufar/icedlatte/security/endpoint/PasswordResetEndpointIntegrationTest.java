@@ -50,7 +50,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
     @DisplayName("Should reset password using valid reset token and authenticate with new password")
     void shouldResetPasswordUsingValidResetTokenAndAuthenticateWithNewPassword() {
         AuthenticatedUser user = registerAndAuthenticateUser();
-        String newPassword = "ResetPass123!";
+        String newPassword = "rain clouds above the city";
 
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
@@ -100,7 +100,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
                 .body("""
                         {
                           "code": "123456789",
-                          "password": "ResetPass123!"
+                          "password": "rain clouds above the city"
                         }
                         """)
                 .post("/password/change")
@@ -112,7 +112,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
     @DisplayName("Should reject reused reset token after successful password change")
     void shouldRejectReusedResetTokenAfterSuccessfulPasswordChange() {
         AuthenticatedUser user = registerAndAuthenticateUser();
-        String newPassword = "ResetPass123!";
+        String newPassword = "rain clouds above the city";
 
         UserRegistrationRequest resetRequest = new UserRegistrationRequest();
         resetRequest.setEmail(user.email());
@@ -134,7 +134,7 @@ class PasswordResetEndpointIntegrationTest extends AuthenticatedUserIntegrationS
                 .body("""
                         {
                           "code": "%s",
-                          "password": "AnotherPass123!"
+                          "password": "another calm morning brew"
                         }
                         """.formatted(resetToken))
                 .post("/password/change")

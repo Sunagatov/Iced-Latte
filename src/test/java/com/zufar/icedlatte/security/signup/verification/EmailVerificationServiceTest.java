@@ -27,7 +27,6 @@ import com.zufar.icedlatte.security.service.cache.ExpiringKeyValueStore;
 import com.zufar.icedlatte.security.service.cache.InMemoryExpiringKeyValueStore;
 import com.zufar.icedlatte.security.session.management.AuthSessionRequestMetadata;
 import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
-import com.zufar.icedlatte.security.signin.exception.UserRegistrationException;
 import com.zufar.icedlatte.security.signup.registration.UserRegistrationService;
 import com.zufar.icedlatte.user.api.UserAccessControlApi;
 import com.zufar.icedlatte.user.api.UserLookupApi;
@@ -88,7 +87,7 @@ class EmailVerificationServiceTest {
 
             service.sendEmailVerificationCode(request);
 
-            verify(userRegistrationService).ensureRegistrationAllowed(request, null);
+            verify(userRegistrationService).emailAlreadyRegistered(request.getEmail());
             verify(emailConfirmation)
                     .sendTemporaryCode(eq("john@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
         }
@@ -98,12 +97,9 @@ class EmailVerificationServiceTest {
         void doesNotSendTokenWhenEmailIsAlreadyRegistered() {
             UserRegistrationRequest request =
                     new UserRegistrationRequest("John", "Doe", "john@example.com", "pass123!");
-            doThrow(new UserRegistrationException("duplicate"))
-                    .when(userRegistrationService)
-                    .ensureRegistrationAllowed(request, null);
-
-            assertThatThrownBy(() -> service.sendEmailVerificationCode(request))
-                    .isInstanceOf(UserRegistrationException.class);
+            when(userRegistrationService.emailAlreadyRegistered(request.getEmail()))
+                    .thenReturn(true);
+            service.sendEmailVerificationCode(request);
 
             verifyNoInteractions(emailConfirmation);
         }
@@ -119,7 +115,7 @@ class EmailVerificationServiceTest {
             service.sendPasswordResetCode("user@example.com");
 
             verify(emailConfirmation)
-                    .sendTemporaryCode(eq("user@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
+                    .sendPasswordReset(eq("user@example.com"), argThat(EmailVerificationServiceTest::isOpaqueToken));
         }
     }
 

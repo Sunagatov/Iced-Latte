@@ -88,7 +88,11 @@ public class OAuthLoginService {
     private UserAuthenticationSnapshot findOrCreateUserAndIdentity(
             OAuthProvider provider, OAuthProfile profile, String providerSubject, String email) {
         Optional<UserAuthenticationSnapshot> existingUser = userAuthenticationApi.findUserAuthenticationByEmail(email);
-        UserAuthenticationSnapshot user = existingUser.orElseGet(() -> createUser(provider, profile, email));
+        if (existingUser.isPresent()) {
+            // Email equality is not proof of control of the existing account's credentials.
+            throw new UnauthorizedException("Sign in using your existing account before linking another provider.");
+        }
+        UserAuthenticationSnapshot user = createUser(provider, profile, email);
         try {
             oAuthIdentityRepository.saveAndFlush(OAuthIdentityEntity.builder()
                     .provider(provider)

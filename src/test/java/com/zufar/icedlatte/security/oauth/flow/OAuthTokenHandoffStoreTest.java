@@ -22,6 +22,8 @@ import com.zufar.icedlatte.security.session.token.AuthenticationTokens;
 @DisplayName("OAuthTokenHandoffStore unit tests")
 class OAuthTokenHandoffStoreTest {
 
+    private static final String VERIFIER = "B".repeat(43);
+    private static final String CHALLENGE = OAuthTokenHandoffStore.challenge(VERIFIER);
     private OAuthTokenHandoffStore store;
 
     @BeforeEach
@@ -38,14 +40,14 @@ class OAuthTokenHandoffStoreTest {
     void storesTokensBehindOneTimeOpaqueCode() {
         AuthenticationTokens tokens = new AuthenticationTokens("access-token", "refresh-token");
 
-        String code = store.store(tokens);
+        String code = store.store(tokens, CHALLENGE);
 
         assertThat(code).matches("[A-Za-z0-9_-]{43}");
-        assertThat(store.consume(code)).hasValueSatisfying(result -> {
+        assertThat(store.consume(code, VERIFIER)).hasValueSatisfying(result -> {
             assertThat(result.accessToken()).isEqualTo("access-token");
             assertThat(result.refreshToken()).isEqualTo("refresh-token");
         });
-        assertThat(store.consume(code)).isEmpty();
+        assertThat(store.consume(code, VERIFIER)).isEmpty();
     }
 
     @Test
@@ -56,7 +58,7 @@ class OAuthTokenHandoffStoreTest {
                 temporaryStore, new ObjectMapper(), jwtProperties(), properties(handoffEncryptionKey()));
         AuthenticationTokens tokens = new AuthenticationTokens("access-token", "refresh-token");
 
-        encryptedStore.store(tokens);
+        encryptedStore.store(tokens, CHALLENGE);
 
         verify(temporaryStore)
                 .put(
@@ -72,9 +74,18 @@ class OAuthTokenHandoffStoreTest {
         OAuthTokenHandoffStore encryptedStore = new OAuthTokenHandoffStore(
                 temporaryStore, new ObjectMapper(), jwtProperties(), properties(handoffEncryptionKey()));
 
-        assertThat(encryptedStore.consume("not-a-valid-handoff-code")).isEmpty();
+        assertThat(encryptedStore.consume("not-a-valid-handoff-code", VERIFIER)).isEmpty();
 
         verify(temporaryStore, never()).take(anyString());
+    }
+
+    @Test
+    void rejectsMissingOrWrongBrowserWithoutConsumingLegitimateHandoff() {
+        String code = store.store(new AuthenticationTokens("access", "refresh"), CHALLENGE);
+        assertThat(store.consume(code, null)).isEmpty();
+        assertThat(store.consume(code, "C".repeat(43))).isEmpty();
+        assertThat(store.consume(code, VERIFIER)).isPresent();
+        assertThat(store.consume(code, VERIFIER)).isEmpty();
     }
 
     private static JwtProperties jwtProperties() {

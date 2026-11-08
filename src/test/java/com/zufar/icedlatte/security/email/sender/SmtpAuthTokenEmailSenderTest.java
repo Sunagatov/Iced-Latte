@@ -20,6 +20,23 @@ class SmtpAuthTokenEmailSenderTest {
     private final MessageSource messageSource = mock(MessageSource.class);
 
     @Test
+    void sendsRecoveryLinkAndSecurityNotificationWithoutReusingConfirmationWording() {
+        SmtpAuthTokenEmailSender sender = new SmtpAuthTokenEmailSender(javaMailSender, messageSource);
+        ReflectionTestUtils.setField(sender, "frontendUrl", "https://iced-latte.uk");
+        String token = "A".repeat(43);
+        sender.sendPasswordReset("user@example.com", token);
+        sender.sendPasswordChanged("user@example.com");
+        ArgumentCaptor<SimpleMailMessage> messages = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(javaMailSender, times(2)).send(messages.capture());
+        assertThat(messages.getAllValues().get(0).getText())
+                .contains("https://iced-latte.uk/resetpass?token=" + token)
+                .contains("5 minutes");
+        assertThat(messages.getAllValues().get(1).getText())
+                .contains("previous sessions have been signed out")
+                .doesNotContain(token);
+    }
+
+    @Test
     @DisplayName("builds confirmation email body and sends it with configured subject")
     void sendsTemporaryCodeWithRenderedBodyAndSubject() {
         when(messageSource.getMessage("email-template", new Object[] {"654321"}, Locale.ROOT))

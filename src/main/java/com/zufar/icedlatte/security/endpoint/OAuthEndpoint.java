@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,11 +39,13 @@ public class OAuthEndpoint implements OAuthApi {
     @Override
     @GetMapping("/api/v1/auth/oauth/{provider}")
     public ResponseEntity<Void> initiateOAuth(
-            @PathVariable String provider, @Valid @RequestParam(required = false) URI redirectUrl) {
+            @PathVariable String provider,
+            @RequestParam String codeChallenge,
+            @RequestParam(required = false) URI redirectUrl) {
         OAuthProvider oAuthProvider = parseProvider(provider);
         String redirectUrlAsString = redirectUrl == null ? null : redirectUrl.toString();
         return oAuthFlowService
-                .initiate(oAuthProvider, redirectUrlAsString, httpRequest, httpResponse)
+                .initiate(oAuthProvider, redirectUrlAsString, codeChallenge, httpRequest, httpResponse)
                 .map(OAuthEndpoint::redirect)
                 .orElseGet(() ->
                         ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());
@@ -61,8 +64,9 @@ public class OAuthEndpoint implements OAuthApi {
 
     @Override
     @PostMapping("/api/v1/auth/oauth/token")
-    public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(@RequestParam String code) {
-        AuthenticationTokens authenticationTokens = oAuthFlowService.completeTokenHandoff(code);
+    public ResponseEntity<UserAuthenticationResponse> completeOAuthTokenHandoff(
+            @RequestParam String code, @RequestHeader("X-OAuth-Verifier") String xOAuthVerifier) {
+        AuthenticationTokens authenticationTokens = oAuthFlowService.completeTokenHandoff(code, xOAuthVerifier);
         return ResponseEntity.ok(toResponse(authenticationTokens));
     }
 

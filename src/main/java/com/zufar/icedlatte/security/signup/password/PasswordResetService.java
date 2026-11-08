@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PasswordResetService {
 
+    private final com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
     private final UserLookupApi userLookupApi;
     private final EmailVerificationService emailVerificationService;
     private final TurnstileVerifier turnstileVerifier;
@@ -34,7 +35,7 @@ public class PasswordResetService {
                 return;
             }
             emailVerificationService.sendPasswordResetCode(normalizedEmail);
-        } catch (TimeTokenException _) {
+        } catch (TimeTokenException | org.springframework.core.task.TaskRejectedException _) {
             // Swallow cooldown error — returning a distinct response would confirm the email exists.
             log.debug("auth.password.forgot.cooldown");
         }
@@ -46,6 +47,7 @@ public class PasswordResetService {
 
     public void confirmReset(String token, String newPassword, String turnstileToken, String remoteIp) {
         turnstileVerifier.verify(TurnstileVerificationRequest.forAction(turnstileToken, remoteIp, "change_password"));
+        passwordPolicy.validateNewPassword(newPassword);
         emailVerificationService.confirmResetPasswordEmailByCode(token, newPassword);
         log.info("auth.password.changed");
     }

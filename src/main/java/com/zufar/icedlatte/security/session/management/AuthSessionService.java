@@ -113,7 +113,8 @@ public class AuthSessionService {
         return listActiveSessions(userId).stream().map(this::toSessionInfo).toList();
     }
 
-    @Transactional
+    // Replay rejection must commit the compromise response, including when joining refresh().
+    @Transactional(noRollbackFor = JwtTokenBlacklistedException.class)
     public AuthSessionEntity findActiveByHash(String refreshTokenHash) {
         Optional<AuthSessionEntity> currentSession =
                 sessionRepository.findByRefreshTokenHashForUpdate(refreshTokenHash);
@@ -148,7 +149,7 @@ public class AuthSessionService {
             String logMessage = "auth.session.replay_repeated: sessionId={}, userId={}";
             log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
         }
-        throw new JwtTokenBlacklistedException("Refresh token has been rotated");
+        throw JwtTokenBlacklistedException.compromiseDetected("Refresh token has been rotated");
     }
 
     private void handleRevokedOrCompromisedSession(AuthSessionEntity session) {
@@ -158,7 +159,7 @@ public class AuthSessionService {
             log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
             revokeAllForCompromisedUser(session.getUserId());
         }
-        throw new JwtTokenBlacklistedException("Refresh token has been revoked");
+        throw JwtTokenBlacklistedException.compromiseDetected("Refresh token has been revoked");
     }
 
     private boolean isActiveSession(AuthSessionEntity session) {

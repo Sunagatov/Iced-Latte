@@ -41,6 +41,7 @@ class SentryConfigurationTest {
         request.setHeaders(new HashMap<>(Map.of(
                 "authorization", "Bearer token",
                 "COOKIE", "sid=1",
+                "X-OAuth-Verifier", "private-verifier",
                 "X-Trace-ID", "trace")));
         errorEvent.setRequest(request);
 
@@ -49,7 +50,7 @@ class SentryConfigurationTest {
 
         assertThat(result).isSameAs(errorEvent);
         assertThat(sanitizedRequest.getHeaders()).isNotNull();
-        assertThat(sanitizedRequest.getHeaders()).doesNotContainKeys("authorization", "COOKIE");
+        assertThat(sanitizedRequest.getHeaders()).doesNotContainKeys("authorization", "COOKIE", "X-OAuth-Verifier");
         assertThat(sanitizedRequest.getHeaders()).containsEntry("X-Trace-ID", "trace");
         assertThat(result.getTag("application")).isEqualTo("iced-latte");
         assertThat(result.getTag("version")).isEqualTo("2026.04");

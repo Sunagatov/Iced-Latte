@@ -19,12 +19,17 @@ public class OAuthStateStore {
     private final ExpiringKeyValueStore temporaryStore;
     private final OAuthFlowProperties properties;
 
-    public void store(OAuthProvider provider, String nonce, String callbackBase) {
+    public void store(OAuthProvider provider, String nonce, String callbackBase, String challenge) {
         temporaryStore.put(namespacedKey(provider, nonce), callbackBase, stateTtl());
+        temporaryStore.put(namespacedKey(provider, nonce) + ":challenge", challenge, stateTtl());
     }
 
     public Optional<String> consume(OAuthProvider provider, String nonce) {
         return temporaryStore.take(namespacedKey(provider, nonce));
+    }
+
+    public Optional<String> consumeChallenge(OAuthProvider provider, String nonce) {
+        return temporaryStore.take(namespacedKey(provider, nonce) + ":challenge");
     }
 
     Duration stateTtl() {

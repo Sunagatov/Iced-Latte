@@ -1,5 +1,8 @@
 package com.zufar.icedlatte.security.oauth.flow;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
@@ -45,18 +48,20 @@ public class OAuthTokenHandoffStore {
         this.protector = new AesGcmStringProtector(keySource, PAYLOAD_DESCRIPTION);
     }
 
-    public String store(AuthenticationTokens tokens) {
+    public String store(AuthenticationTokens tokens, String challenge) {
+        if (!isValidHandoffCode(challenge)) throw new IllegalArgumentException("Invalid browser challenge");
         String code = newHandoffCode();
-        temporaryStore.put(namespacedKey(code), protector.protect(serialize(tokens)), properties.handoffTtl());
+        temporaryStore.put(
+                namespacedKey(code, challenge), protector.protect(serialize(tokens)), properties.handoffTtl());
         return code;
     }
 
-    public Optional<AuthenticationTokens> consume(String code) {
-        if (!isValidHandoffCode(code)) {
+    public Optional<AuthenticationTokens> consume(String code, String verifier) {
+        if (!isValidHandoffCode(code) || !isValidHandoffCode(verifier)) {
             return Optional.empty();
         }
         return temporaryStore
-                .take(namespacedKey(code))
+                .take(namespacedKey(code, challenge(verifier)))
                 .map(protector::unprotect)
                 .map(this::deserialize);
     }
@@ -83,8 +88,19 @@ public class OAuthTokenHandoffStore {
         }
     }
 
-    private static String namespacedKey(String code) {
-        return KEY_PREFIX + code;
+    public static String challenge(String verifier) {
+        try {
+            return Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(
+                            MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static String namespacedKey(String code, String challenge) {
+        return KEY_PREFIX + code + ":" + challenge;
     }
 
     private static boolean isValidHandoffCode(String code) {

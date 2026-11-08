@@ -1,0 +1,6 @@
+GET /api/v1/auth/oauth/{provider} added the new required 'query' request parameter 'codeChallenge'
+POST /api/v1/auth/oauth/token added the new required 'header' request parameter 'X-OAuth-Verifier'
+POST /api/v1/auth/password/change the 'password' request property's minLength was increased from '8' to '15'
+POST /api/v1/auth/register the 'password' request property's minLength was increased from '8' to '15'
+POST /api/v1/auth/register removed the media type 'application/json' for the response with the status '200'
+PATCH /api/v1/users the 'newPassword' request property's minLength was increased from '8' to '15'

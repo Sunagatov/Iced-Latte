@@ -310,8 +310,8 @@ cors:
 security:
   # Argon2 password hashing parameters (higher = more secure but slower).
   argon2:
-    # Memory cost in KiB (16 MiB default). Lower in tests for speed.
-    memory: 16384
+    # Memory cost in KiB (19 MiB baseline). Lower in tests for speed.
+    memory: 19456
     # Number of hash iterations.
     iterations: 2
   rate-limit:

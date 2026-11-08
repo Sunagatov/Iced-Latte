@@ -35,8 +35,9 @@ class OAuthStateStoreTest {
     @Test
     @DisplayName("store writes the callback under a namespaced key")
     void storeWritesTheCallbackUnderNamespacedKey() {
-        cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback");
+        cache.store(OAuthProvider.GOOGLE, "nonce-1", "https://example.com/callback", "A".repeat(43));
 
+        verify(temporaryStore).put("oauth:state:google:nonce-1:challenge", "A".repeat(43), Duration.ofMinutes(10));
         verify(temporaryStore)
                 .put("oauth:state:google:nonce-1", "https://example.com/callback", Duration.ofMinutes(10));
     }

@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class UserRegistrationService {
 
+    private final com.zufar.icedlatte.common.validation.password.PasswordPolicy passwordPolicy;
     private final UserRegistrationApi userRegistrationApi;
     private final PasswordEncoder passwordEncoder;
     private final SessionTokenService sessionTokenService;
@@ -38,9 +39,20 @@ public class UserRegistrationService {
 
     public void ensureRegistrationAllowed(
             final UserRegistrationRequest userRegistrationRequest, final String remoteIp) {
+        passwordPolicy.validateNewPassword(userRegistrationRequest.getPassword());
         turnstileVerifier.verify(TurnstileVerificationRequest.forAction(
                 userRegistrationRequest.getTurnstileToken(), remoteIp, "register"));
         ensureEmailAvailable(userRegistrationRequest);
+    }
+
+    public void verifyRegistrationChallenge(UserRegistrationRequest request, String remoteIp) {
+        passwordPolicy.validateNewPassword(request.getPassword());
+        turnstileVerifier.verify(
+                TurnstileVerificationRequest.forAction(request.getTurnstileToken(), remoteIp, "register"));
+    }
+
+    public boolean emailAlreadyRegistered(String email) {
+        return userRegistrationApi.existsByEmail(EmailNormalizer.normalize(email));
     }
 
     @Transactional

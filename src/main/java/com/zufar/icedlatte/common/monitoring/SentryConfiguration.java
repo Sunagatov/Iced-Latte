@@ -29,8 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 @ConditionalOnProperty(name = "sentry.enabled", havingValue = "true")
 public class SentryConfiguration {
 
-    private static final Set<String> SENSITIVE_HEADER_NAMES =
-            Set.of(HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT), HttpHeaders.COOKIE.toLowerCase(Locale.ROOT));
+    private static final Set<String> SENSITIVE_HEADER_NAMES = Set.of(
+            HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT),
+            HttpHeaders.COOKIE.toLowerCase(Locale.ROOT),
+            "x-oauth-verifier");
     private static final Set<String> SENSITIVE_BREADCRUMB_KEYS = Set.of("email", "password", "phone");
     private static final Pattern CLIENT_IP_FIELD_PATTERN = Pattern.compile("(client_ip=)([^,\\s]+)");
     private static final String HTTP_ACCESS_LOGGER = "http.access";
