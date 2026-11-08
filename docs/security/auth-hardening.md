@@ -15,3 +15,5 @@ The six exact compatibility-check exceptions in .github/oasdiff-auth-hardening.i
 The shared password policy is exposed as common :: password-policy because both security registration/recovery and user profile password changes enforce it. The blocklist source, revision, transformation and license are retained beside the resource under src/main/resources/security/. It is a periodically updated local snapshot, not an exhaustive breach database.
 
 Mail dispatch uses a bounded executor. Forgot-password response semantics remain generic under cooldown and queue saturation; notification submission failure cannot change the result of an already committed password update.
+
+Replay of an active rotated credential commits compromise containment. Credentials already revoked by logout or password change are rejected without revoking later sign-ins, so an old tab cannot invalidate a fresh login. Matched managed sessions never fall through the legacy-token migration path.

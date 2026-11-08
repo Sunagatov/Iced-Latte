@@ -262,8 +262,8 @@ class AuthSessionServiceTest {
     }
 
     @Test
-    @DisplayName("findActiveByHash marks reused revoked session as compromised and revokes all sessions")
-    void findActiveByHashMarksRevokedSessionAsCompromisedAndRevokesAll() {
+    @DisplayName("findActiveByHash rejects revoked credentials without affecting later sessions")
+    void findActiveByHashRejectsRevokedSessionWithoutCompromisingLaterLogins() {
         UUID userId = UUID.randomUUID();
         AuthSessionEntity revoked = AuthSessionEntity.builder()
                 .id(UUID.randomUUID())
@@ -278,9 +278,9 @@ class AuthSessionServiceTest {
                 .isInstanceOf(JwtTokenBlacklistedException.class)
                 .hasMessageContaining("revoked");
 
-        assertThat(revoked.isCompromised()).isTrue();
-        verify(sessionRepository).save(revoked);
-        verify(sessionRepository).markCompromisedAndRevokeAllByUserId(eq(userId), any(OffsetDateTime.class));
+        assertThat(revoked.isCompromised()).isFalse();
+        verify(sessionRepository, never()).save(any());
+        verify(sessionRepository, never()).markCompromisedAndRevokeAllByUserId(any(), any());
     }
 
     @Test

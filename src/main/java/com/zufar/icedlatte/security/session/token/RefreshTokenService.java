@@ -43,8 +43,8 @@ public class RefreshTokenService {
         try {
             session = authSessionService.findActiveByHash(hash);
         } catch (JwtTokenBlacklistedException ex) {
-            if (ex.isCompromiseDetected()) {
-                // Do not reinterpret detected replay as legacy, including after JWT expiry.
+            if (ex.isManagedSessionRejection()) {
+                // A matched managed session must never fall back to legacy, including after JWT expiry.
                 throw ex;
             }
             if (jwtTokenClaims.isSessionManagedRefreshToken(rawToken)) {

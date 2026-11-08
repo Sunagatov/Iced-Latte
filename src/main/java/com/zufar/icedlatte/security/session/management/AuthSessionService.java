@@ -149,17 +149,14 @@ public class AuthSessionService {
             String logMessage = "auth.session.replay_repeated: sessionId={}, userId={}";
             log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
         }
-        throw JwtTokenBlacklistedException.compromiseDetected("Refresh token has been rotated");
+        throw JwtTokenBlacklistedException.managedSessionRejected("Refresh token has been rotated");
     }
 
     private void handleRevokedOrCompromisedSession(AuthSessionEntity session) {
-        if (!session.isCompromised()) {
-            markCompromised(session);
-            String logMessage = "auth.session.reuse_detected: sessionId={}, userId={}";
-            log.warn(logMessage, maskSessionId(session.getId()), session.getUserId());
-            revokeAllForCompromisedUser(session.getUserId());
-        }
-        throw JwtTokenBlacklistedException.compromiseDetected("Refresh token has been revoked");
+        // A tab may legitimately retain a credential revoked by password change or logout.
+        // Reject it without treating that expected stale credential as a new compromise.
+        log.debug("auth.session.revoked_credential_rejected: sessionId={}", maskSessionId(session.getId()));
+        throw JwtTokenBlacklistedException.managedSessionRejected("Refresh token has been revoked");
     }
 
     private boolean isActiveSession(AuthSessionEntity session) {
